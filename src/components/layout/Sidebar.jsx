@@ -157,9 +157,16 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             flex-shrink-0
           ">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              {/* <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-lg lg:text-xl">IRS</span>
-              </div>
+              </div> */}
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
+  <img 
+    src="/irs-logos.png" 
+    alt="Logo IRS" 
+    className="w-8 h-8 object-contain"
+  />
+</div>
               <div className="min-w-0 flex-1">
                 <h1 className="text-lg lg:text-xl font-bold text-gray-900 truncate">IRS OJK</h1>
                 <p className="text-xs text-gray-500 truncate">Sistem Pelaporan Terpusat</p>

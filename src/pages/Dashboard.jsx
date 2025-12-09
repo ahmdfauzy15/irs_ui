@@ -63,7 +63,7 @@ const Dashboard = () => {
       </div>
 
       {/* Quick Access Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {quickAccessCards.map((card, index) => (
           <QuickAccessCard
             key={index}
@@ -74,7 +74,22 @@ const Dashboard = () => {
             link={card.link}
           />
         ))}
+      </div> */}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {quickAccessCards.map((card, index) => (
+          <QuickAccessCard
+            key={index}
+            title={card.title}
+            description={card.description}
+            reports={card.reports}
+            color={card.color}
+            link={card.link}
+            icon={card.icon}      
+          />
+        ))}
       </div>
+
 
       {/* Recent Activity and Reports Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
