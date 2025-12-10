@@ -161,4 +161,47 @@
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
+
+}
+
+/* Tambahkan di akhir index.css */
+
+/* AI Assistant specific styles */
+.ai-message strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ai-message ul, .ai-message ol {
+  margin-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ai-message li {
+  margin-bottom: 0.25rem;
+}
+
+/* Smooth animations */
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-fade-out {
+  animation: fade-out 0.3s ease-out forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .ai-chat-modal {
+    margin: 0;
+    border-radius: 0;
+    height: 100vh;
+    max-width: 100% !important;
+  }
 }

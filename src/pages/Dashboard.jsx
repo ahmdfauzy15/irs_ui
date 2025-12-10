@@ -14,6 +14,7 @@ import StatsCard from '../components/dashboard/StatsCard';
 import QuickAccessCard from '../components/dashboard/QuickAccessCard';
 import ActivityList from '../components/dashboard/ActivityList';
 import RecentReports from '../components/dashboard/RecentReports';
+import DashboardCarousel from '../components/dashboard/DashboardCarousel'; // Tambahkan ini
 import { homeReportsData, welcomeStats, quickAccessCards } from '../data/reportsData';
 
 const Dashboard = () => {
@@ -42,11 +43,13 @@ const Dashboard = () => {
       system: 'SIPINA'
     }
   ];
-
-  return (
+   return (
     <div className="space-y-6 animate-fade-in">
       {/* Welcome Banner */}
       <WelcomeBanner />
+
+      {/* Dashboard Carousel */}
+      <DashboardCarousel />
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -62,6 +65,7 @@ const Dashboard = () => {
         ))}
       </div>
 
+  
       {/* Quick Access Cards */}
       {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {quickAccessCards.map((card, index) => (
