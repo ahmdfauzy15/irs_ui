@@ -21,7 +21,7 @@ const DashboardCarousel = () => {
       description: 'Batas waktu pengiriman laporan keuangan Q1 2024 adalah 30 April 2024.',
       icon: AlertTriangle,
       color: 'bg-gradient-to-r from-orange-500 to-red-500',
-      cta: 'Lihat Detail',
+    //   cta: 'Lihat Detail',
       link: '/apolo'
     },
     {
@@ -30,7 +30,7 @@ const DashboardCarousel = () => {
       description: 'Laporan Anda telah diproses 30% lebih cepat dari rata-rata.',
       icon: TrendingUp,
       color: 'bg-gradient-to-r from-green-500 to-emerald-600',
-      cta: 'Analisis Data',
+    //   cta: 'Analisis Data',
       link: '/dashboard'
     },
     {
@@ -39,7 +39,7 @@ const DashboardCarousel = () => {
       description: 'Sistem telah diperbarui dengan enkripsi end-to-end terbaru.',
       icon: Shield,
       color: 'bg-gradient-to-r from-blue-500 to-indigo-600',
-      cta: 'Pelajari Lebih',
+    //   cta: 'Pelajari Lebih',
       link: '/about'
     },
     {
@@ -48,7 +48,7 @@ const DashboardCarousel = () => {
       description: 'Ada 3 laporan yang memerlukan perhatian segera.',
       icon: Bell,
       color: 'bg-gradient-to-r from-purple-500 to-pink-600',
-      cta: 'Buka Notifikasi',
+    //   cta: 'Buka Notifikasi',
       link: '/notifications'
     }
   ];
@@ -107,7 +107,7 @@ const DashboardCarousel = () => {
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold text-white">{slide.title}</h3>
-                      <p className="text-white/90 mt-1">{slide.description}</p>
+                      {/* <p className="text-white/90 mt-1">{slide.description}</p> */}
                     </div>
                   </div>
                 </div>
@@ -119,13 +119,13 @@ const DashboardCarousel = () => {
                     <p className="text-gray-600">
                       {slide.description}
                     </p>
-                    <div className="mt-4 flex items-center space-x-4">
+                    {/* <div className="mt-4 flex items-center space-x-4">
                       <button className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
                         <span>{slide.cta}</span>
                         <ExternalLink className="w-4 h-4" />
                       </button>
 
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>
@@ -165,14 +165,14 @@ const DashboardCarousel = () => {
       </div>
 
       {/* Autoplay Control */}
-      <div className="absolute top-4 right-4">
+      {/* <div className="absolute top-4 right-4">
         <button
           onClick={() => setAutoplay(!autoplay)}
           className="text-xs text-gray-600 hover:text-gray-900 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full"
         >
           {autoplay ? '⏸️ Jeda' : '▶️ Lanjut'}
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };
