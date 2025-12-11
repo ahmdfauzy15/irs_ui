@@ -1,4 +1,3 @@
-// src/components/dashboard/DownloadCenter.jsx
 import React, { useState, useRef } from 'react';
 import { 
   Download, 
@@ -177,7 +176,7 @@ const DownloadCenter = () => {
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+            <div className="p-3 bg-gradient-to-br from-red-700 via-red-600 to-red-800 rounded-xl">
               <Download className="w-6 h-6 text-white" />
             </div>
             <div>

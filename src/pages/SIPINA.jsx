@@ -117,7 +117,7 @@ const SIPINA = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
-          <div className="p-3 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-red-700 via-red-600 to-red-800 rounded-xl">
             <Gavel className="w-6 h-6 text-white" />
           </div>
           <div>

@@ -3,7 +3,7 @@ import { BarChart3, TrendingUp } from 'lucide-react';
 
 const WelcomeBanner = () => {
   return (
-    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg overflow-hidden">
+    <div className="bg-gradient-to-r from-red-400 to-red-800 rounded-xl shadow-lg overflow-hidden">
       <div className="p-6 md:p-8">
         <div className="flex flex-col md:flex-row items-center justify-between">
           <div className="text-white mb-6 md:mb-0 md:mr-8 flex-1">

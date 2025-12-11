@@ -47,7 +47,7 @@ export const quickAccessCards = [
   },
   {
     title: "SIPINA",
-    description: "Laporan informasi nasabah asing disampaikan secara daring melalui sistem penyampaian informasi nasabah asing",
+    description: "Penyampaian laporan informasi nasabah asing dilakukan secara daring,dapat mengirimkan data nasabah asing secara terstruktur sesuai ketentuan yang berlaku.",
     reports: 4,
     color: "sipina",
     link: "https://pelaporan.id/Account/Login"

@@ -3,20 +3,20 @@ import { ArrowRight, FileText } from 'lucide-react';
 
 const QuickAccessCard = ({ title, description, reports, color, link }) => {
   const colorClasses = {
-    apolo: 'bg-gradient-to-br from-blue-500 to-indigo-600',
-    ereporting: 'bg-gradient-to-br from-cyan-500 to-blue-500',
+    apolo: 'bg-gradient-to-br from-pink-500 to-rose-600',
+    ereporting: 'bg-gradient-to-br from-pink-500 to-rose-600',
     sipina: 'bg-gradient-to-br from-pink-500 to-rose-600',
   };
 
   const textClasses = {
-    apolo: 'text-blue-600',
-    ereporting: 'text-cyan-600',
+    apolo: 'text-pink-600',
+    ereporting: 'text-pink-600',
     sipina: 'text-pink-600',
   };
 
   const bgClasses = {
-    apolo: 'bg-blue-50 border-blue-100 hover:bg-blue-100',
-    ereporting: 'bg-cyan-50 border-cyan-100 hover:bg-cyan-100',
+    apolo: 'bg-pink-50 border-pink-100 hover:bg-pink-100',
+    ereporting: 'bg-pink-50 border-pink-100 hover:bg-pink-100',
     sipina: 'bg-pink-50 border-pink-100 hover:bg-pink-100',
   };
 

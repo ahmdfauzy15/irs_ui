@@ -144,32 +144,38 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         {/* Sidebar Content */}
         <div className="
           h-full
-          bg-white border-r border-gray-200
+          bg-gradient-to-b from-white via-red-50/30 to-white
+          border-r border-red-100
           flex flex-col
           overflow-hidden
+          shadow-sm
         ">
           
-          {/* Sidebar Header */}
+          {/* Sidebar Header - Gradient Putih-Merah */}
           <div className="
             p-4 lg:p-6 
-            border-b border-gray-100 
-            bg-white
+            border-b border-red-100
+            bg-gradient-to-r from-white via-red-50 to-white
             flex-shrink-0
+            shadow-sm
           ">
             <div className="flex items-center space-x-3">
-              {/* <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-lg lg:text-xl">IRS</span>
-              </div> */}
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
-  <img 
-    src="/irs-logos.png" 
-    alt="Logo IRS" 
-    className="w-8 h-8 object-contain"
-  />
-</div>
+              <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl overflow-hidden 
+                  border border-red-200 shadow-sm flex-shrink-0 bg-white">
+              <img 
+                src="/irs-logos.png" 
+                alt="Logo IRS" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+
               <div className="min-w-0 flex-1">
-                <h1 className="text-lg lg:text-xl font-bold text-gray-900 truncate">IRS OJK</h1>
-                <p className="text-xs text-gray-500 truncate">Sistem Pelaporan Terpusat</p>
+                <h1 className="text-lg lg:text-xl font-bold text-red-800 truncate">
+                  IRS OJK
+                </h1>
+                <p className="text-xs text-red-600/80 truncate">
+                  Sistem Pelaporan Terpusat
+                </p>
               </div>
             </div>
           </div>
@@ -184,37 +190,51 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                       <button
                         onClick={item.toggle}
                         className={`
-                          w-full flex items-center justify-between px-3 lg:px-4 py-3 rounded-xl
+                          w-full flex items-center justify-between 
+                          px-3 lg:px-4 py-3 rounded-xl
                           transition-all duration-200
-                          hover:bg-gray-100 active:scale-[0.98]
-                          ${item.open ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}
-                          ${isActive('/apolo') || isActive('/ereporting') || isActive('/sipina') ? 'bg-blue-50 text-blue-600' : ''}
+                          hover:bg-gradient-to-r hover:from-red-50 hover:to-white
+                          active:scale-[0.98]
+                          border border-transparent hover:border-red-200
+                          ${item.open 
+                            ? 'bg-gradient-to-r from-red-100 to-white text-red-700 border-red-200 shadow-sm' 
+                            : 'text-red-800 hover:text-red-700'
+                          }
+                          ${isActive('/apolo') || isActive('/ereporting') || isActive('/sipina') 
+                            ? 'bg-gradient-to-r from-red-100 to-white text-red-700 border-red-200' 
+                            : ''
+                          }
                         `}
                       >
                         <div className="flex items-center space-x-3">
                           <item.icon className="w-5 h-5 flex-shrink-0" />
-                          <span className="font-medium truncate text-left">{item.label}</span>
+                          <span className="font-medium truncate text-left">
+                            {item.label}
+                          </span>
                         </div>
                         {item.open ? (
-                          <ChevronDown className="w-4 h-4 flex-shrink-0 transition-transform duration-200" />
+                          <ChevronDown className="w-4 h-4 flex-shrink-0 transition-transform duration-200 text-red-600" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 flex-shrink-0 transition-transform duration-200" />
+                          <ChevronRight className="w-4 h-4 flex-shrink-0 transition-transform duration-200 text-red-500" />
                         )}
                       </button>
                       
                       {item.open && (
-                        <div className="ml-3 lg:ml-4 mt-1 space-y-1 pl-3 lg:pl-8 border-l-2 border-blue-100 animate-fade-in">
+                        <div className="ml-3 lg:ml-4 mt-1 space-y-1 pl-3 lg:pl-8 border-l-2 border-red-200 animate-fade-in">
                           {item.subItems.map((subItem) => (
                             <button
                               key={subItem.label}
                               onClick={() => handleMenuItemClick(subItem.path)}
                               className={`
-                                w-full flex items-center space-x-3 px-3 lg:px-4 py-2.5 rounded-lg
+                                w-full flex items-center space-x-3 
+                                px-3 lg:px-4 py-2.5 rounded-lg
                                 transition-all duration-200 text-left
-                                hover:bg-gray-100 active:scale-[0.98]
+                                hover:bg-gradient-to-r hover:from-red-50 hover:to-white
+                                active:scale-[0.98]
+                                border border-transparent hover:border-red-200
                                 ${isActive(subItem.path) 
-                                  ? 'bg-blue-50 text-blue-600 font-medium' 
-                                  : 'text-gray-600'
+                                  ? 'bg-gradient-to-r from-red-100 to-white text-red-700 font-medium border-red-200 shadow-sm' 
+                                  : 'text-red-700 hover:text-red-800'
                                 }
                               `}
                             >
@@ -230,12 +250,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                       key={item.label}
                       onClick={() => handleMenuItemClick(item.path)}
                       className={`
-                        w-full flex items-center justify-between px-3 lg:px-4 py-3 rounded-xl
+                        w-full flex items-center justify-between 
+                        px-3 lg:px-4 py-3 rounded-xl
                         transition-all duration-200 relative
-                        hover:bg-gray-100 active:scale-[0.98]
+                        hover:bg-gradient-to-r hover:from-red-50 hover:to-white
+                        active:scale-[0.98]
+                        border border-transparent hover:border-red-200
                         ${isActive(item.path, item.exact) 
-                          ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 border border-blue-100 font-medium' 
-                          : 'text-gray-700'
+                          ? 'bg-gradient-to-r from-red-100 to-white text-red-700 border-red-200 font-medium shadow-sm' 
+                          : 'text-red-800 hover:text-red-700'
                         }
                       `}
                     >
@@ -247,10 +270,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                         <span className="
                           absolute -top-1 -right-1 
                           w-5 h-5 
-                          bg-red-500 text-white 
+                          bg-gradient-to-br from-red-500 to-red-600 
+                          text-white 
                           text-xs rounded-full 
                           flex items-center justify-center
                           animate-bounce-in
+                          font-bold
+                          border border-white
+                          shadow-sm
                         ">
                           {item.badge}
                         </span>
@@ -261,19 +288,22 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               </div>
 
               {/* Bottom Menu */}
-              <div className="mt-6 lg:mt-8 pt-4 lg:pt-6 border-t border-gray-100">
+              <div className="mt-6 lg:mt-8 pt-4 lg:pt-6 border-t border-red-100">
                 <div className="space-y-1">
                   {bottomMenuItems.map((item) => (
                     <button
                       key={item.label}
                       onClick={() => handleMenuItemClick(item.path)}
                       className={`
-                        w-full flex items-center space-x-3 px-3 lg:px-4 py-3 rounded-xl
+                        w-full flex items-center space-x-3 
+                        px-3 lg:px-4 py-3 rounded-xl
                         transition-all duration-200 text-left
-                        hover:bg-gray-100 active:scale-[0.98]
+                        hover:bg-gradient-to-r hover:from-red-50 hover:to-white
+                        active:scale-[0.98]
+                        border border-transparent hover:border-red-200
                         ${isActive(item.path) 
-                          ? 'bg-blue-50 text-blue-600 font-medium' 
-                          : 'text-gray-700'
+                          ? 'bg-gradient-to-r from-red-100 to-white text-red-700 border-red-200 font-medium shadow-sm' 
+                          : 'text-red-800 hover:text-red-700'
                         }
                       `}
                     >
@@ -286,19 +316,20 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </nav>
           </div>
 
-          {/* Sidebar Footer */}
+          {/* Sidebar Footer - Gradient Putih-Merah */}
           <div className="
             p-3 lg:p-4 
-            border-t border-gray-100 
-            bg-white
+            border-t border-red-100 
+            bg-gradient-to-r from-white via-red-50 to-white
             flex-shrink-0
+            shadow-inner
           ">
             <div className="flex items-center justify-between">
-              <div className="text-xs lg:text-sm text-gray-500 min-w-0">
-                <p className="truncate">v1.0.0</p>
-                <p className="truncate">© 2025 OJK</p>
+              <div className="text-xs lg:text-sm text-red-800 min-w-0">
+                <p className="truncate font-medium">v1.0.0</p>
+                <p className="truncate text-red-600 font-semibold">© 2025 OJK</p>
               </div>
-              <div className="text-xs text-gray-400 hidden lg:block">
+              <div className="text-xs text-red-500/70 hidden lg:block">
                 <p className="whitespace-nowrap">Sistem Terpusat</p>
               </div>
             </div>

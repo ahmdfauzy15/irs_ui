@@ -6,40 +6,35 @@ import {
   AlertTriangle, 
   TrendingUp, 
   Shield,
-  Bell,
-  ExternalLink
+  Bell
 } from 'lucide-react';
 
 const DashboardCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
 
   const slides = [
     {
       id: 1,
-      title: 'Penting: Deadline Pelaporan Q1',
+      title: 'Deadline Pelaporan Q1 2024',
       description: 'Batas waktu pengiriman laporan keuangan Q1 2024 adalah 30 April 2024.',
       icon: AlertTriangle,
-      color: 'bg-gradient-to-r from-orange-500 to-red-500',
-    //   cta: 'Lihat Detail',
+      color: 'bg-gradient-to-r from-red-600 to-red-700',
       link: '/apolo'
     },
     {
       id: 2,
-      title: 'Performa Terbaik Minggu Ini',
-      description: 'Laporan Anda telah diproses 30% lebih cepat dari rata-rata.',
+      title: 'Performa Sistem Optimal',
+      description: 'Laporan diproses 30% lebih cepat dari rata-rata bulan lalu.',
       icon: TrendingUp,
-      color: 'bg-gradient-to-r from-green-500 to-emerald-600',
-    //   cta: 'Analisis Data',
+      color: 'bg-gradient-to-r from-red-500 to-red-600',
       link: '/dashboard'
     },
     {
       id: 3,
-      title: 'Update Keamanan Sistem',
+      title: 'Keamanan Sistem Terbaru',
       description: 'Sistem telah diperbarui dengan enkripsi end-to-end terbaru.',
       icon: Shield,
-      color: 'bg-gradient-to-r from-blue-500 to-indigo-600',
-    //   cta: 'Pelajari Lebih',
+      color: 'bg-gradient-to-r from-red-700 to-red-800',
       link: '/about'
     },
     {
@@ -47,132 +42,107 @@ const DashboardCarousel = () => {
       title: 'Notifikasi Penting',
       description: 'Ada 3 laporan yang memerlukan perhatian segera.',
       icon: Bell,
-      color: 'bg-gradient-to-r from-purple-500 to-pink-600',
-    //   cta: 'Buka Notifikasi',
+      color: 'bg-gradient-to-r from-red-600 to-red-700',
       link: '/notifications'
     }
   ];
 
   useEffect(() => {
-    if (!autoplay) return;
-
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [autoplay, slides.length]);
+  }, [slides.length]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
-    setAutoplay(false);
-    setTimeout(() => setAutoplay(true), 10000);
   };
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-    setAutoplay(false);
-    setTimeout(() => setAutoplay(true), 10000);
   };
 
   const goToSlide = (index) => {
     setCurrentSlide(index);
-    setAutoplay(false);
-    setTimeout(() => setAutoplay(true), 10000);
   };
 
   return (
-    <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+    <div className="relative w-full">
       {/* Carousel Container */}
-      <div className="relative h-64">
-        {slides.map((slide, index) => {
-          const Icon = slide.icon;
-          return (
-            <div
-              key={slide.id}
-              className={`absolute inset-0 transition-all duration-500 ease-in-out ${
-                index === currentSlide
-                  ? 'opacity-100 translate-x-0'
-                  : index < currentSlide
-                  ? 'opacity-0 -translate-x-full'
-                  : 'opacity-0 translate-x-full'
-              }`}
-            >
-              <div className={`${slide.color} h-32 relative overflow-hidden`}>
-                <div className="absolute inset-0 bg-black/10" />
-                <div className="relative p-6 h-full flex items-center">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                      <Icon className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-white">{slide.title}</h3>
-                      {/* <p className="text-white/90 mt-1">{slide.description}</p> */}
+      <div className="bg-gradient-to-b from-white to-red-50/30 rounded-xl shadow-sm border border-red-100 overflow-hidden">
+        <div className="relative h-56 md:h-48">
+          {slides.map((slide, index) => {
+            const Icon = slide.icon;
+            return (
+              <div
+                key={slide.id}
+                className={`absolute inset-0 transition-all duration-300 ease-in-out ${
+                  index === currentSlide
+                    ? 'opacity-100 translate-x-0'
+                    : index < currentSlide
+                    ? 'opacity-0 -translate-x-full'
+                    : 'opacity-0 translate-x-full'
+                }`}
+              >
+                {/* Header dengan gradient merah */}
+                <div className={`${slide.color} h-24 md:h-20 relative`}>
+                  <div className="p-4 md:p-6 h-full flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-white/20 p-2 rounded-lg">
+                        <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                      </div>
+                      <h3 className="text-lg md:text-xl font-bold text-white">
+                        {slide.title}
+                      </h3>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-gray-600">
-                      {slide.description}
-                    </p>
-                    {/* <div className="mt-4 flex items-center space-x-4">
-                      <button className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
-                        <span>{slide.cta}</span>
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
-
-                    </div> */}
-                  </div>
+                
+                {/* Konten */}
+                <div className="p-4 md:p-6 bg-white">
+                  <p className="text-red-800 text-sm md:text-base">
+                    {slide.description}
+                  </p>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* Navigation Buttons */}
-      <button
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-all hover:scale-110"
-      >
-        <ChevronLeft className="w-5 h-5 text-gray-700" />
-      </button>
-      
-      <button
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-all hover:scale-110"
-      >
-        <ChevronRight className="w-5 h-5 text-gray-700" />
-      </button>
-
-      {/* Dots Indicator */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`w-2 h-2 rounded-full transition-all ${
-              index === currentSlide 
-                ? 'bg-gray-900 w-8' 
-                : 'bg-gray-300 hover:bg-gray-400'
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Autoplay Control */}
-      {/* <div className="absolute top-4 right-4">
+        {/* Navigation Buttons */}
         <button
-          onClick={() => setAutoplay(!autoplay)}
-          className="text-xs text-gray-600 hover:text-gray-900 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full"
+          onClick={prevSlide}
+          className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white p-1.5 md:p-2 rounded-full shadow-md border border-red-200 transition-colors"
+          aria-label="Slide sebelumnya"
         >
-          {autoplay ? '⏸️ Jeda' : '▶️ Lanjut'}
+          <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-red-700" />
         </button>
-      </div> */}
+        
+        <button
+          onClick={nextSlide}
+          className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white p-1.5 md:p-2 rounded-full shadow-md border border-red-200 transition-colors"
+          aria-label="Slide selanjutnya"
+        >
+          <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-red-700" />
+        </button>
+
+        {/* Dots Indicator */}
+        <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all ${
+                index === currentSlide 
+                  ? 'bg-red-600 w-6 md:w-8' 
+                  : 'bg-red-300 hover:bg-red-400'
+              }`}
+              aria-label={`Pergi ke slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
