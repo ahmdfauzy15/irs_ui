@@ -1,5 +1,4 @@
-// Update src/App.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
@@ -12,11 +11,30 @@ import About from './pages/About';
 import FAQ from './pages/FAQ';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
-import DownloadCenter from './components/dashboard/DownloadCenter'; // Tambahkan ini
-import AIAssistant from './components/common/AIAssistant'; // Tambahkan ini
+import DownloadCenter from './components/dashboard/DownloadCenter';
+import AIAssistant from './components/common/AIAssistant';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setWindowWidth(width);
+      
+      // Auto manage sidebar state
+      if (width >= 1024) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -24,13 +42,22 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+        <div className="flex min-h-screen">
           {/* Sidebar */}
-          <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+          <div className="flex-shrink-0">
+            <Sidebar 
+              isSidebarOpen={sidebarOpen} 
+              toggleSidebar={toggleSidebar} 
+            />
+          </div>
           
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className={`
+            flex-1 flex flex-col min-w-0
+            ${windowWidth >= 1024 ? 'lg:ml-0' : ''}
+            transition-all duration-300 ease-in-out
+          `}>
             {/* Header */}
             <Header 
               toggleSidebar={toggleSidebar} 
@@ -38,8 +65,8 @@ function App() {
             />
             
             {/* Page Content */}
-            <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto">
-              <div className="max-w-full">
+            <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-transparent">
+              <div className="max-w-full mx-auto">
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/apolo" element={<ApoloReports />} />
@@ -50,7 +77,7 @@ function App() {
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/profile" element={<Profile />} /> 
                   <Route path="/settings" element={<Settings />} />
-                  <Route path="/download" element={<DownloadCenter />} /> {/* Ganti ini */}
+                  <Route path="/download" element={<DownloadCenter />} />
                 </Routes>
               </div>
             </main>
