@@ -13,10 +13,17 @@ import {
   File,
   Database,
   X,
-  Check,
-  FileDown,
+  Eye,
   ExternalLink,
-  Eye
+  Calendar,
+  HardDrive,
+  Users,
+  BarChart,
+  Clock,
+  Copy,
+  Info,
+  ChevronRight,
+  Maximize2
 } from 'lucide-react';
 import { allDownloadsData } from '../../data/downloadsData';
 import { sectorsData } from '../../data/sectorsData';
@@ -29,8 +36,10 @@ const DownloadCenter = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [downloadProgress, setDownloadProgress] = useState({});
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [showAplikasiDropdown, setShowAplikasiDropdown] = useState(false);
+  const [expandedRows, setExpandedRows] = useState([]);
   const aplikasiDropdownRef = useRef(null);
   
   // Filter states
@@ -49,12 +58,12 @@ const DownloadCenter = () => {
   const sektorOptions = sectorsData.map(sector => sector.namaSektor);
   const levelSektorOptions = ['Semua', ...new Set(sectorsData.map(s => s.levelSektor).filter(Boolean))];
 
-  // File types configuration dengan tema merah
+  // File types configuration dengan tema merah yang diperbarui
   const fileTypes = {
-    pdf: { icon: File, color: 'bg-red-100 text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
-    excel: { icon: FileSpreadsheet, color: 'bg-red-100 text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
-    archive: { icon: FileArchive, color: 'bg-red-100 text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
-    csv: { icon: Database, color: 'bg-red-100 text-red-600', bg: 'bg-red-50', border: 'border-red-200' }
+    pdf: { icon: File, color: 'text-red-500', bg: 'bg-red-50/80', label: 'PDF' },
+    excel: { icon: FileSpreadsheet, color: 'text-green-600', bg: 'bg-green-50/80', label: 'Excel' },
+    archive: { icon: FileArchive, color: 'text-amber-600', bg: 'bg-amber-50/80', label: 'ZIP' },
+    csv: { icon: Database, color: 'text-blue-600', bg: 'bg-blue-50/80', label: 'CSV' }
   };
 
   // Close dropdown when clicking outside
@@ -254,6 +263,11 @@ const DownloadCenter = () => {
     setShowShareModal(true);
   };
 
+  const handleViewDetails = (file) => {
+    setSelectedFile(file);
+    setShowDetailModal(true);
+  };
+
   const handleBulkDownload = () => {
     if (selectedFiles.length > 0) {
       handleDownload(null, true);
@@ -284,22 +298,46 @@ const DownloadCenter = () => {
     setShowFilters(false);
   };
 
+  const toggleRowExpansion = (id) => {
+    setExpandedRows(prev => 
+      prev.includes(id) 
+        ? prev.filter(rowId => rowId !== id)
+        : [...prev, id]
+    );
+  };
+
   // Get application color with red theme
   const getAppColor = (app) => {
     switch(app) {
-      case 'APOLO': return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-300' };
-      case 'EREPORTING': return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-300' };
-      case 'SIPINA': return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-300' };
-      default: return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-300' };
+      case 'APOLO': return { bg: 'bg-gradient-to-r from-red-50 to-red-100', text: 'text-red-800', border: 'border-red-300' };
+      case 'EREPORTING': return { bg: 'bg-gradient-to-r from-red-50 to-red-100', text: 'text-red-800', border: 'border-red-300' };
+      case 'SIPINA': return { bg: 'bg-gradient-to-r from-red-50 to-red-100', text: 'text-red-800', border: 'border-red-300' };
+      default: return { bg: 'bg-gradient-to-r from-red-50 to-red-100', text: 'text-red-800', border: 'border-red-300' };
     }
   };
 
   const getTipeSektorColor = (tipe) => {
     switch(tipe) {
-      case 'Syariah': return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
-      case 'Konvensional': return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-300' };
-      default: return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' };
+      case 'Syariah': return { bg: 'bg-gradient-to-r from-red-50 to-red-100', text: 'text-red-700', border: 'border-red-200' };
+      case 'Konvensional': return { bg: 'bg-gradient-to-r from-red-100 to-red-200', text: 'text-red-800', border: 'border-red-300' };
+      default: return { bg: 'bg-gradient-to-r from-red-50 to-red-100', text: 'text-red-600', border: 'border-red-200' };
     }
+  };
+
+  // Format tanggal
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  // Copy nama file ke clipboard
+  const copyFileName = (fileName) => {
+    navigator.clipboard.writeText(fileName);
+    alert('Nama file berhasil disalin ke clipboard!');
   };
 
   return (
@@ -345,12 +383,12 @@ const DownloadCenter = () => {
             <input
               type="text"
               placeholder="Cari laporan, sektor, atau aplikasi..."
-              className="w-full pl-10 pr-4 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-red-900 placeholder-red-400"
+              className="w-full pl-10 pr-4 py-2.5 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-red-900 placeholder-red-400"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-between sm:justify-start space-x-4">
             <div className="text-sm text-red-700">
               <span className="font-semibold">{filteredDownloads.length}</span> laporan tersedia
             </div>
@@ -447,12 +485,12 @@ const DownloadCenter = () => {
         )}
       </div>
 
-      {/* Downloads Table */}
+      {/* Downloads Table - Responsive */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-red-100">
           <thead className="bg-red-50">
             <tr>
-              <th className="px-6 py-4 text-left w-12">
+              <th className="px-4 lg:px-6 py-4 text-left w-12">
                 <input
                   type="checkbox"
                   checked={selectedFiles.length === filteredDownloads.length && filteredDownloads.length > 0}
@@ -461,51 +499,53 @@ const DownloadCenter = () => {
                 />
               </th>
               <th 
-                className="px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors"
+                className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors"
                 onClick={() => requestSort('name')}
               >
                 <div className="flex items-center">
-                  Nama Laporan
+                  <span className="hidden sm:inline">Nama Laporan</span>
+                  <span className="sm:hidden">Laporan</span>
                   {getSortIcon('name')}
                 </div>
               </th>
               <th 
-                className="px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors"
+                className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors hidden md:table-cell"
                 onClick={() => requestSort('namaSektor')}
               >
                 <div className="flex items-center">
-                  JenisSektor
+                  Jenis Sektor
                   {getSortIcon('namaSektor')}
                 </div>
               </th>
               <th 
-                className="px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors"
+                className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors hidden lg:table-cell"
                 onClick={() => requestSort('levelSektor')}
               >
                 <div className="flex items-center">
-                  Level Sektor
+                  Level
                   {getSortIcon('levelSektor')}
                 </div>
               </th>
               <th 
-                className="px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors"
+                className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors hidden xl:table-cell"
                 onClick={() => requestSort('tipeSektor')}
               >
                 <div className="flex items-center">
-                  Tipe Sektor
+                  Tipe
                   {getSortIcon('tipeSektor')}
                 </div>
               </th>
               <th 
-                className="px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors"
+                className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider cursor-pointer hover:bg-red-100 transition-colors"
                 onClick={() => requestSort('aplikasi')}
               >
                 <div className="flex items-center">
-                  Aplikasi
+                  <span className="hidden sm:inline">Aplikasi</span>
+                  <span className="sm:hidden">App</span>
                   {getSortIcon('aplikasi')}
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
+              <th className="px-4 lg:px-6 py-4 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
                 Aksi
               </th>
             </tr>
@@ -519,97 +559,200 @@ const DownloadCenter = () => {
               const tipeSektorColor = getTipeSektorColor(sectorDetails?.tipeSektor);
               
               return (
-                <tr 
-                  key={file.id} 
-                  className={`hover:bg-red-50/50 transition-colors ${
-                    selectedFiles.includes(file.id) ? 'bg-red-50' : ''
-                  }`}
-                >
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedFiles.includes(file.id)}
-                      onChange={() => handleSelectFile(file.id)}
-                      className="rounded border-red-300 focus:ring-red-500 text-red-600"
-                    />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg ${fileTypeConfig.color} ${fileTypeConfig.border} border`}>
-                        <FileIcon className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-red-900 truncate max-w-xs hover:text-red-700 cursor-pointer">
-                          {file.name}
+                <React.Fragment key={file.id}>
+                  <tr 
+                    className={`hover:bg-red-50/50 transition-colors ${
+                      selectedFiles.includes(file.id) ? 'bg-red-50' : ''
+                    }`}
+                  >
+                    <td className="px-4 lg:px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedFiles.includes(file.id)}
+                        onChange={() => handleSelectFile(file.id)}
+                        className="rounded border-red-300 focus:ring-red-500 text-red-600"
+                      />
+                    </td>
+                    <td className="px-4 lg:px-6 py-4">
+                      <div className="flex items-start space-x-3 min-w-0">
+                        <div className={`p-2 rounded-lg ${fileTypeConfig.bg} flex-shrink-0 mt-1`}>
+                          <FileIcon className={`w-4 h-4 ${fileTypeConfig.color}`} />
                         </div>
-                        <div className="text-sm text-red-600 flex items-center space-x-2">
-                          <span className="capitalize">{file.type}</span>
-                          <span>•</span>
-                          <span>{file.size}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start">
+                            <div 
+                              className="font-medium text-red-900 cursor-pointer hover:text-red-700 truncate max-w-[200px] lg:max-w-xs"
+                              onClick={() => handleViewDetails(file)}
+                              title="Klik untuk melihat detail lengkap"
+                            >
+                              {file.name}
+                            </div>
+                            <button
+                              onClick={() => handleViewDetails(file)}
+                              className="ml-2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded flex-shrink-0"
+                              title="Lihat detail lengkap"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <div className="text-xs text-red-600 flex items-center space-x-2 mt-1 flex-wrap gap-y-1">
+                            <span className="capitalize">{fileTypeConfig.label}</span>
+                            <span>•</span>
+                            <span>{file.size}</span>
+                            <span className="md:hidden">
+                              <span>•</span> {sectorDetails?.namaSektor?.split(' ')[0] || 'N/A'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="max-w-xs">
-                      <div className="text-sm font-medium text-red-900 truncate">
-                        {sectorDetails?.namaSektor || 'Tidak Diketahui'}
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 hidden md:table-cell">
+                      <div className="max-w-[150px] lg:max-w-xs">
+                        <div className="text-sm font-medium text-red-900 truncate" title={sectorDetails?.namaSektor}>
+                          {sectorDetails?.namaSektor || 'Tidak Diketahui'}
+                        </div>
+                        <div className="text-xs text-red-500 truncate">
+                          {file.sektorKode}
+                        </div>
                       </div>
-                      <div className="text-xs text-red-500 truncate">
-                        Kode: {file.sektorKode}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200`}>
-                      {sectorDetails?.levelSektor || '-'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {sectorDetails?.tipeSektor ? (
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${tipeSektorColor.bg} ${tipeSektorColor.text} border ${tipeSektorColor.border}`}>
-                        {sectorDetails.tipeSektor}
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 hidden lg:table-cell">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200 truncate max-w-[100px]`}>
+                        {sectorDetails?.levelSektor || '-'}
                       </span>
-                    ) : (
-                      <span className="text-sm text-red-500">-</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${appColor.bg} ${appColor.text} border ${appColor.border}`}>
-                      {file.aplikasi}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleDownload(file)}
-                        disabled={downloadProgress[file.id] > 0}
-                        className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-red-200 hover:border-red-300"
-                        title="Unduh"
-                      >
-                        {downloadProgress[file.id] > 0 ? (
-                          <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Download className="w-5 h-5" />
-                        )}
-                      </button>
-                      
-                      <button
-                        onClick={() => handleShare(file)}
-                        className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-300 border border-red-200 hover:border-red-300"
-                        title="Bagikan"
-                      >
-                        <Share2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 hidden xl:table-cell">
+                      {sectorDetails?.tipeSektor ? (
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${tipeSektorColor.bg} ${tipeSektorColor.text} border ${tipeSektorColor.border}`}>
+                          {sectorDetails.tipeSektor}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-red-500">-</span>
+                      )}
+                    </td>
+                    <td className="px-4 lg:px-6 py-4">
+                      <span className={`inline-flex items-center px-2 py-1.5 rounded-full text-xs font-medium ${appColor.bg} ${appColor.text} border ${appColor.border} truncate max-w-[100px]`}>
+                        {file.aplikasi}
+                      </span>
+                    </td>
+                    <td className="px-4 lg:px-6 py-4">
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => handleDownload(file)}
+                          disabled={downloadProgress[file.id] > 0}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-300 disabled:opacity-50 border border-red-200 hover:border-red-300"
+                          title="Unduh"
+                        >
+                          {downloadProgress[file.id] > 0 ? (
+                            <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
+                        </button>
+                        
+                        <button
+                          onClick={() => handleShare(file)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-300 border border-red-200 hover:border-red-300 hidden sm:inline-flex"
+                          title="Bagikan"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => toggleRowExpansion(file.id)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-300 border border-red-200 hover:border-red-300"
+                          title={expandedRows.includes(file.id) ? "Sembunyikan detail" : "Tampilkan detail"}
+                        >
+                          <ChevronRight className={`w-4 h-4 transition-transform ${expandedRows.includes(file.id) ? 'rotate-90' : ''}`} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  {/* Expanded Row untuk Detail Tambahan */}
+                  {expandedRows.includes(file.id) && (
+                    <tr className="bg-red-50/30">
+                      <td colSpan="7" className="px-4 lg:px-6 py-4">
+                        <div className="bg-white rounded-lg border border-red-200 p-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <h4 className="text-sm font-medium text-red-700 mb-2 flex items-center">
+                                <Info className="w-4 h-4 mr-2" />
+                                Detail File
+                              </h4>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-red-600">Format</span>
+                                  <span className="font-medium text-red-900">{fileTypeConfig.label}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-red-600">Ukuran</span>
+                                  <span className="font-medium text-red-900">{file.size}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-red-600">Diunduh</span>
+                                  <span className="font-medium text-red-900">{file.downloads} kali</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium text-red-700 mb-2 flex items-center">
+                                <BarChart className="w-4 h-4 mr-2" />
+                                Status
+                              </h4>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-red-600">Status</span>
+                                  <span className={`text-xs px-2 py-1 rounded-full ${file.status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                    {file.status}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-red-600">Terakhir Update</span>
+                                  <span className="text-sm text-red-900">{formatDate(file.lastUpdated)}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium text-red-700 mb-2 flex items-center">
+                                <Users className="w-4 h-4 mr-2" />
+                                Aksi Cepat
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  onClick={() => handleDownload(file)}
+                                  className="text-xs px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-300"
+                                >
+                                  Unduh
+                                </button>
+                                <button
+                                  onClick={() => handleShare(file)}
+                                  className="text-xs px-3 py-1.5 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-all duration-300"
+                                >
+                                  Bagikan
+                                </button>
+                                <button
+                                  onClick={() => copyFileName(file.name)}
+                                  className="text-xs px-3 py-1.5 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-all duration-300"
+                                >
+                                  Salin Nama
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               );
             })}
             
             {filteredDownloads.length === 0 && (
               <tr>
-                <td colSpan="7" className="px-6 py-12 text-center">
+                <td colSpan="7" className="px-4 lg:px-6 py-12 text-center">
                   <div className="text-red-500">
                     <Search className="w-12 h-12 mx-auto mb-3 text-red-300" />
                     <p className="text-lg font-medium mb-2 text-red-700">Tidak ada laporan ditemukan</p>
@@ -628,7 +771,213 @@ const DownloadCenter = () => {
         </table>
       </div>
 
-      {/* Share Modal dengan tema merah */}
+      {/* Detail Modal untuk Nama Laporan Panjang */}
+      {showDetailModal && selectedFile && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-xl max-w-4xl w-full border border-red-100 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 p-6 border-b border-red-100 bg-gradient-to-r from-red-50 to-white rounded-t-xl">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold text-red-900">Detail Laporan Lengkap</h3>
+                  <p className="text-sm text-red-600 mt-1">Informasi lengkap tentang laporan ini</p>
+                </div>
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {/* Bagian Nama File Lengkap */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-red-700">Nama Laporan Lengkap</h4>
+                  <button
+                    onClick={() => copyFileName(selectedFile.name)}
+                    className="text-xs text-red-600 hover:text-red-800 flex items-center"
+                  >
+                    <Copy className="w-3 h-3 mr-1" />
+                    Salin
+                  </button>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="font-mono text-sm text-red-900 whitespace-pre-wrap break-words leading-relaxed">
+                    {selectedFile.name}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Kolom Kiri */}
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-sm font-medium text-red-700 mb-3 flex items-center">
+                      <Info className="w-4 h-4 mr-2" />
+                      Informasi File
+                    </h4>
+                    <div className="bg-white border border-red-100 rounded-lg p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">Format File</span>
+                          <div className="flex items-center">
+                            <div className={`p-1.5 rounded-lg ${fileTypes[selectedFile.type]?.bg} mr-2`}>
+                              {fileTypes[selectedFile.type]?.icon ? 
+                                React.createElement(fileTypes[selectedFile.type].icon, { 
+                                  className: `w-4 h-4 ${fileTypes[selectedFile.type].color}` 
+                                }) : 
+                                <FileText className="w-4 h-4 text-red-500" />
+                              }
+                            </div>
+                            <span className="font-medium text-red-900">{fileTypes[selectedFile.type]?.label}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">Ukuran File</span>
+                          <span className="font-medium text-red-900">{selectedFile.size}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">Total Unduhan</span>
+                          <span className="font-medium text-red-900">{selectedFile.downloads} kali</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">Status</span>
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                            selectedFile.status === 'Aktif' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {selectedFile.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-red-700 mb-3 flex items-center">
+                      <Clock className="w-4 h-4 mr-2" />
+                      Timeline
+                    </h4>
+                    <div className="bg-white border border-red-100 rounded-lg p-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">Dibuat</span>
+                          <span className="text-sm text-red-900">{formatDate(selectedFile.createdAt)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">Terakhir Diupdate</span>
+                          <span className="text-sm text-red-900">{formatDate(selectedFile.lastUpdated)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">Terakhir Diunduh</span>
+                          <span className="text-sm text-red-900">{formatDate(selectedFile.lastDownloaded)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Kolom Kanan */}
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-sm font-medium text-red-700 mb-3 flex items-center">
+                      <BarChart className="w-4 h-4 mr-2" />
+                      Informasi Aplikasi & Sektor
+                    </h4>
+                    <div className="bg-white border border-red-100 rounded-lg p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-red-600">Aplikasi</span>
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getAppColor(selectedFile.aplikasi).bg} ${getAppColor(selectedFile.aplikasi).text}`}>
+                            {selectedFile.aplikasi}
+                          </span>
+                        </div>
+                        {(() => {
+                          const sectorDetails = getSectorDetails(selectedFile.sektorKode);
+                          return (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-red-600">Jenis Sektor</span>
+                                <span className="font-medium text-red-900 text-right">{sectorDetails?.namaSektor || 'Tidak Diketahui'}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-red-600">Kode Sektor</span>
+                                <span className="font-mono text-red-900">{selectedFile.sektorKode}</span>
+                              </div>
+                              {sectorDetails?.levelSektor && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-red-600">Level Sektor</span>
+                                  <span className="font-medium text-red-900">{sectorDetails.levelSektor}</span>
+                                </div>
+                              )}
+                              {sectorDetails?.tipeSektor && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-red-600">Tipe Sektor</span>
+                                  <span className="font-medium text-red-900">{sectorDetails.tipeSektor}</span>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-red-700 mb-3 flex items-center">
+                      <HardDrive className="w-4 h-4 mr-2" />
+                      Deskripsi
+                    </h4>
+                    <div className="bg-white border border-red-100 rounded-lg p-4">
+                      <p className="text-sm text-red-600 leading-relaxed">
+                        Laporan ini berisi data lengkap sesuai dengan kategori dan sektor yang ditentukan. 
+                        File tersedia dalam format yang mudah diakses dan dapat diunduh kapan saja.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="mt-8 pt-6 border-t border-red-100">
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => handleDownload(selectedFile)}
+                    className="flex-1 min-w-[200px] flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-md hover:shadow-lg"
+                  >
+                    <Download className="w-5 h-5" />
+                    <span>Unduh Laporan Sekarang</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleShare(selectedFile);
+                      setShowDetailModal(false);
+                    }}
+                    className="flex-1 min-w-[200px] flex items-center justify-center space-x-2 px-4 py-3 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-all duration-300"
+                  >
+                    <Share2 className="w-5 h-5" />
+                    <span>Bagikan Laporan</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                    }}
+                    className="flex-1 min-w-[200px] flex items-center justify-center space-x-2 px-4 py-3 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-all duration-300"
+                  >
+                    <X className="w-5 h-5" />
+                    <span>Tutup</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
       {showShareModal && selectedFile && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-white rounded-xl max-w-md w-full border border-red-100 shadow-2xl">
