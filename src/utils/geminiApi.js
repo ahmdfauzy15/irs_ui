@@ -1,4 +1,3 @@
-// src/utils/geminiApi.js
 export const GEMINI_CONFIG = {
   API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
   API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
@@ -21,12 +20,10 @@ export const GEMINI_CONFIG = {
 export const checkQueryRelevance = (query) => {
   const lowerQuery = query.toLowerCase();
   
-  // Cek jika mengandung kata kunci yang diizinkan
   const hasAllowedKeyword = GEMINI_CONFIG.ALLOWED_KEYWORDS.some(keyword => 
     lowerQuery.includes(keyword)
   );
   
-  // Cek jika mengandung topik yang diblokir
   const hasBlockedTopic = GEMINI_CONFIG.BLOCKED_TOPICS.some(topic => 
     lowerQuery.includes(topic)
   );

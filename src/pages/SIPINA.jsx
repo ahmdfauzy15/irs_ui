@@ -11,7 +11,6 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-// Data reports diletakkan di luar component untuk konsistensi
 const REPORTS_DATA = [
   { id: 1, jenis: "Laporan Sanksi Administratif", jenisValue: "sanksi", periode: "Semester I 2023", tanggal: "15 Juli 2023", deadline: "31 Juli 2023", status: "berhasil", priority: "high" },
   { id: 2, jenis: "Laporan Nasabah Asing", jenisValue: "nasabah", periode: "Q2 2023", tanggal: "10 Juli 2023", deadline: "15 Juli 2023", status: "terlambat", priority: "high" },

@@ -10,5 +10,5 @@ export const sipinaReports = [
     downloads: 211,
     description: 'Laporan analisis risiko sistem SIPINA untuk Pengelolaan Investasi'
   },
-  // Tambahkan lebih banyak data SIPINA
+  
 ];

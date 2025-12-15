@@ -196,7 +196,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       )}
 
       {/* Mobile Toggle Button */}
-      {windowWidth < 1024 && (
+      {/* {windowWidth < 1024 && (
         <button
           onClick={toggleSidebar}
           className="mobile-toggle-btn fixed top-4 left-4 z-50 p-3 rounded-full bg-red-600 text-white shadow-lg hover:bg-red-700 hover:shadow-xl transition-all duration-300"
@@ -208,7 +208,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             <Menu className="w-5 h-5" />
           )}
         </button>
-      )}
+      )} */}
 
       {/* Sidebar Container */}
       <div 

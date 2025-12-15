@@ -1,4 +1,4 @@
-// Data modul laporan e-Reporting berdasarkan data OJK
+// Data modul laporan e-Reporting 
 export const ereportingModulesData = [
   {
     id: 1,

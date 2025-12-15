@@ -1,4 +1,3 @@
-// src/data/downloadsData.js
 import { sectorsData } from './sectorsData';
 
 // Generate random application
@@ -7,7 +6,7 @@ const getRandomApplication = () => {
   return apps[Math.floor(Math.random() * apps.length)];
 };
 
-// Generate random file type (tetap dipertahankan untuk properti type, tapi tidak ditampilkan di nama)
+// Generate random file type 
 const getRandomFileType = () => {
   const types = ['pdf', 'excel', 'csv', 'archive'];
   return types[Math.floor(Math.random() * types.length)];
@@ -32,7 +31,7 @@ const getRandomDate = () => {
   return `${year}-${month}-${day}`;
 };
 
-// Generate report name based on sector and application (tanpa ekstensi file)
+// Generate report name based on sector and application 
 const generateReportName = (sector, application) => {
   const reportTypes = [
     'Laporan Bulanan',
@@ -69,7 +68,6 @@ const generateReportName = (sector, application) => {
   } else if (reportType.includes('Tahunan')) {
     return `${reportType} ${application} - Tahun ${year}`;
   } else {
-    // Potong nama sektor jika terlalu panjang
     const sektorName = sector.namaSektor.length > 40 
       ? sector.namaSektor.substring(0, 40) + '...' 
       : sector.namaSektor;
@@ -85,18 +83,18 @@ export const downloadsData = sectorsData.map((sector, index) => {
   
   return {
     id: index + 1,
-    name: reportName, // Tanpa ekstensi file
-    type: fileType, // Tetap ada properti type untuk keperluan internal
+    name: reportName, 
+    type: fileType, 
     size: getRandomFileSize(),
     date: getRandomDate(),
-    status: Math.random() > 0.1 ? 'completed' : 'pending', // 90% completed, 10% pending
+    status: Math.random() > 0.1 ? 'completed' : 'pending',
     aplikasi: application,
     sektorKode: sector.kodeSektor,
-    downloads: Math.floor(Math.random() * 300) + 50 // Random downloads between 50-350
+    downloads: Math.floor(Math.random() * 300) + 50 
   };
 });
 
-// Add some additional data for variety (tanpa ekstensi di nama)
+// Add some additional data for variety 
 export const additionalDownloadsData = [
   {
     id: downloadsData.length + 1,

@@ -1,4 +1,3 @@
-// src/components/dashboard/DashboardCarousel.jsx
 import React, { useState, useEffect } from 'react';
 import { 
   ChevronLeft, 

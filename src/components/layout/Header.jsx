@@ -98,22 +98,20 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
     <header className="sticky top-0 z-30 bg-gradient-to-r from-red-600 to-red-700 border-b border-red-500 shadow-lg">
       <div className="px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          {/* Left Section */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={toggleSidebar}
-              className="lg:hidden p-2 rounded-lg hover:bg-red-700 transition-colors flex-shrink-0"
-              aria-label="Toggle sidebar"
-            >
-              {sidebarOpen ? (
-                <X className="w-5 h-5 text-white" />
-              ) : (
+          {/* Left Section - Title dan Mobile Menu Button */}
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
+            {/* Logo/Mobile Menu Button di Kiri (Hanya untuk Mobile) */}
+            {isMobile && !sidebarOpen && (
+              <button
+                onClick={toggleSidebar}
+                className="p-2 rounded-lg hover:bg-red-700 transition-colors flex-shrink-0"
+                aria-label="Open sidebar"
+              >
                 <Menu className="w-5 h-5 text-white" />
-              )}
-            </button>
+              </button>
+            )}
 
-            {/* Page Title and Breadcrumb */}
+            {/* Page Title dan Breadcrumb */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <h1 className="text-lg sm:text-xl font-bold text-white truncate">
@@ -153,6 +151,17 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
 
           {/* Right Section */}
           <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Tombol Close di Tengah Kanan (Hanya Mobile ketika Sidebar Open) */}
+            {isMobile && sidebarOpen && (
+              <button
+                onClick={toggleSidebar}
+                className="p-2 rounded-lg hover:bg-red-700 transition-colors flex-shrink-0"
+                aria-label="Close sidebar"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            )}
+
             {/* Search Box - Visible on tablet and desktop */}
             {!isMobile && (
               <div className="hidden md:flex items-center">
@@ -171,8 +180,8 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
               </div>
             )}
 
-            {/* Mobile Search Toggle Button */}
-            {isMobile && (
+            {/* Mobile Search Toggle Button - Hanya tampil jika sidebar tidak terbuka */}
+            {isMobile && !sidebarOpen && (
               <button 
                 onClick={handleMobileSearchToggle}
                 className="p-2 rounded-lg hover:bg-red-700 transition-colors"
@@ -182,86 +191,90 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
               </button>
             )}
 
-            {/* Notifications */}
-            <button 
-              onClick={handleNotificationsClick}
-              className="relative p-2 rounded-lg hover:bg-red-700 transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell className="w-5 h-5 text-white" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-red-600 text-xs rounded-full flex items-center justify-center animate-pulse font-bold">
-                3
-              </span>
-            </button>
-
-            {/* User Profile */}
-            <div className="relative user-menu-container">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-2 p-1 sm:p-2 rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-red-600"
-                aria-label="User menu"
-                aria-expanded={showUserMenu}
+            {/* Notifications - Hanya tampil jika sidebar tidak terbuka di mobile */}
+            {(!isMobile || (isMobile && !sidebarOpen)) && (
+              <button 
+                onClick={handleNotificationsClick}
+                className="relative p-2 rounded-lg hover:bg-red-700 transition-colors"
+                aria-label="Notifications"
               >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-white to-red-200 rounded-full flex items-center justify-center text-red-700 font-bold flex-shrink-0 border-2 border-white shadow-lg">
-                  JD
-                </div>
-                {!isMobile && (
-                  <div className="hidden sm:block text-left min-w-0">
-                    <p className="text-sm font-bold text-white truncate max-w-[120px]">John Doe</p>
-                    <p className="text-xs text-red-200 truncate max-w-[120px]">Pelapor</p>
-                  </div>
-                )}
-                <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} />
+                <Bell className="w-5 h-5 text-white" />
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-red-600 text-xs rounded-full flex items-center justify-center animate-pulse font-bold">
+                  3
+                </span>
               </button>
+            )}
 
-              {/* User Dropdown Menu */}
-              {showUserMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowUserMenu(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-lg shadow-xl border border-red-200 z-50 py-1 animate-fade-in">
-                    <div className="px-4 py-3 border-b border-red-100 bg-gradient-to-r from-red-50 to-white">
-                      <p className="text-sm font-bold text-red-800">John Doe</p>
-                      <p className="text-xs text-red-600 truncate">john.doe@example.com</p>
+            {/* User Profile - Hanya tampil jika sidebar tidak terbuka di mobile */}
+            {(!isMobile || (isMobile && !sidebarOpen)) && (
+              <div className="relative user-menu-container">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2 p-1 sm:p-2 rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-red-600"
+                  aria-label="User menu"
+                  aria-expanded={showUserMenu}
+                >
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-white to-red-200 rounded-full flex items-center justify-center text-red-700 font-bold flex-shrink-0 border-2 border-white shadow-lg">
+                    JD
+                  </div>
+                  {!isMobile && (
+                    <div className="hidden sm:block text-left min-w-0">
+                      <p className="text-sm font-bold text-white truncate max-w-[120px]">John Doe</p>
+                      <p className="text-xs text-red-200 truncate max-w-[120px]">Pelapor</p>
                     </div>
-                    <button 
-                      onClick={() => {
-                        navigate('/profile');
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
-                    >
-                      <User className="w-4 h-4 mr-3 text-red-600" />
-                      <span>Profil Saya</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        navigate('/settings');
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
-                    >
-                      <Settings className="w-4 h-4 mr-3 text-red-600" />
-                      <span>Pengaturan</span>
-                    </button>
-                    <div className="border-t border-red-100">
+                  )}
+                  <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* User Dropdown Menu */}
+                {showUserMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowUserMenu(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-lg shadow-xl border border-red-200 z-50 py-1 animate-fade-in">
+                      <div className="px-4 py-3 border-b border-red-100 bg-gradient-to-r from-red-50 to-white">
+                        <p className="text-sm font-bold text-red-800">John Doe</p>
+                        <p className="text-xs text-red-600 truncate">john.doe@example.com</p>
+                      </div>
                       <button 
                         onClick={() => {
-                          alert('Anda telah keluar dari sistem');
+                          navigate('/profile');
                           setShowUserMenu(false);
                         }}
-                        className="w-full flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors font-medium"
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
                       >
-                        <LogOut className="w-4 h-4 mr-3" />
-                        <span>Keluar</span>
+                        <User className="w-4 h-4 mr-3 text-red-600" />
+                        <span>Profil Saya</span>
                       </button>
+                      <button 
+                        onClick={() => {
+                          navigate('/settings');
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
+                      >
+                        <Settings className="w-4 h-4 mr-3 text-red-600" />
+                        <span>Pengaturan</span>
+                      </button>
+                      <div className="border-t border-red-100">
+                        <button 
+                          onClick={() => {
+                            alert('Anda telah keluar dari sistem');
+                            setShowUserMenu(false);
+                          }}
+                          className="w-full flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors font-medium"
+                        >
+                          <LogOut className="w-4 h-4 mr-3" />
+                          <span>Keluar</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
