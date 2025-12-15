@@ -579,21 +579,12 @@ const DownloadCenter = () => {
                           <FileIcon className={`w-4 h-4 ${fileTypeConfig.color}`} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-start">
-                            <div 
-                              className="font-medium text-red-900 cursor-pointer hover:text-red-700 truncate max-w-[200px] lg:max-w-xs"
-                              onClick={() => handleViewDetails(file)}
-                              title="Klik untuk melihat detail lengkap"
-                            >
-                              {file.name}
-                            </div>
-                            <button
-                              onClick={() => handleViewDetails(file)}
-                              className="ml-2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded flex-shrink-0"
-                              title="Lihat detail lengkap"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
+                          <div 
+                            className="font-medium text-red-900 cursor-pointer hover:text-red-700 truncate max-w-[200px] lg:max-w-xs"
+                            onClick={() => handleViewDetails(file)}
+                            title="Klik untuk melihat detail lengkap"
+                          >
+                            {file.name}
                           </div>
                           <div className="text-xs text-red-600 flex items-center space-x-2 mt-1 flex-wrap gap-y-1">
                             <span className="capitalize">{fileTypeConfig.label}</span>
@@ -635,8 +626,18 @@ const DownloadCenter = () => {
                         {file.aplikasi}
                       </span>
                     </td>
+                    {/* COLOM AKSI - Tombol Lihat Detail dipindahkan ke sini */}
                     <td className="px-4 lg:px-6 py-4">
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center justify-end space-x-1">
+                        {/* Tombol Lihat Detail - Sekarang di kolom Aksi */}
+                        <button
+                          onClick={() => handleViewDetails(file)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-300 border border-red-200 hover:border-red-300"
+                          title="Lihat detail lengkap"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        
                         <button
                           onClick={() => handleDownload(file)}
                           disabled={downloadProgress[file.id] > 0}
@@ -685,14 +686,14 @@ const DownloadCenter = () => {
                                   <span className="text-sm text-red-600">Format</span>
                                   <span className="font-medium text-red-900">{fileTypeConfig.label}</span>
                                 </div>
-                                <div className="flex items-center justify-between">
+                                {/* <div className="flex items-center justify-between">
                                   <span className="text-sm text-red-600">Ukuran</span>
                                   <span className="font-medium text-red-900">{file.size}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm text-red-600">Diunduh</span>
                                   <span className="font-medium text-red-900">{file.downloads} kali</span>
-                                </div>
+                                </div> */}
                               </div>
                             </div>
                             
@@ -834,14 +835,14 @@ const DownloadCenter = () => {
                             <span className="font-medium text-red-900">{fileTypes[selectedFile.type]?.label}</span>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between">
+                        {/* <div className="flex items-center justify-between">
                           <span className="text-sm text-red-600">Ukuran File</span>
                           <span className="font-medium text-red-900">{selectedFile.size}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-red-600">Total Unduhan</span>
                           <span className="font-medium text-red-900">{selectedFile.downloads} kali</span>
-                        </div>
+                        </div> */}
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-red-600">Status</span>
                           <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -926,7 +927,7 @@ const DownloadCenter = () => {
                     </div>
                   </div>
                   
-                  <div>
+                  {/* <div>
                     <h4 className="text-sm font-medium text-red-700 mb-3 flex items-center">
                       <HardDrive className="w-4 h-4 mr-2" />
                       Deskripsi
@@ -937,7 +938,7 @@ const DownloadCenter = () => {
                         File tersedia dalam format yang mudah diakses dan dapat diunduh kapan saja.
                       </p>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
               
