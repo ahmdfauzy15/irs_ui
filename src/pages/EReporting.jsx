@@ -17,19 +17,24 @@ import {
   RefreshCw,
   Calendar,
   Shield,
-  TrendingUp
+  TrendingUp,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { ereportingModulesData, activeIndustries, monitoringStatus, reportPeriods } from '../data/ereportingData';
 
 const EReporting = () => {
-  // State untuk filter dan search
+  // State untuk filter 2 tingkat
   const [filters, setFilters] = useState({
-    kodeIndustri: 'all',
     status: 'all',
-    jenis: 'all',
+    subFilters: {
+      kodeIndustri: 'all',
+      jenis: 'all',
+    }
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
+  const [showSubFilters, setShowSubFilters] = useState(false);
   const [stats, setStats] = useState({
     totalModul: 0,
     aktif: 0,
@@ -52,18 +57,17 @@ const EReporting = () => {
   // Hitung filteredReports secara reactive menggunakan useMemo
   const filteredReports = useMemo(() => {
     return ereportingModulesData.filter(report => {
-      // Filter berdasarkan kode industri
-      if (filters.kodeIndustri !== 'all' && report.kodeIndustri !== filters.kodeIndustri) {
-        return false;
-      }
-      
-      // Filter berdasarkan status
+      // Level 1: Filter berdasarkan status
       if (filters.status !== 'all' && report.status !== filters.status) {
         return false;
       }
       
-      // Filter berdasarkan jenis
-      if (filters.jenis !== 'all' && report.jenis !== filters.jenis) {
+      // Level 2: Filter sub-filters
+      if (filters.subFilters.kodeIndustri !== 'all' && report.kodeIndustri !== filters.subFilters.kodeIndustri) {
+        return false;
+      }
+      
+      if (filters.subFilters.jenis !== 'all' && report.jenis !== filters.subFilters.jenis) {
         return false;
       }
       
@@ -82,23 +86,74 @@ const EReporting = () => {
     });
   }, [filters, searchTerm]);
 
-  // Get unique kode industri untuk filter
+  // Get unique kode industri berdasarkan status yang dipilih
   const uniqueKodeIndustri = useMemo(() => {
-    const kodes = [...new Set(ereportingModulesData.map(report => report.kodeIndustri))];
+    let filteredData = ereportingModulesData;
+    
+    if (filters.status !== 'all') {
+      filteredData = filteredData.filter(report => report.status === filters.status);
+    }
+    
+    const kodes = [...new Set(filteredData.map(report => report.kodeIndustri))];
     return kodes.map(kode => ({
       value: kode,
       label: kode
     }));
-  }, []);
+  }, [filters.status]);
+
+  // Get unique jenis berdasarkan status yang dipilih
+  const uniqueJenis = useMemo(() => {
+    let filteredData = ereportingModulesData;
+    
+    if (filters.status !== 'all') {
+      filteredData = filteredData.filter(report => report.status === filters.status);
+    }
+    
+    const jenis = [...new Set(filteredData.map(report => report.jenis))];
+    return jenis.map(j => ({
+      value: j,
+      label: reportPeriods.find(p => p.value === j)?.label || j
+    }));
+  }, [filters.status]);
 
   const resetFilters = () => {
     setFilters({ 
-      kodeIndustri: 'all', 
       status: 'all',
-      jenis: 'all' 
+      subFilters: {
+        kodeIndustri: 'all',
+        jenis: 'all',
+      }
     });
     setSearchTerm('');
     setSelectedReport(null);
+    setShowSubFilters(false);
+  };
+
+  const handleStatusChange = (status) => {
+    setFilters(prev => ({ 
+      status,
+      subFilters: {
+        kodeIndustri: 'all',
+        jenis: 'all',
+      }
+    }));
+    
+    // Tampilkan sub-filters otomatis jika status bukan 'all'
+    if (status !== 'all') {
+      setShowSubFilters(true);
+    } else {
+      setShowSubFilters(false);
+    }
+  };
+
+  const handleSubFilterChange = (key, value) => {
+    setFilters(prev => ({
+      ...prev,
+      subFilters: {
+        ...prev.subFilters,
+        [key]: value
+      }
+    }));
   };
 
   const getStatusBadge = (status) => {
@@ -176,6 +231,18 @@ const EReporting = () => {
     ].join('\n');
     return csv;
   };
+
+  // Status summary
+  const statusSummary = useMemo(() => {
+    const summary = {};
+    const allStatus = ['Aktif', 'Used', 'Unused'];
+    
+    allStatus.forEach(status => {
+      summary[status] = ereportingModulesData.filter(r => r.status === status).length;
+    });
+    
+    return summary;
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in bg-gradient-to-br from-red-50/20 to-white min-h-screen">
@@ -272,7 +339,7 @@ const EReporting = () => {
         </div>
       </div>
 
-      {/* Filter Section */}
+      {/* Filter Section - 2 Tingkat */}
       <div className="px-6">
         <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl shadow-lg border border-red-100 overflow-hidden">
           <div className="p-6 border-b border-red-100 bg-gradient-to-r from-red-50 to-white">
@@ -282,92 +349,263 @@ const EReporting = () => {
                   <Filter className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-red-900">Filter Modul Laporan</h3>
-                  <p className="text-sm text-gray-600">Temukan modul laporan berdasarkan kriteria</p>
+                  <h3 className="text-lg font-bold text-red-900">Filter 2-Tingkat Modul Laporan</h3>
+                  <p className="text-sm text-gray-600">Pilih status terlebih dahulu, lalu filter lainnya</p>
                 </div>
               </div>
               <button
                 onClick={resetFilters}
                 className="text-sm text-red-600 hover:text-red-800 font-medium px-4 py-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
               >
-                Reset Filter
+                Reset Semua Filter
               </button>
             </div>
           </div>
 
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Building className="w-4 h-4 inline mr-2" />
-                  Kode Industri
-                </label>
-                <select
-                  value={filters.kodeIndustri}
-                  onChange={(e) => setFilters(prev => ({ ...prev, kodeIndustri: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
+            {/* Level 1: Status Filter */}
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-gray-700 mb-4">Level 1: Pilih Status Laporan</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <button
+                  onClick={() => handleStatusChange('all')}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
+                    filters.status === 'all' 
+                      ? 'border-red-500 bg-red-50 shadow-md' 
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
                 >
-                  <option value="all">Semua Industri</option>
-                  {uniqueKodeIndustri.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Shield className="w-4 h-4 inline mr-2" />
-                  Status
-                </label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
-                >
-                  <option value="all">Semua Status</option>
-                  <option value="Aktif">Aktif</option>
-                  <option value="Used">Digunakan</option>
-                  <option value="Unused">Tidak Digunakan</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-2" />
-                  Jenis Periode
-                </label>
-                <select
-                  value={filters.jenis}
-                  onChange={(e) => setFilters(prev => ({ ...prev, jenis: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
-                >
-                  <option value="all">Semua Jenis</option>
-                  {reportPeriods.map((period) => (
-                    <option key={period.value} value={period.value}>
-                      {period.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Search className="w-4 h-4 inline mr-2" />
-                  Cari Modul
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-gray-400" />
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <Shield className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-bold text-gray-900">Semua Status</div>
+                      <div className="text-sm text-gray-600">{ereportingModulesData.length} modul</div>
+                    </div>
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Cari nama/kode laporan..."
-                    className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                  {filters.status === 'all' && <ChevronDown className="w-5 h-5 text-red-500" />}
+                </button>
+
+                <button
+                  onClick={() => handleStatusChange('Aktif')}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
+                    filters.status === 'Aktif' 
+                      ? 'border-green-500 bg-green-50 shadow-md' 
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-bold text-gray-900">Aktif</div>
+                      <div className="text-sm text-gray-600">{statusSummary.Aktif || 0} modul</div>
+                    </div>
+                  </div>
+                  {filters.status === 'Aktif' && <ChevronDown className="w-5 h-5 text-green-500" />}
+                </button>
+
+                <button
+                  onClick={() => handleStatusChange('Used')}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
+                    filters.status === 'Used' 
+                      ? 'border-blue-500 bg-blue-50 shadow-md' 
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-bold text-gray-900">Digunakan</div>
+                      <div className="text-sm text-gray-600">{statusSummary.Used || 0} modul</div>
+                    </div>
+                  </div>
+                  {filters.status === 'Used' && <ChevronDown className="w-5 h-5 text-blue-500" />}
+                </button>
+
+                <button
+                  onClick={() => handleStatusChange('Unused')}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
+                    filters.status === 'Unused' 
+                      ? 'border-gray-500 bg-gray-50 shadow-md' 
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <Clock className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-bold text-gray-900">Tidak Digunakan</div>
+                      <div className="text-sm text-gray-600">{statusSummary.Unused || 0} modul</div>
+                    </div>
+                  </div>
+                  {filters.status === 'Unused' && <ChevronDown className="w-5 h-5 text-gray-500" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Level 2: Sub Filters */}
+            {(filters.status !== 'all' || showSubFilters) && (
+              <div className="mb-6 animate-slide-down">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-medium text-gray-700">Level 2: Filter Tambahan</h4>
+                  <button
+                    onClick={() => setShowSubFilters(!showSubFilters)}
+                    className="text-sm text-gray-600 hover:text-gray-800 flex items-center space-x-1"
+                  >
+                    {showSubFilters ? (
+                      <>
+                        <ChevronDown className="w-4 h-4" />
+                        <span>Sembunyikan</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronRight className="w-4 h-4" />
+                        <span>Tampilkan</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                {showSubFilters && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <Building className="w-4 h-4 inline mr-2" />
+                        Kode Industri
+                        <span className="ml-1 text-xs text-gray-500">
+                          ({uniqueKodeIndustri.length} tersedia)
+                        </span>
+                      </label>
+                      <select
+                        value={filters.subFilters.kodeIndustri}
+                        onChange={(e) => handleSubFilterChange('kodeIndustri', e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
+                        disabled={uniqueKodeIndustri.length === 0}
+                      >
+                        <option value="all">
+                          {uniqueKodeIndustri.length === 0 ? 'Tidak tersedia' : 'Semua Industri'}
+                        </option>
+                        {uniqueKodeIndustri.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <Calendar className="w-4 h-4 inline mr-2" />
+                        Jenis Periode
+                        <span className="ml-1 text-xs text-gray-500">
+                          ({uniqueJenis.length} tersedia)
+                        </span>
+                      </label>
+                      <select
+                        value={filters.subFilters.jenis}
+                        onChange={(e) => handleSubFilterChange('jenis', e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
+                        disabled={uniqueJenis.length === 0}
+                      >
+                        <option value="all">
+                          {uniqueJenis.length === 0 ? 'Tidak tersedia' : 'Semua Jenis'}
+                        </option>
+                        {uniqueJenis.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <Search className="w-4 h-4 inline mr-2" />
+                        Cari Modul
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Search className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Cari nama/kode laporan..."
+                          className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Filter Info Summary */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Filter className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-blue-900">Filter Aktif:</h5>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {filters.status !== 'all' && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                          Status: {filters.status}
+                          <button 
+                            onClick={() => handleStatusChange('all')}
+                            className="ml-2 text-blue-600 hover:text-blue-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      )}
+                      {filters.subFilters.kodeIndustri !== 'all' && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                          Kode: {filters.subFilters.kodeIndustri}
+                          <button 
+                            onClick={() => handleSubFilterChange('kodeIndustri', 'all')}
+                            className="ml-2 text-green-600 hover:text-green-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      )}
+                      {filters.subFilters.jenis !== 'all' && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                          Jenis: {reportPeriods.find(p => p.value === filters.subFilters.jenis)?.label || filters.subFilters.jenis}
+                          <button 
+                            onClick={() => handleSubFilterChange('jenis', 'all')}
+                            className="ml-2 text-purple-600 hover:text-purple-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      )}
+                      {searchTerm && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                          Pencarian: "{searchTerm}"
+                          <button 
+                            onClick={() => setSearchTerm('')}
+                            className="ml-2 text-gray-600 hover:text-gray-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-sm font-medium text-blue-700">
+                  {filteredReports.length} modul ditemukan
                 </div>
               </div>
             </div>
