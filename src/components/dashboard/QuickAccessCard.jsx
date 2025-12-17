@@ -8,19 +8,19 @@ const QuickAccessCard = ({ title, description, reports, color, link }) => {
       gradient: 'bg-gradient-to-br from-white to-slate-100',
       text: 'text-pink-600',
       bg: 'bg-pink-50 border-pink-100 hover:bg-pink-100',
-      logo: "/public/apolo-logo.png" 
+      logo: "/apolo-logo.png" 
     },
     ereporting: {
       gradient: 'bg-gradient-to-br from-white to-slate-100',
       text: 'text-green-600',
       bg: 'bg-green-50 border-green-100 hover:bg-green-100',
-      logo: '/public/ereporting-logo.png' // Ganti dengan nama file logo eReporting yang sesuai
+      logo: '/ereporting-logo.png' // Ganti dengan nama file logo eReporting yang sesuai
     },
     sipina: {
       gradient: 'bg-gradient-to-br from-white to-slate-100',
       text: 'text-blue-600',      
       bg: 'bg-blue-50 border-blue-100 hover:bg-blue-100',
-      logo: '/public/sipina-logo.png' // Ganti dengan nama file logo Sipina yang sesuai
+      logo: '/sipina-logo.png' // Ganti dengan nama file logo Sipina yang sesuai
     }
   };
 
