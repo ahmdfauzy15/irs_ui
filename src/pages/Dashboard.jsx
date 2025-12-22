@@ -1,3 +1,4 @@
+// src/pages/Dashboard.jsx
 import React, { useState } from 'react';
 import { 
   FileText, 
@@ -7,7 +8,11 @@ import {
   TrendingUp,
   History,
   ArrowRight,
-  Search
+  Search,
+  AlertCircle,
+  Building,
+  Calendar,
+  XCircle
 } from 'lucide-react';
 import WelcomeBanner from '../components/dashboard/WelcomeBanner';
 import StatsCard from '../components/dashboard/StatsCard';
@@ -15,34 +20,28 @@ import QuickAccessCard from '../components/dashboard/QuickAccessCard';
 import ActivityList from '../components/dashboard/ActivityList';
 import RecentReports from '../components/dashboard/RecentReports';
 import DashboardCarousel from '../components/dashboard/DashboardCarousel';
-import { homeReportsData, welcomeStats, quickAccessCards } from '../data/reportsData';
+import { 
+  homeReportsData, 
+  welcomeStats, 
+  quickAccessCards, 
+  recentActivityData,
+  getRealTimeStats,
+  processReportData 
+} from '../data/reportDataDash';
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const activityData = [
-    {
-      id: 1,
-      type: 'success',
-      title: 'Laporan Keuangan Q1 2023 telah disetujui',
-      time: '2 jam yang lalu',
-      system: 'APOLO'
-    },
-    {
-      id: 2,
-      type: 'warning',
-      title: 'Laporan E-Statement memerlukan revisi',
-      time: '5 jam yang lalu',
-      system: 'E-REPORTING'
-    },
-    {
-      id: 3,
-      type: 'danger',
-      title: 'Laporan SIPINA ditolak oleh sistem',
-      time: 'Kemarin, 14:30',
-      system: 'SIPINA'
-    }
-  ];
+  // Ambil data real-time
+  const realTimeStats = getRealTimeStats();
+  const processedData = processReportData();
+  
+  // Hitung statistik tambahan
+  const totalLJKTypes = Object.keys(processedData.reportsByLJKType).length;
+  const uniquePeriods = Object.keys(processedData.reportsByPeriod).length;
+  
+  // Data aktivitas berdasarkan JSON
+  const activityData = recentActivityData;
   
   return (
     <div className="space-y-6 animate-fade-in bg-gradient-to-br from-red-50/30 to-white min-h-screen p-4 lg:p-6">
@@ -53,7 +52,7 @@ const Dashboard = () => {
       <DashboardCarousel />
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {welcomeStats.map((stat, index) => (
           <StatsCard
             key={index}
@@ -75,10 +74,64 @@ const Dashboard = () => {
             description={card.description}
             reports={card.reports}
             color={card.color}
-            link={card.link}
-            icon={card.icon}      
+            link={card.link}     
           />
         ))}
+      </div>
+
+      {/* Laporan Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-xl border border-purple-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-purple-900 font-bold text-2xl">{totalLJKTypes}</div>
+              <div className="text-purple-700 text-sm font-medium">Jenis LJK</div>
+              <div className="text-purple-500 text-xs">Tipe Lembaga</div>
+            </div>
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Building className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-indigo-900 font-bold text-2xl">{uniquePeriods}</div>
+              <div className="text-indigo-700 text-sm font-medium">Periode Laporan</div>
+              <div className="text-indigo-500 text-xs">Variasi periode</div>
+            </div>
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <Calendar className="w-6 h-6 text-indigo-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-r from-pink-50 to-white p-4 rounded-xl border border-pink-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-pink-900 font-bold text-2xl">{processedData.lateReports}</div>
+              <div className="text-pink-700 text-sm font-medium">Terlambat</div>
+              <div className="text-pink-500 text-xs">Laporan overdue</div>
+            </div>
+            <div className="p-2 bg-pink-100 rounded-lg">
+              <AlertCircle className="w-6 h-6 text-pink-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-r from-orange-50 to-white p-4 rounded-xl border border-orange-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-orange-900 font-bold text-2xl">{realTimeStats.daysToDeadline}</div>
+              <div className="text-orange-700 text-sm font-medium">Deadline Dekat</div>
+              <div className="text-orange-500 text-xs">Perlu perhatian</div>
+            </div>
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <Clock className="w-6 h-6 text-orange-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Recent Activity and Reports */}
@@ -116,8 +169,8 @@ const Dashboard = () => {
                   <FileText className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-red-900">Analisis Laporan</h3>
-                  <p className="text-sm text-red-600/80">Visualisasi data laporan IRS</p>
+                  <h3 className="text-lg font-bold text-red-900">Analisis Laporan IRS</h3>
+                  <p className="text-sm text-red-600/80">Visualisasi data dari {processedData.totalReports} laporan</p>
                 </div>
               </div>
               <div className="relative">
@@ -136,8 +189,9 @@ const Dashboard = () => {
           </div>
           <div className="p-6 bg-white">
             <RecentReports 
-              reports={homeReportsData} 
+              reports={homeReportsData()} 
               searchTerm={searchTerm}
+              allReports={processedData.allReports}
             />
           </div>
         </div>
@@ -151,10 +205,10 @@ const Dashboard = () => {
               <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                 <CheckCircle className="w-5 h-5" />
               </div>
-              <h4 className="font-bold text-lg">Pelaporan Tepat Waktu</h4>
+              <h4 className="font-bold text-lg">Kepatuhan Pelaporan</h4>
             </div>
             <p className="text-red-100 text-sm">
-              Pastikan semua laporan disampaikan sesuai jadwal untuk menghindari sanksi.
+              {realTimeStats.successRate}% laporan berhasil dikirim tepat waktu sesuai regulasi OJK.
             </p>
           </div>
           
@@ -163,10 +217,10 @@ const Dashboard = () => {
               <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                 <Clock className="w-5 h-5" />
               </div>
-              <h4 className="font-bold text-lg">24/7 Monitoring</h4>
+              <h4 className="font-bold text-lg">Monitoring Real-time</h4>
             </div>
             <p className="text-red-100 text-sm">
-              Sistem IRS OJK aktif 24 jam untuk memantau status laporan Anda.
+              Pantau status {processedData.activeReports} laporan aktif dalam sistem IRS OJK 24/7.
             </p>
           </div>
           
@@ -175,10 +229,10 @@ const Dashboard = () => {
               <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                 <TrendingUp className="w-5 h-5" />
               </div>
-              <h4 className="font-bold text-lg">Analisis Real-time</h4>
+              <h4 className="font-bold text-lg">Analisis Data</h4>
             </div>
             <p className="text-red-100 text-sm">
-              Dapatkan insight dari data pelaporan untuk pengambilan keputusan yang lebih baik.
+              Analisis {processedData.totalReports} laporan dari {totalLJKTypes} jenis LJK untuk insight komprehensif.
             </p>
           </div>
         </div>
@@ -187,27 +241,61 @@ const Dashboard = () => {
       {/* Quick Stats Footer */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-gradient-to-r from-red-50 to-white p-4 rounded-xl border border-red-100 shadow-sm">
-          <div className="text-red-900 font-bold text-2xl">98%</div>
+          <div className="text-red-900 font-bold text-2xl">{realTimeStats.successRate}%</div>
           <div className="text-red-700 text-sm font-medium">Tingkat Keberhasilan</div>
           <div className="text-red-500 text-xs">Laporan yang disetujui</div>
         </div>
         
         <div className="bg-gradient-to-r from-red-50 to-white p-4 rounded-xl border border-red-100 shadow-sm">
-          <div className="text-red-900 font-bold text-2xl">24</div>
+          <div className="text-red-900 font-bold text-2xl">{processedData.activeReports}</div>
           <div className="text-red-700 text-sm font-medium">Laporan Aktif</div>
-          <div className="text-red-500 text-xs">Dalam proses review</div>
+          <div className="text-red-500 text-xs">Dalam sistem</div>
         </div>
         
         <div className="bg-gradient-to-r from-red-50 to-white p-4 rounded-xl border border-red-100 shadow-sm">
-          <div className="text-red-900 font-bold text-2xl">3</div>
+          <div className="text-red-900 font-bold text-2xl">{realTimeStats.needsAttention}</div>
           <div className="text-red-700 text-sm font-medium">Perlu Perhatian</div>
-          <div className="text-red-500 text-xs">Laporan menunggu revisi</div>
+          <div className="text-red-500 text-xs">Laporan bermasalah</div>
         </div>
         
         <div className="bg-gradient-to-r from-red-50 to-white p-4 rounded-xl border border-red-100 shadow-sm">
-          <div className="text-red-900 font-bold text-2xl">7</div>
-          <div className="text-red-700 text-sm font-medium">Hari Lagi</div>
-          <div className="text-red-500 text-xs">Batas waktu pelaporan</div>
+          <div className="text-red-900 font-bold text-2xl">{realTimeStats.monthlyReports}</div>
+          <div className="text-red-700 text-sm font-medium">Laporan Bulanan</div>
+          <div className="text-red-500 text-xs">Periode reguler</div>
+        </div>
+      </div>
+
+      {/* Sistem Info */}
+      <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-white rounded-xl border border-blue-100">
+        <h3 className="text-lg font-bold text-blue-900 mb-4">Informasi Sistem</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-700">APOLO</span>
+            </div>
+            <p className="text-xs text-gray-600">
+              {processedData.reportsBySystem.APOLO?.length || 0} laporan dari berbagai jenis LJK
+            </p>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-cyan-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-700">E-Reporting</span>
+            </div>
+            <p className="text-xs text-gray-600">
+              {processedData.reportsBySystem.Ereporting?.length || 0} laporan elektronik
+            </p>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-700">SiPina</span>
+            </div>
+            <p className="text-xs text-gray-600">
+              {processedData.reportsBySystem.SiPina?.length || 0} laporan nasabah asing
+            </p>
+          </div>
         </div>
       </div>
     </div>

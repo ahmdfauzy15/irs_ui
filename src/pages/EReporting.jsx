@@ -19,109 +19,135 @@ import {
   Shield,
   TrendingUp,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle,
+  CheckSquare,
+  FileCheck,
+  FileX
 } from 'lucide-react';
-import { ereportingModulesData, activeIndustries, monitoringStatus, reportPeriods } from '../data/ereportingData';
+import { 
+  monitoringLaporanData, 
+  jenisLJKOptions, 
+  periodeLaporanOptions,
+  statusPengirimanOptions,
+  statusKetepatanOptions 
+} from '../data/monitoringData';
 
 const EReporting = () => {
   // State untuk filter 2 tingkat
   const [filters, setFilters] = useState({
     status: 'all',
     subFilters: {
-      kodeIndustri: 'all',
-      jenis: 'all',
+      jenisLJK: 'all',
+      periodeLaporan: 'all',
     }
   });
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
   const [showSubFilters, setShowSubFilters] = useState(false);
   const [stats, setStats] = useState({
-    totalModul: 0,
-    aktif: 0,
-    used: 0,
-    unused: 0,
-    totalIndustri: 0
+    totalLaporan: 0,
+    berhasil: 0,
+    tidakBerhasil: 0,
+    tepatWaktu: 0,
+    terlambat: 0
   });
 
   // Hitung stats saat data berubah
   useEffect(() => {
-    const totalModul = ereportingModulesData.length;
-    const aktif = ereportingModulesData.filter(r => r.status === 'Aktif').length;
-    const used = ereportingModulesData.filter(r => r.status === 'Used').length;
-    const unused = ereportingModulesData.filter(r => r.status === 'Unused').length;
-    const totalIndustri = activeIndustries.length;
+    const totalLaporan = monitoringLaporanData.length;
+    const berhasil = monitoringLaporanData.filter(r => r.statusPengiriman === 'Berhasil').length;
+    const tidakBerhasil = monitoringLaporanData.filter(r => r.statusPengiriman === 'Tidak Berhasil').length;
+    const tepatWaktu = monitoringLaporanData.filter(r => r.statusKetepatan === 'Tepat Waktu').length;
+    const terlambat = monitoringLaporanData.filter(r => r.statusKetepatan === 'Terlambat').length;
 
-    setStats({ totalModul, aktif, used, unused, totalIndustri });
+    setStats({ totalLaporan, berhasil, tidakBerhasil, tepatWaktu, terlambat });
   }, []);
 
   // Hitung filteredReports secara reactive menggunakan useMemo
   const filteredReports = useMemo(() => {
-    return ereportingModulesData.filter(report => {
-      // Level 1: Filter berdasarkan status
-      if (filters.status !== 'all' && report.status !== filters.status) {
-        return false;
-      }
-      
-      // Level 2: Filter sub-filters
-      if (filters.subFilters.kodeIndustri !== 'all' && report.kodeIndustri !== filters.subFilters.kodeIndustri) {
-        return false;
-      }
-      
-      if (filters.subFilters.jenis !== 'all' && report.jenis !== filters.subFilters.jenis) {
-        return false;
-      }
-      
-      // Filter berdasarkan search term
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        if (!report.namaLaporan.toLowerCase().includes(term) &&
-            !report.namaIndustri.toLowerCase().includes(term) &&
-            !report.kodeLaporan.toLowerCase().includes(term) &&
-            !report.kodeIndustri.toLowerCase().includes(term)) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
+    let filtered = [...monitoringLaporanData];
+
+    // Level 1: Filter berdasarkan status pengiriman
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(report => report.statusPengiriman === filters.status);
+    }
+    
+    // Level 2: Filter sub-filters
+    if (filters.subFilters.jenisLJK !== 'all') {
+      filtered = filtered.filter(report => report.jenisLJK === filters.subFilters.jenisLJK);
+    }
+
+    if (filters.subFilters.periodeLaporan !== 'all') {
+      filtered = filtered.filter(report => {
+        const periode = report.periodeLaporan.toLowerCase();
+        const filterPeriode = filters.subFilters.periodeLaporan.toLowerCase();
+        return periode.includes(filterPeriode);
+      });
+    }
+
+    // Apply search term
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(report => 
+        report.namaLaporan.toLowerCase().includes(term) ||
+        report.jenisLJK.toLowerCase().includes(term) ||
+        report.periodeLaporan.toLowerCase().includes(term) ||
+        report.batasWaktu.toLowerCase().includes(term)
+      );
+    }
+
+    return filtered;
   }, [filters, searchTerm]);
 
-  // Get unique kode industri berdasarkan status yang dipilih
-  const uniqueKodeIndustri = useMemo(() => {
-    let filteredData = ereportingModulesData;
+  // Get unique jenisLJK berdasarkan status yang dipilih
+  const uniqueJenisLJK = useMemo(() => {
+    let filteredData = monitoringLaporanData;
     
     if (filters.status !== 'all') {
-      filteredData = filteredData.filter(report => report.status === filters.status);
+      filteredData = filteredData.filter(report => report.statusPengiriman === filters.status);
     }
     
-    const kodes = [...new Set(filteredData.map(report => report.kodeIndustri))];
-    return kodes.map(kode => ({
-      value: kode,
-      label: kode
+    const jenisLJK = [...new Set(filteredData.map(report => report.jenisLJK))];
+    return jenisLJK.map(j => ({
+      value: j,
+      label: j
     }));
   }, [filters.status]);
 
-  // Get unique jenis berdasarkan status yang dipilih
-  const uniqueJenis = useMemo(() => {
-    let filteredData = ereportingModulesData;
+  // Get unique periode berdasarkan status yang dipilih
+  const uniquePeriode = useMemo(() => {
+    let filteredData = monitoringLaporanData;
     
     if (filters.status !== 'all') {
-      filteredData = filteredData.filter(report => report.status === filters.status);
+      filteredData = filteredData.filter(report => report.statusPengiriman === filters.status);
     }
     
-    const jenis = [...new Set(filteredData.map(report => report.jenis))];
-    return jenis.map(j => ({
-      value: j,
-      label: reportPeriods.find(p => p.value === j)?.label || j
+    const periode = [...new Set(filteredData.map(report => report.periodeLaporan))];
+    return periode.map(p => ({
+      value: p,
+      label: p
     }));
   }, [filters.status]);
+
+  // Status summary untuk filter level 1
+  const statusSummary = useMemo(() => {
+    const summary = {};
+    
+    statusPengirimanOptions.forEach(status => {
+      summary[status] = monitoringLaporanData.filter(r => r.statusPengiriman === status).length;
+    });
+    
+    return summary;
+  }, []);
 
   const resetFilters = () => {
-    setFilters({ 
+    setFilters({
       status: 'all',
       subFilters: {
-        kodeIndustri: 'all',
-        jenis: 'all',
+        jenisLJK: 'all',
+        periodeLaporan: 'all',
       }
     });
     setSearchTerm('');
@@ -133,8 +159,8 @@ const EReporting = () => {
     setFilters(prev => ({ 
       status,
       subFilters: {
-        kodeIndustri: 'all',
-        jenis: 'all',
+        jenisLJK: 'all',
+        periodeLaporan: 'all',
       }
     }));
     
@@ -156,44 +182,84 @@ const EReporting = () => {
     }));
   };
 
-  const getStatusBadge = (status) => {
-    const styles = {
-      'Aktif': 'bg-green-100 text-green-800 border-green-200',
-      'Used': 'bg-blue-100 text-blue-800 border-blue-200',
-      'Unused': 'bg-gray-100 text-gray-800 border-gray-200',
-      'Pending': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'Expired': 'bg-red-100 text-red-800 border-red-200',
-    };
+  const getStatusPengirimanBadge = (status) => {
+    if (status === 'Berhasil') {
+      return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          {status}
+        </span>
+      );
+    } else {
+      return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+          <XCircle className="w-3 h-3 mr-1" />
+          {status}
+        </span>
+      );
+    }
+  };
 
+  const getStatusKetepatanBadge = (status) => {
+    if (status === 'Tepat Waktu') {
+      return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+          <Clock className="w-3 h-3 mr-1" />
+          {status}
+        </span>
+      );
+    } else {
+      return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+          <AlertTriangle className="w-3 h-3 mr-1" />
+          {status}
+        </span>
+      );
+    }
+  };
+
+  const getPeriodeBadge = (periode) => {
+    const colors = {
+      'Semesteran': 'bg-purple-100 text-purple-800 border-purple-200',
+      'Bulanan': 'bg-blue-100 text-blue-800 border-blue-200',
+      'Tahunan': 'bg-green-100 text-green-800 border-green-200',
+      'Insidentil': 'bg-gray-100 text-gray-800 border-gray-200',
+      'Triwulanan': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'setiap perubahan': 'bg-pink-100 text-pink-800 border-pink-200'
+    };
+    
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[status] || 'bg-gray-100'}`}>
-        {status}
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${colors[periode] || 'bg-gray-100'}`}>
+        <Calendar className="w-3 h-3 mr-1" />
+        {periode}
       </span>
     );
   };
 
-  const getJenisBadge = (jenis) => {
-    const styles = {
-      'mingguan': 'bg-purple-100 text-purple-800 border-purple-200',
-      'bulanan': 'bg-blue-100 text-blue-800 border-blue-200',
-      'triwulanan': 'bg-green-100 text-green-800 border-green-200',
-      'semesteran': 'bg-orange-100 text-orange-800 border-orange-200',
-      'tahunan': 'bg-red-100 text-red-800 border-red-200',
-      'khusus': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+  const getJenisLKJBadge = (jenis) => {
+    const colorMap = {
+      'PEE': 'bg-red-100 text-red-800 border-red-200',
+      'PPE AB, PPE Non AB': 'bg-blue-100 text-blue-800 border-blue-200',
+      'PEE, PPE AB, PPE Non AB': 'bg-purple-100 text-purple-800 border-purple-200',
+      'PEE, PPE AB': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      'PPE AB': 'bg-pink-100 text-pink-800 border-pink-200',
+      'PPE AB, PPE Non AB, BANK, PPU': 'bg-teal-100 text-teal-800 border-teal-200',
+      'APEI': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+      'Dana Pensiun': 'bg-orange-100 text-orange-800 border-orange-200',
+      'Perusahaan Penjaminan': 'bg-amber-100 text-amber-800 border-amber-200',
+      'Asuransi Jiwa': 'bg-rose-100 text-rose-800 border-rose-200',
+      'Asuransi Umum': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200',
+      'Reasuransi': 'bg-violet-100 text-violet-800 border-violet-200',
+      'Asuransi Jiwa Syariah/UUS': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      'Asuransi Umum Syariah/UUS': 'bg-lime-100 text-lime-800 border-lime-200',
+      'Reasuransi Syariah/UUS': 'bg-sky-100 text-sky-800 border-sky-200',
     };
 
-    const labels = {
-      'mingguan': 'Mingguan',
-      'bulanan': 'Bulanan',
-      'triwulanan': 'Triwulanan',
-      'semesteran': 'Semesteran',
-      'tahunan': 'Tahunan',
-      'khusus': 'Khusus',
-    };
-
+    const defaultStyle = 'bg-gray-100 text-gray-800 border-gray-200';
+    
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[jenis] || 'bg-gray-100'}`}>
-        {labels[jenis] || jenis}
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${colorMap[jenis] || defaultStyle}`}>
+        {jenis.length > 30 ? `${jenis.substring(0, 28)}...` : jenis}
       </span>
     );
   };
@@ -204,14 +270,14 @@ const EReporting = () => {
 
   const handleExportData = () => {
     const exportData = filteredReports.map(report => ({
-      'Kode Industri': report.kodeIndustri,
-      'Nama Industri': report.namaIndustri,
-      'Kode Laporan': report.kodeLaporan,
+      'No': report.id,
+      'Aplikasi': report.aplikasi,
+      'Jenis LJK': report.jenisLJK,
       'Nama Laporan': report.namaLaporan,
-      'Status': report.status,
-      'Jenis': report.jenis,
-      'Periode': report.periodePelaporan,
-      'Direktorat': report.direktorat
+      'Periode Laporan': report.periodeLaporan,
+      'Batas Waktu': report.batasWaktu,
+      'Status Pengiriman': report.statusPengiriman,
+      'Status Ketepatan': report.statusKetepatan
     }));
 
     const csv = convertToCSV(exportData);
@@ -219,7 +285,7 @@ const EReporting = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `e-reporting-modules-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `monitoring-laporan-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
 
@@ -232,29 +298,17 @@ const EReporting = () => {
     return csv;
   };
 
-  // Status summary
-  const statusSummary = useMemo(() => {
-    const summary = {};
-    const allStatus = ['Aktif', 'Used', 'Unused'];
-    
-    allStatus.forEach(status => {
-      summary[status] = ereportingModulesData.filter(r => r.status === status).length;
-    });
-    
-    return summary;
-  }, []);
-
   return (
     <div className="space-y-6 animate-fade-in bg-gradient-to-br from-red-50/20 to-white min-h-screen">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6">
         <div className="flex items-center space-x-4">
           <div className="p-3 bg-gradient-to-br from-red-600 via-red-500 to-red-700 rounded-xl shadow-lg">
-            <FileSignature className="w-7 h-7 text-white" />
+            <FileCheck className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-red-900">Sistem E-Reporting OJK</h1>
-            <p className="text-gray-600 mt-1">Modul Laporan Elektronik untuk Seluruh Industri Keuangan</p>
+            <h1 className="text-2xl lg:text-3xl font-bold text-red-900">Monitoring Laporan E-Reporting</h1>
+            <p className="text-gray-600 mt-1">Pemantauan Pengiriman Laporan Elektronik OJK</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
@@ -266,7 +320,7 @@ const EReporting = () => {
             <span>Export Data</span>
           </button>
           <button 
-            onClick={() => alert('Refresh data berhasil')}
+            onClick={() => window.location.reload()}
             className="p-2.5 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl transition-all duration-200 shadow hover:shadow-lg"
           >
             <RefreshCw className="w-4 h-4" />
@@ -283,8 +337,8 @@ const EReporting = () => {
                 <FileText className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-red-900">{stats.totalModul}</p>
-                <p className="text-sm text-gray-600 font-medium">Total Modul</p>
+                <p className="text-2xl font-bold text-red-900">{stats.totalLaporan}</p>
+                <p className="text-sm text-gray-600 font-medium">Total Laporan</p>
               </div>
             </div>
           </div>
@@ -292,11 +346,11 @@ const EReporting = () => {
           <div className="bg-gradient-to-br from-white to-green-50/50 rounded-xl p-5 border border-green-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-gradient-to-r from-green-100 to-green-200 rounded-lg shadow-sm">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+                <CheckSquare className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-900">{stats.aktif}</p>
-                <p className="text-sm text-gray-600 font-medium">Aktif</p>
+                <p className="text-2xl font-bold text-green-900">{stats.berhasil}</p>
+                <p className="text-sm text-gray-600 font-medium">Berhasil</p>
               </div>
             </div>
           </div>
@@ -307,32 +361,32 @@ const EReporting = () => {
                 <TrendingUp className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-900">{stats.used}</p>
-                <p className="text-sm text-gray-600 font-medium">Digunakan</p>
+                <p className="text-2xl font-bold text-blue-900">{stats.tidakBerhasil}</p>
+                <p className="text-sm text-gray-600 font-medium">Tidak Berhasil</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl p-5 border border-gray-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <div className="bg-gradient-to-br from-white to-teal-50/50 rounded-xl p-5 border border-teal-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg shadow-sm">
-                <Clock className="w-5 h-5 text-gray-600" />
+              <div className="p-2 bg-gradient-to-r from-teal-100 to-teal-200 rounded-lg shadow-sm">
+                <Clock className="w-5 h-5 text-teal-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{stats.unused}</p>
-                <p className="text-sm text-gray-600 font-medium">Tidak Digunakan</p>
+                <p className="text-2xl font-bold text-teal-900">{stats.tepatWaktu}</p>
+                <p className="text-sm text-gray-600 font-medium">Tepat Waktu</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-white to-purple-50/50 rounded-xl p-5 border border-purple-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <div className="bg-gradient-to-br from-white to-orange-50/50 rounded-xl p-5 border border-orange-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-purple-100 to-purple-200 rounded-lg shadow-sm">
-                <Building className="w-5 h-5 text-purple-600" />
+              <div className="p-2 bg-gradient-to-r from-orange-100 to-orange-200 rounded-lg shadow-sm">
+                <AlertTriangle className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-purple-900">{stats.totalIndustri}</p>
-                <p className="text-sm text-gray-600 font-medium">Industri</p>
+                <p className="text-2xl font-bold text-orange-900">{stats.terlambat}</p>
+                <p className="text-sm text-gray-600 font-medium">Terlambat</p>
               </div>
             </div>
           </div>
@@ -349,8 +403,8 @@ const EReporting = () => {
                   <Filter className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-red-900">Filter 2-Tingkat Modul Laporan</h3>
-                  <p className="text-sm text-gray-600">Pilih status terlebih dahulu, lalu filter lainnya</p>
+                  <h3 className="text-lg font-bold text-red-900">Filter 2-Tingkat Monitoring Laporan</h3>
+                  <p className="text-sm text-gray-600">Pilih status pengiriman terlebih dahulu, lalu filter lainnya</p>
                 </div>
               </div>
               <button
@@ -365,8 +419,8 @@ const EReporting = () => {
           <div className="p-6">
             {/* Level 1: Status Filter */}
             <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-4">Level 1: Pilih Status Laporan</h4>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <h4 className="text-sm font-medium text-gray-700 mb-4">Level 1: Pilih Status Pengiriman</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <button
                   onClick={() => handleStatusChange('all')}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
@@ -381,16 +435,16 @@ const EReporting = () => {
                     </div>
                     <div className="text-left">
                       <div className="font-bold text-gray-900">Semua Status</div>
-                      <div className="text-sm text-gray-600">{ereportingModulesData.length} modul</div>
+                      <div className="text-sm text-gray-600">{monitoringLaporanData.length} laporan</div>
                     </div>
                   </div>
                   {filters.status === 'all' && <ChevronDown className="w-5 h-5 text-red-500" />}
                 </button>
 
                 <button
-                  onClick={() => handleStatusChange('Aktif')}
+                  onClick={() => handleStatusChange('Berhasil')}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
-                    filters.status === 'Aktif' 
+                    filters.status === 'Berhasil' 
                       ? 'border-green-500 bg-green-50 shadow-md' 
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
@@ -400,51 +454,31 @@ const EReporting = () => {
                       <CheckCircle className="w-5 h-5 text-green-600" />
                     </div>
                     <div className="text-left">
-                      <div className="font-bold text-gray-900">Aktif</div>
-                      <div className="text-sm text-gray-600">{statusSummary.Aktif || 0} modul</div>
+                      <div className="font-bold text-gray-900">Berhasil</div>
+                      <div className="text-sm text-gray-600">{statusSummary.Berhasil || 0} laporan</div>
                     </div>
                   </div>
-                  {filters.status === 'Aktif' && <ChevronDown className="w-5 h-5 text-green-500" />}
+                  {filters.status === 'Berhasil' && <ChevronDown className="w-5 h-5 text-green-500" />}
                 </button>
 
                 <button
-                  onClick={() => handleStatusChange('Used')}
+                  onClick={() => handleStatusChange('Tidak Berhasil')}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
-                    filters.status === 'Used' 
-                      ? 'border-blue-500 bg-blue-50 shadow-md' 
+                    filters.status === 'Tidak Berhasil' 
+                      ? 'border-red-500 bg-red-50 shadow-md' 
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                    <div className="p-2 bg-red-100 rounded-lg">
+                      <XCircle className="w-5 h-5 text-red-600" />
                     </div>
                     <div className="text-left">
-                      <div className="font-bold text-gray-900">Digunakan</div>
-                      <div className="text-sm text-gray-600">{statusSummary.Used || 0} modul</div>
+                      <div className="font-bold text-gray-900">Tidak Berhasil</div>
+                      <div className="text-sm text-gray-600">{statusSummary['Tidak Berhasil'] || 0} laporan</div>
                     </div>
                   </div>
-                  {filters.status === 'Used' && <ChevronDown className="w-5 h-5 text-blue-500" />}
-                </button>
-
-                <button
-                  onClick={() => handleStatusChange('Unused')}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
-                    filters.status === 'Unused' 
-                      ? 'border-gray-500 bg-gray-50 shadow-md' 
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-gray-100 rounded-lg">
-                      <Clock className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-gray-900">Tidak Digunakan</div>
-                      <div className="text-sm text-gray-600">{statusSummary.Unused || 0} modul</div>
-                    </div>
-                  </div>
-                  {filters.status === 'Unused' && <ChevronDown className="w-5 h-5 text-gray-500" />}
+                  {filters.status === 'Tidak Berhasil' && <ChevronDown className="w-5 h-5 text-red-500" />}
                 </button>
               </div>
             </div>
@@ -477,21 +511,21 @@ const EReporting = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <Building className="w-4 h-4 inline mr-2" />
-                        Kode Industri
+                        Jenis LJK
                         <span className="ml-1 text-xs text-gray-500">
-                          ({uniqueKodeIndustri.length} tersedia)
+                          ({uniqueJenisLJK.length} tersedia)
                         </span>
                       </label>
                       <select
-                        value={filters.subFilters.kodeIndustri}
-                        onChange={(e) => handleSubFilterChange('kodeIndustri', e.target.value)}
+                        value={filters.subFilters.jenisLJK}
+                        onChange={(e) => handleSubFilterChange('jenisLJK', e.target.value)}
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
-                        disabled={uniqueKodeIndustri.length === 0}
+                        disabled={uniqueJenisLJK.length === 0}
                       >
                         <option value="all">
-                          {uniqueKodeIndustri.length === 0 ? 'Tidak tersedia' : 'Semua Industri'}
+                          {uniqueJenisLJK.length === 0 ? 'Tidak tersedia' : 'Semua Jenis LJK'}
                         </option>
-                        {uniqueKodeIndustri.map((item) => (
+                        {uniqueJenisLJK.map((item) => (
                           <option key={item.value} value={item.value}>
                             {item.label}
                           </option>
@@ -502,21 +536,21 @@ const EReporting = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <Calendar className="w-4 h-4 inline mr-2" />
-                        Jenis Periode
+                        Periode Laporan
                         <span className="ml-1 text-xs text-gray-500">
-                          ({uniqueJenis.length} tersedia)
+                          ({uniquePeriode.length} tersedia)
                         </span>
                       </label>
                       <select
-                        value={filters.subFilters.jenis}
-                        onChange={(e) => handleSubFilterChange('jenis', e.target.value)}
+                        value={filters.subFilters.periodeLaporan}
+                        onChange={(e) => handleSubFilterChange('periodeLaporan', e.target.value)}
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
-                        disabled={uniqueJenis.length === 0}
+                        disabled={uniquePeriode.length === 0}
                       >
                         <option value="all">
-                          {uniqueJenis.length === 0 ? 'Tidak tersedia' : 'Semua Jenis'}
+                          {uniquePeriode.length === 0 ? 'Tidak tersedia' : 'Semua Periode'}
                         </option>
-                        {uniqueJenis.map((item) => (
+                        {uniquePeriode.map((item) => (
                           <option key={item.value} value={item.value}>
                             {item.label}
                           </option>
@@ -527,7 +561,7 @@ const EReporting = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <Search className="w-4 h-4 inline mr-2" />
-                        Cari Modul
+                        Cari Laporan
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -535,7 +569,7 @@ const EReporting = () => {
                         </div>
                         <input
                           type="text"
-                          placeholder="Cari nama/kode laporan..."
+                          placeholder="Cari nama laporan, jenis LJK, atau batas waktu..."
                           className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white shadow-sm"
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
@@ -568,23 +602,23 @@ const EReporting = () => {
                           </button>
                         </span>
                       )}
-                      {filters.subFilters.kodeIndustri !== 'all' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                          Kode: {filters.subFilters.kodeIndustri}
+                      {filters.subFilters.jenisLJK !== 'all' && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                          LJK: {filters.subFilters.jenisLJK.length > 20 ? `${filters.subFilters.jenisLJK.substring(0, 18)}...` : filters.subFilters.jenisLJK}
                           <button 
-                            onClick={() => handleSubFilterChange('kodeIndustri', 'all')}
-                            className="ml-2 text-green-600 hover:text-green-800"
+                            onClick={() => handleSubFilterChange('jenisLJK', 'all')}
+                            className="ml-2 text-purple-600 hover:text-purple-800"
                           >
                             ×
                           </button>
                         </span>
                       )}
-                      {filters.subFilters.jenis !== 'all' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
-                          Jenis: {reportPeriods.find(p => p.value === filters.subFilters.jenis)?.label || filters.subFilters.jenis}
+                      {filters.subFilters.periodeLaporan !== 'all' && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                          Periode: {filters.subFilters.periodeLaporan}
                           <button 
-                            onClick={() => handleSubFilterChange('jenis', 'all')}
-                            className="ml-2 text-purple-600 hover:text-purple-800"
+                            onClick={() => handleSubFilterChange('periodeLaporan', 'all')}
+                            className="ml-2 text-green-600 hover:text-green-800"
                           >
                             ×
                           </button>
@@ -605,22 +639,8 @@ const EReporting = () => {
                   </div>
                 </div>
                 <div className="text-sm font-medium text-blue-700">
-                  {filteredReports.length} modul ditemukan
+                  {filteredReports.length} laporan ditemukan
                 </div>
-              </div>
-            </div>
-
-            {/* Status Monitoring */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Monitoring Status:</h4>
-              <div className="flex flex-wrap gap-2">
-                {monitoringStatus.map((status) => (
-                  <div key={status.status} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
-                    <div className={`w-3 h-3 rounded-full bg-${status.color}-500`}></div>
-                    <span className="text-sm font-medium">{status.status}</span>
-                    <span className="text-xs text-gray-500">- {status.description}</span>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
@@ -637,12 +657,12 @@ const EReporting = () => {
                   <BarChart3 className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-red-900">Daftar Modul Laporan E-Reporting</h3>
-                  <p className="text-sm text-gray-600">Total {filteredReports.length} modul ditemukan</p>
+                  <h3 className="text-lg font-bold text-red-900">Daftar Monitoring Laporan</h3>
+                  <p className="text-sm text-gray-600">Total {filteredReports.length} laporan ditemukan</p>
                 </div>
               </div>
               <div className="text-sm text-gray-600 font-medium">
-                Menampilkan {filteredReports.length} dari {ereportingModulesData.length} modul
+                Menampilkan {filteredReports.length} dari {monitoringLaporanData.length} laporan
               </div>
             </div>
           </div>
@@ -652,50 +672,51 @@ const EReporting = () => {
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">No</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Kode Industri</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Industri</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Kode Laporan</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aplikasi</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jenis LJK</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Laporan</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jenis</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Periode Laporan</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Batas Waktu</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Pengiriman</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Ketepatan</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredReports.map((report, index) => (
+                {filteredReports.map((report) => (
                   <tr key={report.id} className="hover:bg-red-50/50 transition-colors duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{report.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         <div className="p-1.5 bg-blue-50 rounded-lg">
-                          <Building className="w-4 h-4 text-blue-600" />
+                          <FileText className="w-4 h-4 text-blue-600" />
                         </div>
-                        <span className="text-sm font-bold text-blue-700">{report.kodeIndustri}</span>
+                        <span className="text-sm font-bold text-blue-700">{report.aplikasi}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900 max-w-xs truncate" title={report.namaIndustri}>
-                        {report.namaIndustri}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className="p-1.5 bg-green-50 rounded-lg">
-                          <FileText className="w-4 h-4 text-green-600" />
-                        </div>
-                        <span className="text-sm font-bold text-green-700">{report.kodeLaporan}</span>
+                      <div className="max-w-xs">
+                        {getJenisLKJBadge(report.jenisLJK)}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900 max-w-md truncate" title={report.namaLaporan}>
+                      <div className="text-sm font-medium text-gray-900 max-w-md">
                         {report.namaLaporan}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getJenisBadge(report.jenis)}
+                      {getPeriodeBadge(report.periodeLaporan)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-700 max-w-xs">
+                        {report.batasWaktu}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(report.status)}
+                      {getStatusPengirimanBadge(report.statusPengiriman)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusKetepatanBadge(report.statusKetepatan)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
@@ -706,13 +727,15 @@ const EReporting = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => alert(`Buka laporan ${report.kodeLaporan}`)}
-                          className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
-                          title="Buka laporan"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </button>
+                        {report.statusPengiriman === 'Berhasil' && (
+                          <button
+                            onClick={() => alert(`Download laporan ${report.namaLaporan}`)}
+                            className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Download"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -726,8 +749,8 @@ const EReporting = () => {
               <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-8 h-8 text-red-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Tidak ada modul ditemukan</h3>
-              <p className="text-gray-600">Tidak ada modul yang sesuai dengan kriteria pencarian atau filter</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Tidak ada laporan ditemukan</h3>
+              <p className="text-gray-600">Tidak ada laporan yang sesuai dengan kriteria pencarian atau filter</p>
               <button
                 onClick={resetFilters}
                 className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -773,7 +796,7 @@ const EReporting = () => {
       {/* Detail Modal */}
       {selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-red-50 to-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -781,8 +804,8 @@ const EReporting = () => {
                     <FileText className="w-6 h-6 text-red-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-red-900">Detail Modul Laporan</h3>
-                    <p className="text-gray-600">{selectedReport.kodeLaporan}</p>
+                    <h3 className="text-xl font-bold text-red-900">Detail Monitoring Laporan</h3>
+                    <p className="text-gray-600">ID: {selectedReport.id}</p>
                   </div>
                 </div>
                 <button
@@ -797,47 +820,42 @@ const EReporting = () => {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Kode Industri</h4>
-                  <p className="text-lg font-bold text-blue-700">{selectedReport.kodeIndustri}</p>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">ID Laporan</h4>
+                  <p className="text-lg font-bold text-red-700">#{selectedReport.id}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Nama Industri</h4>
-                  <p className="text-lg font-medium text-gray-900">{selectedReport.namaIndustri}</p>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Aplikasi</h4>
+                  <p className="text-lg font-bold text-blue-700">{selectedReport.aplikasi}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Kode Laporan</h4>
-                  <p className="text-lg font-bold text-green-700">{selectedReport.kodeLaporan}</p>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Periode Laporan</h4>
+                  <div className="mt-1">{getPeriodeBadge(selectedReport.periodeLaporan)}</div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Nama Laporan</h4>
-                  <p className="text-lg font-medium text-gray-900">{selectedReport.namaLaporan}</p>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Status Pengiriman</h4>
+                  <div className="mt-1">{getStatusPengirimanBadge(selectedReport.statusPengiriman)}</div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Status</h4>
-                  {getStatusBadge(selectedReport.status)}
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Status Ketepatan Waktu</h4>
+                  <div className="mt-1">{getStatusKetepatanBadge(selectedReport.statusKetepatan)}</div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Jenis Periode</h4>
-                  {getJenisBadge(selectedReport.jenis)}
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Periode Pelaporan</h4>
-                  <p className="text-lg font-medium text-gray-900">{selectedReport.periodePelaporan}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Direktorat</h4>
-                  <p className="text-lg font-medium text-gray-900">{selectedReport.direktorat}</p>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Jenis LJK</h4>
+                  <div className="mt-1">{getJenisLKJBadge(selectedReport.jenisLJK)}</div>
                 </div>
               </div>
               
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-2">Deskripsi</h4>
-                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{selectedReport.deskripsi}</p>
+                <h4 className="text-sm font-medium text-gray-500 mb-2">Nama Laporan</h4>
+                <p className="text-lg font-medium text-gray-900 bg-gray-50 p-4 rounded-lg">{selectedReport.namaLaporan}</p>
               </div>
               
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-2">Alamat Pengiriman</h4>
-                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{selectedReport.alamat}</p>
+                <h4 className="text-sm font-medium text-gray-500 mb-2">Batas Waktu Penyampaian</h4>
+                <p className="text-gray-700 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <Clock className="w-4 h-4 inline mr-2 text-yellow-600" />
+                  {selectedReport.batasWaktu}
+                </p>
               </div>
               
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
@@ -848,10 +866,16 @@ const EReporting = () => {
                   Tutup
                 </button>
                 <button
-                  onClick={() => alert(`Membuka laporan ${selectedReport.kodeLaporan}`)}
+                  onClick={() => alert(`Download laporan ${selectedReport.namaLaporan}`)}
                   className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
                 >
-                  Buka Laporan
+                  Download Laporan
+                </button>
+                <button
+                  onClick={() => alert(`Melihat riwayat ${selectedReport.namaLaporan}`)}
+                  className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Lihat Riwayat
                 </button>
               </div>
             </div>

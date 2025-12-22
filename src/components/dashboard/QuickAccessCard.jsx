@@ -1,3 +1,4 @@
+// src/components/dashboard/QuickAccessCard.jsx
 import React from 'react';
 import { ArrowRight, FileText } from 'lucide-react';
 
@@ -14,13 +15,13 @@ const QuickAccessCard = ({ title, description, reports, color, link }) => {
       gradient: 'bg-gradient-to-br from-white to-slate-100',
       text: 'text-green-600',
       bg: 'bg-green-50 border-green-100 hover:bg-green-100',
-      logo: '/ereporting-logo.png' // Ganti dengan nama file logo eReporting yang sesuai
+      logo: '/ereporting-logo.png'
     },
     sipina: {
       gradient: 'bg-gradient-to-br from-white to-slate-100',
       text: 'text-blue-600',      
       bg: 'bg-blue-50 border-blue-100 hover:bg-blue-100',
-      logo: '/sipina-logo.png' // Ganti dengan nama file logo Sipina yang sesuai
+      logo: '/sipina-logo.png'
     }
   };
 

@@ -19,19 +19,49 @@ import {
 } from 'lucide-react';
 
 const REPORTS_DATA = [
-  { id: 1, jenis: "Laporan Sanksi Administratif", jenisValue: "sanksi", periode: "Semester I 2023", periodeValue: "semester", tanggal: "15 Juli 2023", deadline: "31 Juli 2023", status: "berhasil", priority: "high", deskripsi: "Laporan sanksi administratif periode semester I 2023", namaFile: "sanksi_semester_I_2023.pdf", ukuran: "2.4 MB" },
-  { id: 2, jenis: "Laporan Nasabah Asing", jenisValue: "nasabah", periode: "Q2 2023", periodeValue: "triwulan", tanggal: "10 Juli 2023", deadline: "15 Juli 2023", status: "terlambat", priority: "high", deskripsi: "Laporan nasabah asing triwulan II 2023", namaFile: "nasabah_asing_Q2_2023.pdf", ukuran: "1.8 MB" },
-  { id: 3, jenis: "Laporan Khusus DJK", jenisValue: "khusus", periode: "Maret 2023", periodeValue: "bulanan", tanggal: "5 April 2023", deadline: "10 April 2023", status: "berhasil", priority: "medium", deskripsi: "Laporan khusus DJK bulan Maret 2023", namaFile: "khusus_djk_maret_2023.pdf", ukuran: "3.1 MB" },
-  { id: 4, jenis: "Laporan Triwulanan", jenisValue: "triwulan", periode: "Januari - Maret 2023", periodeValue: "triwulan", tanggal: "10 April 2023", deadline: "20 April 2023", status: "tidak-berhasil", priority: "high", deskripsi: "Laporan triwulanan Q1 2023", namaFile: "triwulanan_Q1_2023.pdf", ukuran: "2.7 MB" },
+  { 
+    id: 1, 
+    aplikasi: "SiPina", 
+    jenisLJK: "Asuransi Jiwa", 
+    namaLaporan: "Laporan Tahunan - Penyampaian Informasi Nasabah Asing", 
+    periodeLaporan: "Tahunan", 
+    batasWaktu: "1 Juli s.d 1 Agustus Tahun berikutnya", 
+    statusPengiriman: "Berhasil", 
+    statusKetepatan: "Tepat Waktu",
+    jenisValue: "asuransi-jiwa",
+    periodeValue: "tahunan",
+    tanggal: "15 Juli 2024",
+    priority: "high",
+    deskripsi: "Laporan penyampaian informasi nasabah asing tahunan untuk Asuransi Jiwa",
+    namaFile: "laporan_tahunan_nasabah_asing_2023.pdf",
+    ukuran: "3.2 MB"
+  },
+  { 
+    id: 2, 
+    aplikasi: "SiPina", 
+    jenisLJK: "Asuransi Jiwa", 
+    namaLaporan: "Laporan Tahunan 2 - Penyampaian Informasi Nasabah Asing", 
+    periodeLaporan: "Tahunan", 
+    batasWaktu: "1 Juli s.d 1 Agustus Tahun berikutnya", 
+    statusPengiriman: "Tidak Berhasil", 
+    statusKetepatan: "Terlambat",
+    jenisValue: "asuransi-jiwa",
+    periodeValue: "tahunan",
+    tanggal: "10 Agustus 2024",
+    priority: "high",
+    deskripsi: "Laporan penyampaian informasi nasabah asing tahunan (pengiriman kedua)",
+    namaFile: "laporan_tahunan2_nasabah_asing_2023.pdf",
+    ukuran: "3.5 MB"
+  },
 ];
 
 const SIPINA = () => {
   // State untuk filter 2 tingkat
   const [filters, setFilters] = useState({
-    status: 'all', // Level 1: Filter status
+    statusPengiriman: 'all', // Level 1: Filter status pengiriman
     subFilters: { // Level 2: Filter setelah status dipilih
-      jenis: 'all',
-      periode: 'all',
+      jenisLJK: 'all',
+      periodeLaporan: 'all',
       tanggal: ''
     }
   });
@@ -43,20 +73,22 @@ const SIPINA = () => {
   const filteredReports = useMemo(() => {
     let filtered = [...REPORTS_DATA];
 
-    // Level 1: Filter berdasarkan status
-    if (filters.status !== 'all') {
-      filtered = filtered.filter(report => report.status === filters.status);
+    // Level 1: Filter berdasarkan status pengiriman
+    if (filters.statusPengiriman !== 'all') {
+      filtered = filtered.filter(report => 
+        report.statusPengiriman.toLowerCase() === filters.statusPengiriman.toLowerCase()
+      );
     }
     
     // Level 2: Filter sub-filters
-    // Apply jenis filter
-    if (filters.subFilters.jenis !== 'all') {
-      filtered = filtered.filter(report => report.jenisValue === filters.subFilters.jenis);
+    // Apply jenisLJK filter
+    if (filters.subFilters.jenisLJK !== 'all') {
+      filtered = filtered.filter(report => report.jenisValue === filters.subFilters.jenisLJK);
     }
 
-    // Apply periode filter
-    if (filters.subFilters.periode !== 'all') {
-      filtered = filtered.filter(report => report.periodeValue === filters.subFilters.periode);
+    // Apply periodeLaporan filter
+    if (filters.subFilters.periodeLaporan !== 'all') {
+      filtered = filtered.filter(report => report.periodeValue === filters.subFilters.periodeLaporan);
     }
 
     // Apply tanggal filter
@@ -87,8 +119,9 @@ const SIPINA = () => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(report => 
-        report.jenis.toLowerCase().includes(term) ||
-        report.periode.toLowerCase().includes(term) ||
+        report.namaLaporan.toLowerCase().includes(term) ||
+        report.jenisLJK.toLowerCase().includes(term) ||
+        report.periodeLaporan.toLowerCase().includes(term) ||
         report.tanggal.toLowerCase().includes(term) ||
         report.deskripsi?.toLowerCase().includes(term) ||
         report.namaFile?.toLowerCase().includes(term)
@@ -98,56 +131,55 @@ const SIPINA = () => {
     return filtered;
   }, [filters, searchTerm]);
 
-  // Get unique jenis berdasarkan status yang dipilih
-  const uniqueJenis = useMemo(() => {
+  // Get unique jenisLJK berdasarkan status yang dipilih
+  const uniqueJenisLJK = useMemo(() => {
     let filteredData = REPORTS_DATA;
     
-    if (filters.status !== 'all') {
-      filteredData = filteredData.filter(report => report.status === filters.status);
+    if (filters.statusPengiriman !== 'all') {
+      filteredData = filteredData.filter(report => 
+        report.statusPengiriman.toLowerCase() === filters.statusPengiriman.toLowerCase()
+      );
     }
     
     const jenis = [...new Set(filteredData.map(report => report.jenisValue))];
     return jenis.map(j => ({
       value: j,
-      label: j === 'sanksi' ? 'Sanksi Administratif' :
-             j === 'nasabah' ? 'Nasabah Asing' :
-             j === 'khusus' ? 'Khusus DJK' :
-             j === 'triwulan' ? 'Triwulanan' : j
+      label: j === 'asuransi-jiwa' ? 'Asuransi Jiwa' : j
     }));
-  }, [filters.status]);
+  }, [filters.statusPengiriman]);
 
   // Get unique periode berdasarkan status yang dipilih
   const uniquePeriode = useMemo(() => {
     let filteredData = REPORTS_DATA;
     
-    if (filters.status !== 'all') {
-      filteredData = filteredData.filter(report => report.status === filters.status);
+    if (filters.statusPengiriman !== 'all') {
+      filteredData = filteredData.filter(report => 
+        report.statusPengiriman.toLowerCase() === filters.statusPengiriman.toLowerCase()
+      );
     }
     
     const periode = [...new Set(filteredData.map(report => report.periodeValue))];
     return periode.map(p => ({
       value: p,
-      label: p === 'semester' ? 'Semester' :
-             p === 'triwulan' ? 'Triwulan' :
-             p === 'bulanan' ? 'Bulanan' : p
+      label: p === 'tahunan' ? 'Tahunan' : p
     }));
-  }, [filters.status]);
+  }, [filters.statusPengiriman]);
 
   // Hitung stats dari data asli (REPORTS_DATA)
   const stats = useMemo(() => ({
     total: REPORTS_DATA.length,
-    berhasil: REPORTS_DATA.filter(r => r.status === 'berhasil').length,
-    terlambat: REPORTS_DATA.filter(r => r.status === 'terlambat').length,
-    tidakBerhasil: REPORTS_DATA.filter(r => r.status === 'tidak-berhasil').length,
+    berhasil: REPORTS_DATA.filter(r => r.statusPengiriman === 'Berhasil').length,
+    terlambat: REPORTS_DATA.filter(r => r.statusKetepatan === 'Terlambat').length,
+    tidakBerhasil: REPORTS_DATA.filter(r => r.statusPengiriman === 'Tidak Berhasil').length,
   }), []);
 
   // Status summary untuk filter level 1
   const statusSummary = useMemo(() => {
     const summary = {};
-    const allStatus = ['berhasil', 'terlambat', 'tidak-berhasil'];
+    const allStatus = ['Berhasil', 'Tidak Berhasil'];
     
     allStatus.forEach(status => {
-      summary[status] = REPORTS_DATA.filter(r => r.status === status).length;
+      summary[status] = REPORTS_DATA.filter(r => r.statusPengiriman === status).length;
     });
     
     return summary;
@@ -155,10 +187,10 @@ const SIPINA = () => {
 
   const resetFilters = () => {
     setFilters({
-      status: 'all',
+      statusPengiriman: 'all',
       subFilters: {
-        jenis: 'all',
-        periode: 'all',
+        jenisLJK: 'all',
+        periodeLaporan: 'all',
         tanggal: ''
       }
     });
@@ -169,10 +201,10 @@ const SIPINA = () => {
 
   const handleStatusChange = (status) => {
     setFilters(prev => ({ 
-      status,
+      statusPengiriman: status,
       subFilters: {
-        jenis: 'all',
-        periode: 'all',
+        jenisLJK: 'all',
+        periodeLaporan: 'all',
         tanggal: ''
       }
     }));
@@ -195,22 +227,28 @@ const SIPINA = () => {
     }));
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusPengirimanBadge = (status) => {
     const styles = {
-      'berhasil': 'bg-green-100 text-green-800 border-green-200',
-      'terlambat': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'tidak-berhasil': 'bg-red-100 text-red-800 border-red-200',
-    };
-
-    const labels = {
-      'berhasil': 'Berhasil',
-      'terlambat': 'Terlambat',
-      'tidak-berhasil': 'Tidak Berhasil',
+      'Berhasil': 'bg-green-100 text-green-800 border-green-200',
+      'Tidak Berhasil': 'bg-red-100 text-red-800 border-red-200',
     };
 
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[status] || 'bg-gray-100'}`}>
-        {labels[status] || status}
+        {status}
+      </span>
+    );
+  };
+
+  const getStatusKetepatanBadge = (status) => {
+    const styles = {
+      'Tepat Waktu': 'bg-blue-100 text-blue-800 border-blue-200',
+      'Terlambat': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    };
+
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[status] || 'bg-gray-100'}`}>
+        {status}
       </span>
     );
   };
@@ -241,14 +279,16 @@ const SIPINA = () => {
 
   const handleExportData = () => {
     const exportData = filteredReports.map(report => ({
-      'Jenis': report.jenis,
-      'Periode': report.periode,
+      'No': report.id,
+      'Aplikasi': report.aplikasi,
+      'Jenis LJK': report.jenisLJK,
+      'Nama Laporan': report.namaLaporan,
+      'Periode Laporan': report.periodeLaporan,
+      'Batas Waktu Penyampaian': report.batasWaktu,
+      'Status Pengiriman': report.statusPengiriman,
+      'Status Ketepatan Waktu': report.statusKetepatan,
       'Tanggal': report.tanggal,
-      'Deadline': report.deadline,
-      'Status': report.status === 'berhasil' ? 'Berhasil' : 
-                report.status === 'terlambat' ? 'Terlambat' : 'Tidak Berhasil',
-      'Prioritas': report.priority === 'high' ? 'Tinggi' :
-                   report.priority === 'medium' ? 'Sedang' : 'Rendah',
+      'Prioritas': report.priority === 'high' ? 'Tinggi' : 'Rendah',
       'Deskripsi': report.deskripsi || '',
       'Nama File': report.namaFile || '',
       'Ukuran': report.ukuran || ''
@@ -294,13 +334,13 @@ const SIPINA = () => {
           </div>
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-red-900">Laporan SIPINA</h1>
-            <p className="text-gray-600 mt-1">Kelola semua laporan sistem SIPINA di sini</p>
+            <p className="text-gray-600 mt-1">Sistem Pengawasan dan Informasi Asuransi - Otoritas Jasa Keuangan</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-4 py-2.5 rounded-xl border border-yellow-200 shadow-sm">
             <AlertTriangle className="w-4 h-4" />
-            <span className="text-sm font-medium">3 Hari Deadline</span>
+            <span className="text-sm font-medium">Laporan Tahunan Aktif</span>
           </div>
           <button 
             onClick={handleExportData}
@@ -397,12 +437,12 @@ const SIPINA = () => {
           <div className="p-6">
             {/* Level 1: Status Filter */}
             <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-4">Level 1: Pilih Status Laporan</h4>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <h4 className="text-sm font-medium text-gray-700 mb-4">Level 1: Pilih Status Pengiriman</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <button
                   onClick={() => handleStatusChange('all')}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
-                    filters.status === 'all' 
+                    filters.statusPengiriman === 'all' 
                       ? 'border-red-500 bg-red-50 shadow-md' 
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
@@ -416,13 +456,13 @@ const SIPINA = () => {
                       <div className="text-sm text-gray-600">{REPORTS_DATA.length} laporan</div>
                     </div>
                   </div>
-                  {filters.status === 'all' && <ChevronDown className="w-5 h-5 text-red-500" />}
+                  {filters.statusPengiriman === 'all' && <ChevronDown className="w-5 h-5 text-red-500" />}
                 </button>
 
                 <button
-                  onClick={() => handleStatusChange('berhasil')}
+                  onClick={() => handleStatusChange('Berhasil')}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
-                    filters.status === 'berhasil' 
+                    filters.statusPengiriman === 'Berhasil' 
                       ? 'border-green-500 bg-green-50 shadow-md' 
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
@@ -433,36 +473,16 @@ const SIPINA = () => {
                     </div>
                     <div className="text-left">
                       <div className="font-bold text-gray-900">Berhasil</div>
-                      <div className="text-sm text-gray-600">{statusSummary.berhasil || 0} laporan</div>
+                      <div className="text-sm text-gray-600">{statusSummary.Berhasil || 0} laporan</div>
                     </div>
                   </div>
-                  {filters.status === 'berhasil' && <ChevronDown className="w-5 h-5 text-green-500" />}
+                  {filters.statusPengiriman === 'Berhasil' && <ChevronDown className="w-5 h-5 text-green-500" />}
                 </button>
 
                 <button
-                  onClick={() => handleStatusChange('terlambat')}
+                  onClick={() => handleStatusChange('Tidak Berhasil')}
                   className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
-                    filters.status === 'terlambat' 
-                      ? 'border-yellow-500 bg-yellow-50 shadow-md' 
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-yellow-100 rounded-lg">
-                      <Clock className="w-5 h-5 text-yellow-600" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-gray-900">Terlambat</div>
-                      <div className="text-sm text-gray-600">{statusSummary.terlambat || 0} laporan</div>
-                    </div>
-                  </div>
-                  {filters.status === 'terlambat' && <ChevronDown className="w-5 h-5 text-yellow-500" />}
-                </button>
-
-                <button
-                  onClick={() => handleStatusChange('tidak-berhasil')}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between ${
-                    filters.status === 'tidak-berhasil' 
+                    filters.statusPengiriman === 'Tidak Berhasil' 
                       ? 'border-red-500 bg-red-50 shadow-md' 
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
@@ -473,16 +493,16 @@ const SIPINA = () => {
                     </div>
                     <div className="text-left">
                       <div className="font-bold text-gray-900">Tidak Berhasil</div>
-                      <div className="text-sm text-gray-600">{statusSummary['tidak-berhasil'] || 0} laporan</div>
+                      <div className="text-sm text-gray-600">{statusSummary['Tidak Berhasil'] || 0} laporan</div>
                     </div>
                   </div>
-                  {filters.status === 'tidak-berhasil' && <ChevronDown className="w-5 h-5 text-red-500" />}
+                  {filters.statusPengiriman === 'Tidak Berhasil' && <ChevronDown className="w-5 h-5 text-red-500" />}
                 </button>
               </div>
             </div>
 
             {/* Level 2: Sub Filters */}
-            {(filters.status !== 'all' || showSubFilters) && (
+            {(filters.statusPengiriman !== 'all' || showSubFilters) && (
               <div className="mb-6 animate-slide-down">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-sm font-medium text-gray-700">Level 2: Filter Tambahan</h4>
@@ -508,21 +528,21 @@ const SIPINA = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Jenis Laporan
+                        Jenis LJK
                         <span className="ml-1 text-xs text-gray-500">
-                          ({uniqueJenis.length} tersedia)
+                          ({uniqueJenisLJK.length} tersedia)
                         </span>
                       </label>
                       <select
-                        value={filters.subFilters.jenis}
-                        onChange={(e) => handleSubFilterChange('jenis', e.target.value)}
+                        value={filters.subFilters.jenisLJK}
+                        onChange={(e) => handleSubFilterChange('jenisLJK', e.target.value)}
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                        disabled={uniqueJenis.length === 0}
+                        disabled={uniqueJenisLJK.length === 0}
                       >
                         <option value="all">
-                          {uniqueJenis.length === 0 ? 'Tidak tersedia' : 'Semua Jenis'}
+                          {uniqueJenisLJK.length === 0 ? 'Tidak tersedia' : 'Semua Jenis LJK'}
                         </option>
-                        {uniqueJenis.map((item) => (
+                        {uniqueJenisLJK.map((item) => (
                           <option key={item.value} value={item.value}>
                             {item.label}
                           </option>
@@ -532,14 +552,14 @@ const SIPINA = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Periode
+                        Periode Laporan
                         <span className="ml-1 text-xs text-gray-500">
                           ({uniquePeriode.length} tersedia)
                         </span>
                       </label>
                       <select
-                        value={filters.subFilters.periode}
-                        onChange={(e) => handleSubFilterChange('periode', e.target.value)}
+                        value={filters.subFilters.periodeLaporan}
+                        onChange={(e) => handleSubFilterChange('periodeLaporan', e.target.value)}
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
                         disabled={uniquePeriode.length === 0}
                       >
@@ -600,10 +620,9 @@ const SIPINA = () => {
                   <div>
                     <h5 className="font-medium text-blue-900">Filter Aktif:</h5>
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {filters.status !== 'all' && (
+                      {filters.statusPengiriman !== 'all' && (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                          Status: {filters.status === 'berhasil' ? 'Berhasil' : 
-                                  filters.status === 'terlambat' ? 'Terlambat' : 'Tidak Berhasil'}
+                          Status: {filters.statusPengiriman}
                           <button 
                             onClick={() => handleStatusChange('all')}
                             className="ml-2 text-blue-600 hover:text-blue-800"
@@ -612,22 +631,22 @@ const SIPINA = () => {
                           </button>
                         </span>
                       )}
-                      {filters.subFilters.jenis !== 'all' && (
+                      {filters.subFilters.jenisLJK !== 'all' && (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
-                          Jenis: {filters.subFilters.jenis}
+                          Jenis LJK: {filters.subFilters.jenisLJK}
                           <button 
-                            onClick={() => handleSubFilterChange('jenis', 'all')}
+                            onClick={() => handleSubFilterChange('jenisLJK', 'all')}
                             className="ml-2 text-purple-600 hover:text-purple-800"
                           >
                             ×
                           </button>
                         </span>
                       )}
-                      {filters.subFilters.periode !== 'all' && (
+                      {filters.subFilters.periodeLaporan !== 'all' && (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                          Periode: {filters.subFilters.periode}
+                          Periode: {filters.subFilters.periodeLaporan}
                           <button 
-                            onClick={() => handleSubFilterChange('periode', 'all')}
+                            onClick={() => handleSubFilterChange('periodeLaporan', 'all')}
                             className="ml-2 text-green-600 hover:text-green-800"
                           >
                             ×
@@ -693,12 +712,13 @@ const SIPINA = () => {
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">No</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jenis Laporan</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Periode</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tanggal Submit</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Deadline</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Prioritas</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aplikasi</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jenis LJK</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Laporan</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Periode Laporan</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Batas Waktu Penyampaian</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Pengiriman</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Ketepatan Waktu</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
@@ -708,32 +728,37 @@ const SIPINA = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        <div className="p-1.5 bg-purple-50 rounded-lg">
-                          <FileText className="w-4 h-4 text-purple-600" />
+                        <div className="p-1.5 bg-red-50 rounded-lg">
+                          <FileText className="w-4 h-4 text-red-600" />
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-purple-700">{report.jenis}</div>
-                          {report.namaFile && (
-                            <div className="text-xs text-gray-500">{report.namaFile}</div>
-                          )}
+                          <div className="text-sm font-bold text-red-700">{report.aplikasi}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {report.periode}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {report.tanggal}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{report.deadline}</div>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                        {report.jenisLJK}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900 max-w-xs truncate">{report.namaLaporan}</div>
+                      {report.namaFile && (
+                        <div className="text-xs text-gray-500">{report.namaFile}</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {report.periodeLaporan}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">{report.batasWaktu}</div>
                       <div className="text-xs text-gray-500">Deadline</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getPriorityBadge(report.priority)}
+                      {getStatusPengirimanBadge(report.statusPengiriman)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(report.status)}
+                      {getStatusKetepatanBadge(report.statusKetepatan)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
@@ -744,9 +769,9 @@ const SIPINA = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {report.status === 'berhasil' && (
+                        {report.statusPengiriman === 'Berhasil' && (
                           <button
-                            onClick={() => alert(`Download laporan ${report.jenis}`)}
+                            onClick={() => alert(`Download laporan ${report.namaLaporan}`)}
                             className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
                             title="Download laporan"
                           >
@@ -754,7 +779,7 @@ const SIPINA = () => {
                           </button>
                         )}
                         <button
-                          onClick={() => alert(`Buka laporan ${report.jenis}`)}
+                          onClick={() => alert(`Buka laporan ${report.namaLaporan}`)}
                           className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors"
                           title="Buka laporan"
                         >
@@ -803,12 +828,6 @@ const SIPINA = () => {
                   1
                 </button>
                 <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                  2
-                </button>
-                <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                  3
-                </button>
-                <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                   Selanjutnya →
                 </button>
               </div>
@@ -829,7 +848,7 @@ const SIPINA = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-blue-900">Detail Laporan SIPINA</h3>
-                    <p className="text-gray-600">{selectedReport.jenis}</p>
+                    <p className="text-gray-600">{selectedReport.namaLaporan}</p>
                   </div>
                 </div>
                 <button
@@ -844,24 +863,36 @@ const SIPINA = () => {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Jenis Laporan</h4>
-                  <p className="text-lg font-bold text-purple-700">{selectedReport.jenis}</p>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Aplikasi</h4>
+                  <p className="text-lg font-bold text-red-700">{selectedReport.aplikasi}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Periode</h4>
-                  <p className="text-lg font-medium text-gray-900">{selectedReport.periode}</p>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Jenis LJK</h4>
+                  <p className="text-lg font-medium text-blue-700">{selectedReport.jenisLJK}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Tanggal Submit</h4>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Nama Laporan</h4>
+                  <p className="text-lg font-medium text-gray-900">{selectedReport.namaLaporan}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Periode Laporan</h4>
+                  <p className="text-lg font-medium text-gray-900">{selectedReport.periodeLaporan}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Batas Waktu Penyampaian</h4>
+                  <p className="text-lg font-medium text-gray-900">{selectedReport.batasWaktu}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Status Pengiriman</h4>
+                  {getStatusPengirimanBadge(selectedReport.statusPengiriman)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Status Ketepatan Waktu</h4>
+                  {getStatusKetepatanBadge(selectedReport.statusKetepatan)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Tanggal</h4>
                   <p className="text-lg font-medium text-gray-900">{selectedReport.tanggal}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Deadline</h4>
-                  <p className="text-lg font-medium text-gray-900">{selectedReport.deadline}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Status</h4>
-                  {getStatusBadge(selectedReport.status)}
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Prioritas</h4>
@@ -871,7 +902,7 @@ const SIPINA = () => {
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Nama File</h4>
                   <p className="text-lg font-medium text-gray-900">{selectedReport.namaFile || 'Tidak tersedia'}</p>
                 </div>
-                <div>
+                <div className="md:col-span-2">
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Ukuran</h4>
                   <p className="text-lg font-medium text-gray-900">{selectedReport.ukuran || 'Tidak tersedia'}</p>
                 </div>
@@ -889,16 +920,16 @@ const SIPINA = () => {
                 >
                   Tutup
                 </button>
-                {selectedReport.status === 'berhasil' && (
+                {selectedReport.statusPengiriman === 'Berhasil' && (
                   <button
-                    onClick={() => alert(`Download laporan ${selectedReport.jenis}`)}
+                    onClick={() => alert(`Download laporan ${selectedReport.namaLaporan}`)}
                     className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
                   >
                     Download Laporan
                   </button>
                 )}
                 <button
-                  onClick={() => alert(`Membuka laporan ${selectedReport.jenis}`)}
+                  onClick={() => alert(`Membuka laporan ${selectedReport.namaLaporan}`)}
                   className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Buka Laporan

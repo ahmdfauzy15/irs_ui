@@ -1,3 +1,4 @@
+// src/components/dashboard/RecentReports.jsx
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -28,12 +29,16 @@ import {
   Tablet,
   Monitor,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Calendar,
+  Shield,
+  BanknoteIcon
 } from 'lucide-react';
 
-const RecentReports = ({ reports, searchTerm }) => {
+const RecentReports = ({ reports, searchTerm, allReports }) => {
   const [isMobile, setIsMobile] = useState(false);
-  const [activeChart, setActiveChart] = useState('system'); // 'system', 'status', 'bar'
+  const [activeChart, setActiveChart] = useState('system');
+  const [filteredData, setFilteredData] = useState([]);
   
   // Deteksi ukuran layar
   useEffect(() => {
@@ -46,11 +51,28 @@ const RecentReports = ({ reports, searchTerm }) => {
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
+  
+  // Filter data berdasarkan search term
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredData(reports);
+    } else {
+      const filtered = reports.filter(report =>
+        report.jenis?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.sistem?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.jenis_ljk?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.periode?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredData(filtered);
+    }
+  }, [reports, searchTerm]);
+  
   // Helper functions
   const getSystemColor = (system) => {
     const colors = {
       'APOLO': '#3B82F6',
+      'Ereporting': '#06B6D4',
+      'SiPina': '#8B5CF6',
       'E-REPORTING': '#06B6D4',
       'SIPINA': '#8B5CF6',
       'Unknown': '#6B7280'
@@ -63,9 +85,12 @@ const RecentReports = ({ reports, searchTerm }) => {
       'berhasil': '#10B981',
       'terlambat': '#F59E0B',
       'tidak-berhasil': '#EF4444',
+      'gagal': '#EF4444',
       'Aktif': '#10B981',
-      'Used': '#3B82F6',
-      'Unused': '#6B7280',
+      'Tepat Waktu': '#10B981',
+      'Terlambat': '#F59E0B',
+      'Berhasil': '#10B981',
+      'Tidak Berhasil': '#EF4444',
       'Unknown': '#9CA3AF'
     };
     return colors[status] || '#9CA3AF';
@@ -76,9 +101,12 @@ const RecentReports = ({ reports, searchTerm }) => {
       'berhasil': 'Berhasil',
       'terlambat': 'Terlambat',
       'tidak-berhasil': 'Tidak Berhasil',
+      'gagal': 'Gagal',
       'Aktif': 'Aktif',
-      'Used': 'Digunakan',
-      'Unused': 'Tidak Digunakan'
+      'Tepat Waktu': 'Tepat Waktu',
+      'Terlambat': 'Terlambat',
+      'Berhasil': 'Berhasil',
+      'Tidak Berhasil': 'Tidak Berhasil'
     };
     return labels[status] || status;
   };
@@ -86,27 +114,26 @@ const RecentReports = ({ reports, searchTerm }) => {
   const getSystemIcon = (system) => {
     switch(system) {
       case 'APOLO': return <Building className="w-3.5 h-3.5 sm:w-4 sm:h-4" />;
+      case 'Ereporting':
       case 'E-REPORTING': return <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />;
+      case 'SiPina':
       case 'SIPINA': return <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />;
       default: return <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />;
     }
   };
 
-  // Filter reports
-  const filteredReports = useMemo(() => {
-    if (!reports) return [];
-    return reports.filter(report =>
-      report.jenis?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.sistem?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.periode?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [reports, searchTerm]);
+  const getLJKIcon = (jenis) => {
+    if (jenis.includes('BU')) return <BanknoteIcon className="w-3.5 h-3.5" />;
+    if (jenis.includes('BPR')) return <Shield className="w-3.5 h-3.5" />;
+    if (jenis.includes('Bank')) return <Building className="w-3.5 h-3.5" />;
+    if (jenis.includes('Asuransi')) return <Shield className="w-3.5 h-3.5" />;
+    return <FileText className="w-3.5 h-3.5" />;
+  };
 
   // Data untuk charts
   const systemData = useMemo(() => {
-    if (!filteredReports.length) return [];
     const systems = {};
-    filteredReports.forEach(report => {
+    filteredData.forEach(report => {
       const system = report.sistem || 'Unknown';
       systems[system] = (systems[system] || 0) + 1;
     });
@@ -115,13 +142,12 @@ const RecentReports = ({ reports, searchTerm }) => {
       value,
       color: getSystemColor(name)
     }));
-  }, [filteredReports]);
+  }, [filteredData]);
 
   const statusData = useMemo(() => {
-    if (!filteredReports.length) return [];
     const statuses = {};
-    filteredReports.forEach(report => {
-      const status = report.status || 'Unknown';
+    filteredData.forEach(report => {
+      const status = report.ketepatan || report.status || 'Unknown';
       statuses[status] = (statuses[status] || 0) + 1;
     });
     return Object.entries(statuses).map(([name, value]) => ({
@@ -129,28 +155,50 @@ const RecentReports = ({ reports, searchTerm }) => {
       value,
       color: getStatusColor(name)
     }));
-  }, [filteredReports]);
+  }, [filteredData]);
 
   const recentBarData = useMemo(() => {
-    if (!filteredReports.length) return [];
-    return filteredReports.slice(0, 5).map(report => ({
+    return filteredData.slice(0, 5).map(report => ({
       name: report.jenis?.substring(0, isMobile ? 12 : 20) + (report.jenis?.length > (isMobile ? 12 : 20) ? '...' : ''),
       laporan: report.jenis,
       value: 1,
       system: report.sistem,
-      status: report.status,
-      tanggal: report.tanggal,
+      status: report.ketepatan || report.status,
+      jenis_ljk: report.jenis_ljk,
+      periode: report.periode,
       color: getSystemColor(report.sistem)
     }));
-  }, [filteredReports, isMobile]);
+  }, [filteredData, isMobile]);
+
+  // Data untuk distribusi LJK
+  const ljkData = useMemo(() => {
+    const ljkTypes = {};
+    filteredData.forEach(report => {
+      const jenis = report.jenis_ljk || 'Unknown';
+      if (jenis) {
+        ljkTypes[jenis] = (ljkTypes[jenis] || 0) + 1;
+      }
+    });
+    return Object.entries(ljkTypes)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, value]) => ({
+        name: name.length > 10 ? name.substring(0, 10) + '...' : name,
+        fullName: name,
+        value,
+        color: getSystemColor('APOLO') // Default color
+      }));
+  }, [filteredData]);
 
   const systemLinks = {
     'APOLO': '/apolo',
+    'Ereporting': '/ereporting',
     'E-REPORTING': '/ereporting',
+    'SiPina': '/sipina',
     'SIPINA': '/sipina'
   };
 
-  if (filteredReports.length === 0) {
+  if (filteredData.length === 0) {
     return (
       <div className="text-center py-8 sm:py-12 px-4">
         <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-red-50 to-white rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 border border-red-200 shadow-sm">
@@ -164,35 +212,13 @@ const RecentReports = ({ reports, searchTerm }) => {
 
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
-      {/* Device Indicator (for debugging) */}
-      <div className="hidden sm:flex items-center justify-end space-x-2 mb-2">
-        <div className="flex items-center space-x-1 text-xs text-gray-500">
-          {isMobile ? (
-            <>
-              <Smartphone className="w-3 h-3" />
-              <span>Mobile</span>
-            </>
-          ) : window.innerWidth < 1024 ? (
-            <>
-              <Tablet className="w-3 h-3" />
-              <span>Tablet</span>
-            </>
-          ) : (
-            <>
-              <Monitor className="w-3 h-3" />
-              <span>Desktop</span>
-            </>
-          )}
-        </div>
-      </div>
-
       {/* Header Stats - Mobile Compact */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <div className="bg-gradient-to-br from-blue-50 to-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-blue-100 shadow-xs sm:shadow-sm">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5 sm:space-y-1">
               <p className="text-xs sm:text-sm text-blue-600 font-medium truncate">Total</p>
-              <p className="text-xl sm:text-2xl font-bold text-blue-900">{filteredReports.length}</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-900">{filteredData.length}</p>
             </div>
             <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
               <FileText className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
@@ -203,9 +229,9 @@ const RecentReports = ({ reports, searchTerm }) => {
         <div className="bg-gradient-to-br from-green-50 to-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-green-100 shadow-xs sm:shadow-sm">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5 sm:space-y-1">
-              <p className="text-xs sm:text-sm text-green-600 font-medium truncate">Berhasil</p>
+              <p className="text-xs sm:text-sm text-green-600 font-medium truncate">Tepat Waktu</p>
               <p className="text-xl sm:text-2xl font-bold text-green-900">
-                {filteredReports.filter(r => r.status === 'berhasil' || r.status === 'Aktif').length}
+                {filteredData.filter(r => r.ketepatan === 'Tepat Waktu').length}
               </p>
             </div>
             <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg">
@@ -219,7 +245,7 @@ const RecentReports = ({ reports, searchTerm }) => {
             <div className="space-y-0.5 sm:space-y-1">
               <p className="text-xs sm:text-sm text-red-600 font-medium truncate">Perhatian</p>
               <p className="text-xl sm:text-2xl font-bold text-red-900">
-                {filteredReports.filter(r => r.status === 'terlambat' || r.status === 'tidak-berhasil').length}
+                {filteredData.filter(r => r.ketepatan === 'Terlambat' || r.status === 'tidak-berhasil').length}
               </p>
             </div>
             <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg">
@@ -251,6 +277,12 @@ const RecentReports = ({ reports, searchTerm }) => {
             >
               Laporan
             </button>
+            <button
+              onClick={() => setActiveChart('ljk')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeChart === 'ljk' ? 'bg-red-600 text-white' : 'bg-white text-gray-700 hover:bg-red-50'}`}
+            >
+              LJK
+            </button>
           </div>
           <div className="flex items-center space-x-1">
             <button className="p-1 text-gray-500 hover:text-red-600">
@@ -263,7 +295,7 @@ const RecentReports = ({ reports, searchTerm }) => {
         </div>
       )}
 
-      {/* Charts Section - Mobile: Carousel, Desktop: Grid */}
+      {/* Charts Section */}
       <div className={`${isMobile ? 'space-y-4' : 'grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'}`}>
         {/* Pie Chart - Distribution by System */}
         {(!isMobile || activeChart === 'system') && (
@@ -271,7 +303,7 @@ const RecentReports = ({ reports, searchTerm }) => {
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div className="min-w-0">
                 <h3 className="text-base sm:text-lg font-bold text-red-900 truncate">Distribusi Sistem</h3>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">Laporan berdasarkan sistem</p>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">Laporan berdasarkan sistem pelaporan</p>
               </div>
               <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg flex-shrink-0">
                 <Building className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
@@ -304,9 +336,8 @@ const RecentReports = ({ reports, searchTerm }) => {
               </ResponsiveContainer>
             </div>
             
-            {/* Quick Links to Systems - Mobile: Horizontal Scroll */}
             <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-red-100">
-              <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Akses Cepat:</h4>
+              <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Akses Cepat Sistem:</h4>
               <div className={`${isMobile ? 'flex space-x-2 overflow-x-auto pb-2 -mx-1 px-1' : 'grid grid-cols-3 gap-2'}`}>
                 {systemData.map((system, index) => (
                   <Link
@@ -334,7 +365,7 @@ const RecentReports = ({ reports, searchTerm }) => {
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div className="min-w-0">
                 <h3 className="text-base sm:text-lg font-bold text-red-900 truncate">Distribusi Status</h3>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">Laporan berdasarkan status</p>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">Ketepatan waktu pengiriman</p>
               </div>
               <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg flex-shrink-0">
                 <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
@@ -375,8 +406,8 @@ const RecentReports = ({ reports, searchTerm }) => {
         <div className="bg-gradient-to-br from-white to-red-50/30 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-red-100 shadow-sm sm:shadow-lg transition-shadow">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-bold text-red-900 truncate">5 Laporan Terbaru</h3>
-              <p className="text-xs sm:text-sm text-gray-600 truncate">Visualisasi laporan terbaru</p>
+              <h3 className="text-base sm:text-lg font-bold text-red-900 truncate">Laporan Terbaru</h3>
+              <p className="text-xs sm:text-sm text-gray-600 truncate">Visualisasi laporan terkini</p>
             </div>
             <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg flex-shrink-0">
               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
@@ -406,8 +437,9 @@ const RecentReports = ({ reports, searchTerm }) => {
                       <div key="tooltip-content" className="text-xs sm:text-sm">
                         <div className="font-semibold text-gray-900 truncate max-w-xs">{data.laporan}</div>
                         <div className="text-gray-600">Sistem: {data.system}</div>
+                        <div className="text-gray-600">LJK: {data.jenis_ljk}</div>
+                        <div className="text-gray-600">Periode: {data.periode}</div>
                         <div className="text-gray-600">Status: {getStatusLabel(data.status)}</div>
-                        {data.tanggal && <div className="text-gray-600">Tanggal: {data.tanggal}</div>}
                       </div>
                     ];
                   }}
@@ -426,13 +458,12 @@ const RecentReports = ({ reports, searchTerm }) => {
             </ResponsiveContainer>
           </div>
           
-          {/* Quick Actions - Mobile: Stacked, Desktop: Flex */}
           <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-red-100">
             <div className={`${isMobile ? 'space-y-3' : 'flex items-center justify-between'}`}>
               <div className="text-xs sm:text-sm text-gray-600">
-                Total {filteredReports.length} laporan ditemukan
+                Menampilkan {filteredData.length} laporan
               </div>
-              <div className={`${isMobile ? 'grid grid-cols-3 gap-2' : 'flex items-center space-x-3'}`}>
+              <div className={`${isMobile ? 'grid grid-cols-2 gap-2' : 'flex items-center space-x-3'}`}>
                 <Link
                   to="/apolo"
                   className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 text-blue-600 hover:text-blue-800 text-xs sm:text-sm font-medium hover:underline px-2 py-1.5 sm:px-0 sm:py-0 bg-blue-50 sm:bg-transparent rounded sm:rounded-none"
@@ -447,20 +478,85 @@ const RecentReports = ({ reports, searchTerm }) => {
                   <span>E-Reporting</span>
                   <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Link>
-                <Link
-                  to="/sipina"
-                  className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2 text-purple-600 hover:text-purple-800 text-xs sm:text-sm font-medium hover:underline px-2 py-1.5 sm:px-0 sm:py-0 bg-purple-50 sm:bg-transparent rounded sm:rounded-none"
-                >
-                  <span>SIPINA</span>
-                  <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
-                </Link>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Quick Overview Cards - Mobile: Stacked, Desktop: Grid */}
+      {/* Bar Chart - LJK Distribution */}
+      {(!isMobile || activeChart === 'ljk') && (
+        <div className="bg-gradient-to-br from-white to-red-50/30 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-red-100 shadow-sm sm:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-bold text-red-900 truncate">Distribusi LJK</h3>
+              <p className="text-xs sm:text-sm text-gray-600 truncate">Laporan berdasarkan jenis lembaga</p>
+            </div>
+            <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg flex-shrink-0">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
+            </div>
+          </div>
+          
+          <div className="h-48 sm:h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={ljkData}
+                margin={{ top: 10, right: isMobile ? 10 : 30, left: isMobile ? 0 : 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="name" 
+                  angle={isMobile ? -90 : -45}
+                  textAnchor={isMobile ? "end" : "end"}
+                  height={isMobile ? 80 : 60}
+                  fontSize={isMobile ? 10 : 12}
+                  interval={0}
+                />
+                <YAxis fontSize={isMobile ? 10 : 12} />
+                <Tooltip 
+                  formatter={(value, name, props) => {
+                    const data = props.payload;
+                    return [
+                      <div key="tooltip-content" className="text-xs sm:text-sm">
+                        <div className="font-semibold text-gray-900 truncate max-w-xs">{data.fullName}</div>
+                        <div className="text-gray-600">Jumlah Laporan: {data.value}</div>
+                      </div>
+                    ];
+                  }}
+                />
+                <Bar 
+                  dataKey="value" 
+                  radius={[4, 4, 0, 0]}
+                  barSize={isMobile ? 20 : 40}
+                  background={{ fill: '#f3f4f6' }}
+                >
+                  {ljkData.map((entry, index) => (
+                    <Cell key={`ljk-cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          
+          <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-red-100">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {ljkData.slice(0, 4).map((ljk, index) => (
+                <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                  <div className="p-1 bg-blue-100 rounded">
+                    {getLJKIcon(ljk.fullName)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-900 truncate">{ljk.name}</p>
+                    <p className="text-xs text-gray-500">{ljk.value} laporan</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Overview Cards */}
       <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         <Link
           to="/apolo"
@@ -474,11 +570,11 @@ const RecentReports = ({ reports, searchTerm }) => {
           </div>
           <h4 className="font-bold text-base sm:text-lg text-gray-900 mb-1 sm:mb-2 truncate">Laporan LJK</h4>
           <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2">
-            Sistem pelaporan online untuk Lembaga Jasa Keuangan
+            Aplikasi Pelaporan Online untuk Lembaga Jasa Keuangan
           </p>
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500">
-              {filteredReports.filter(r => r.sistem === 'APOLO').length} laporan
+              {systemData.find(s => s.name === 'APOLO')?.value || 0} laporan
             </span>
             <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 group-hover:translate-x-1 transition-transform" />
           </div>
@@ -496,11 +592,11 @@ const RecentReports = ({ reports, searchTerm }) => {
           </div>
           <h4 className="font-bold text-base sm:text-lg text-gray-900 mb-1 sm:mb-2 truncate">Pelaporan Elektronik</h4>
           <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2">
-            Sistem pelaporan elektronik untuk seluruh industri keuangan
+            Sistem pelaporan elektronik untuk industri keuangan
           </p>
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500">
-              {filteredReports.filter(r => r.sistem === 'E-REPORTING').length} laporan
+              {systemData.find(s => s.name === 'Ereporting' || s.name === 'E-REPORTING')?.value || 0} laporan
             </span>
             <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-600 group-hover:translate-x-1 transition-transform" />
           </div>
@@ -514,15 +610,15 @@ const RecentReports = ({ reports, searchTerm }) => {
             <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
               <Users className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
             </div>
-            <span className="text-xs font-medium text-purple-600">SIPINA</span>
+            <span className="text-xs font-medium text-purple-600">SiPina</span>
           </div>
           <h4 className="font-bold text-base sm:text-lg text-gray-900 mb-1 sm:mb-2 truncate">Nasabah Asing</h4>
           <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2">
-            Laporan informasi nasabah asing untuk kepatuhan PPSK
+            Laporan informasi nasabah asing untuk kepatuhan
           </p>
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500">
-              {filteredReports.filter(r => r.sistem === 'SIPINA').length} laporan
+              {systemData.find(s => s.name === 'SiPina' || s.name === 'SIPINA')?.value || 0} laporan
             </span>
             <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 group-hover:translate-x-1 transition-transform" />
           </div>
