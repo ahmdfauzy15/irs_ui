@@ -18,7 +18,9 @@ import {
   LogOut,
   Sidebar as SidebarIcon,
   LayoutDashboard,
-  ChevronLeft
+  ChevronLeft,
+  Mail,
+  Megaphone
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -26,6 +28,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [reportsOpen, setReportsOpen] = useState(false);
+  const [correspondenceOpen, setCorrespondenceOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const sidebarRef = useRef(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -91,12 +94,17 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { path: '/sipina', icon: Gavel, label: 'SIPINA' },
       ]
     },
-    { 
-      id: 'notifications',
-      path: '/notifications', 
-      icon: Bell, 
-      label: 'Notifikasi', 
-      badge: 3 
+    {
+      id: 'correspondence',
+      type: 'dropdown',
+      icon: Mail,
+      label: 'Korespondensi',
+      open: correspondenceOpen,
+      toggle: () => setCorrespondenceOpen(!correspondenceOpen),
+      subItems: [
+        { path: '/korespondensi/notifikasi', icon: Bell, label: 'Notifikasi' },
+        { path: '/korespondensi/pengumuman', icon: Megaphone, label: 'Pengumuman' },
+      ]
     },
     { 
       id: 'download',
@@ -109,12 +117,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       path: '/profile', 
       icon: User, 
       label: 'Profil Saya' 
-    }, 
-    { 
-      id: 'settings',
-      path: '/settings', 
-      icon: Settings, 
-      label: 'Pengaturan' 
     },
   ];
 
@@ -178,13 +180,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     );
   };
 
-  // Modern badge design
-  const renderBadge = (count) => (
-    <div className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-medium">
-      {count}
-    </div>
-  );
-
   return (
     <>
       {/* Mobile Overlay */}
@@ -194,21 +189,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           onClick={toggleSidebar}
         />
       )}
-
-      {/* Mobile Toggle Button */}
-      {/* {windowWidth < 1024 && (
-        <button
-          onClick={toggleSidebar}
-          className="mobile-toggle-btn fixed top-4 left-4 z-50 p-3 rounded-full bg-red-600 text-white shadow-lg hover:bg-red-700 hover:shadow-xl transition-all duration-300"
-          aria-label="Toggle sidebar"
-        >
-          {isSidebarOpen ? (
-            <X className="w-5 h-5" />
-          ) : (
-            <Menu className="w-5 h-5" />
-          )}
-        </button>
-      )} */}
 
       {/* Sidebar Container */}
       <div 
@@ -255,34 +235,8 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                 </div>
               )}
             </div>
-            
-            {/* Desktop Toggle Button */}
-            {/* {windowWidth >= 1024 && !collapsed && (
-              <button
-                onClick={handleToggleCollapse}
-                className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
-                title="Collapse sidebar"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-            )} */}
           </div>
         </div>
-
-        {/* User Profile - Only show in expanded mode */}
-        {/* {(!collapsed || windowWidth < 1024) && (
-          <div className="px-6 py-4 border-b border-red-50">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold">
-                JD
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate">John Doe</p>
-                <p className="text-xs text-gray-500 truncate">Pelapor</p>
-              </div>
-            </div>
-          </div>
-        )} */}
 
         {/* Menu Items - Scrollable Area */}
         <div className="flex-1 overflow-y-auto py-4">
@@ -314,7 +268,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                         <div className={`flex items-center ${collapsed && windowWidth >= 1024 ? '' : 'space-x-3'}`}>
                           <item.icon className={`w-5 h-5 ${item.open ? 'text-red-600' : 'text-gray-600 group-hover:text-red-600'}`} />
                           {(!collapsed || windowWidth < 1024) && (
-                            <span className="font-medium">Laporan</span>
+                            <span className="font-medium">{item.label}</span>
                           )}
                         </div>
                         
@@ -329,7 +283,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                         {/* Tooltip for collapsed mode */}
                         {collapsed && windowWidth >= 1024 && (
                           <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
-                            Laporan
+                            {item.label}
                             <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
                           </div>
                         )}
@@ -397,21 +351,11 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                         <span className="font-medium">{item.label}</span>
                       )}
                     </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      {(!collapsed || windowWidth < 1024) && item.badge && renderBadge(item.badge)}
-                      
-                      {/* Show badge as dot in collapsed mode */}
-                      {collapsed && windowWidth >= 1024 && item.badge && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
-                      )}
-                    </div>
 
                     {/* Tooltip for collapsed mode */}
                     {collapsed && windowWidth >= 1024 && (
                       <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
                         {item.label}
-                        {item.badge && ` (${item.badge})`}
                         <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
                       </div>
                     )}

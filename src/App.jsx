@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import DownloadCenter from './components/dashboard/DownloadCenter';
 import AIAssistant from './components/common/AIAssistant';
+import Korespondensi from './pages/Korespondensi';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -78,6 +79,8 @@ function App() {
                   <Route path="/profile" element={<Profile />} /> 
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/download" element={<DownloadCenter />} />
+                  <Route path="/korespondensi/notifikasi" element={<Korespondensi />} />
+                  <Route path="/korespondensi/pengumuman" element={<Korespondensi />} />
                 </Routes>
               </div>
             </main>
