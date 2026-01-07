@@ -38,7 +38,7 @@ import { allDownloadsData } from '../../data/downloadsData';
 import { sectorsData } from '../../data/sectorsData';
 
 const DownloadCenter = () => {
-  const [activeTab, setActiveTab] = useState('dokumentasi'); // 'aplikasi' atau 'dokumentasi'
+  const [activeTab, setActiveTab] = useState('dokumentasi');
   const [downloads, setDownloads] = useState(allDownloadsData);
   const [filteredDownloads, setFilteredDownloads] = useState(allDownloadsData);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -52,10 +52,8 @@ const DownloadCenter = () => {
   const [expandedRows, setExpandedRows] = useState([]);
   const aplikasiDropdownRef = useRef(null);
   
-  // Filter states
+  // Filter states - DISEDERHANAKAN: hanya jenis aplikasi
   const [selectedAplikasi, setSelectedAplikasi] = useState(['APOLO', 'EREPORTING', 'SIPINA']);
-  const [selectedNamaSektor, setSelectedNamaSektor] = useState('');
-  const [selectedLevelSektor, setSelectedLevelSektor] = useState('');
   
   // Sorting state
   const [sortConfig, setSortConfig] = useState({
@@ -145,10 +143,8 @@ const DownloadCenter = () => {
     }
   ];
 
-  // Get unique values for filters
+  // Get unique values for filters - DISEDERHANAKAN: hanya aplikasi
   const aplikasiOptions = ['APOLO', 'EREPORTING', 'SIPINA'];
-  const sektorOptions = sectorsData.map(sector => sector.namaSektor);
-  const levelSektorOptions = ['Semua', ...new Set(sectorsData.map(s => s.levelSektor).filter(Boolean))];
 
   // File types configuration dengan tema merah
   const fileTypes = {
@@ -205,7 +201,7 @@ const DownloadCenter = () => {
     setSelectedAplikasi([]);
   };
 
-  // Apply filters for documentation
+  // Apply filters for documentation - DISEDERHANAKAN: hanya filter aplikasi dan pencarian
   useEffect(() => {
     if (activeTab === 'dokumentasi') {
       let result = downloads;
@@ -227,22 +223,6 @@ const DownloadCenter = () => {
       // Filter by aplikasi (multiple selection)
       if (selectedAplikasi.length > 0) {
         result = result.filter(file => selectedAplikasi.includes(file.aplikasi));
-      }
-
-      // Filter by nama sektor
-      if (selectedNamaSektor) {
-        const kodeSektor = sectorsData.find(s => s.namaSektor === selectedNamaSektor)?.kodeSektor;
-        if (kodeSektor) {
-          result = result.filter(file => file.sektorKode === kodeSektor);
-        }
-      }
-
-      // Filter by level sektor
-      if (selectedLevelSektor && selectedLevelSektor !== 'Semua') {
-        result = result.filter(file => {
-          const sector = getSectorDetails(file.sektorKode);
-          return sector && sector.levelSektor === selectedLevelSektor;
-        });
       }
 
       // Apply sorting
@@ -290,7 +270,7 @@ const DownloadCenter = () => {
 
       setFilteredDownloads(result);
     }
-  }, [searchQuery, selectedAplikasi, selectedNamaSektor, selectedLevelSektor, sortConfig, downloads, activeTab]);
+  }, [searchQuery, selectedAplikasi, sortConfig, downloads, activeTab]);
 
   // Handle sorting
   const requestSort = (key) => {
@@ -401,8 +381,6 @@ const DownloadCenter = () => {
 
   const handleResetFilters = () => {
     setSelectedAplikasi(['APOLO', 'EREPORTING', 'SIPINA']);
-    setSelectedNamaSektor('');
-    setSelectedLevelSektor('');
     setSearchQuery('');
     setShowFilters(false);
   };
@@ -499,7 +477,7 @@ const DownloadCenter = () => {
             </div>
           </div>
 
-          {/* Search and Filters */}
+          {/* Search and Filters - DISEDERHANAKAN: hanya filter aplikasi */}
           <div className="p-4 md:p-6 border-b border-red-100 bg-red-50/50">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
               <div className="relative flex-1">
@@ -534,8 +512,8 @@ const DownloadCenter = () => {
             </div>
 
             {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 p-4 bg-white rounded-xl border border-red-200">
-                {/* Filter Aplikasi */}
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4 p-4 bg-white rounded-xl border border-red-200">
+                {/* Filter Aplikasi Saja */}
                 <div className="relative" ref={aplikasiDropdownRef}>
                   <label className="block text-sm font-medium text-red-700 mb-2">
                     Aplikasi
@@ -586,55 +564,11 @@ const DownloadCenter = () => {
                     </div>
                   )}
                 </div>
-                
-                {/* Filter Nama Sektor */}
-                <div>
-                  <label className="block text-sm font-medium text-red-700 mb-2">
-                    Jenis Sektor
-                  </label>
-                  <select
-                    className="w-full border border-red-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-red-900 text-sm"
-                    value={selectedNamaSektor}
-                    onChange={(e) => setSelectedNamaSektor(e.target.value)}
-                    disabled={activeTab === 'aplikasi'}
-                  >
-                    <option value="">Semua Sektor</option>
-                    {sektorOptions.map(sektor => (
-                      <option key={sektor} value={sektor}>{sektor}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                {/* Filter Level Sektor */}
-                <div>
-                  <label className="block text-sm font-medium text-red-700 mb-2">
-                    Level Sektor
-                  </label>
-                  <select
-                    className="w-full border border-red-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white text-red-900 text-sm"
-                    value={selectedLevelSektor}
-                    onChange={(e) => setSelectedLevelSektor(e.target.value)}
-                    disabled={activeTab === 'aplikasi'}
-                  >
-                    {levelSektorOptions.map(level => (
-                      <option key={level} value={level}>{level}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {activeTab === 'aplikasi' && (
-                  <div className="md:col-span-3">
-                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded-xl border border-red-200">
-                      <Info className="w-4 h-4 inline mr-2 text-red-500" />
-                      Filter sektor hanya tersedia untuk halaman dokumentasi
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
 
-          {/* Main Content */}
+          {/* Main Content - TIDAK DIUBAH */}
           <div className="p-4 md:p-6">
             {activeTab === 'aplikasi' ? (
               /* Aplikasi Pendukung Grid - Responsive */
@@ -1022,7 +956,7 @@ const DownloadCenter = () => {
         </div>
       </div>
 
-      {/* Detail Modal */}
+      {/* Detail Modal - TIDAK DIUBAH */}
       {showDetailModal && selectedFile && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-white rounded-xl max-w-4xl w-full border border-red-100 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -1189,7 +1123,7 @@ const DownloadCenter = () => {
         </div>
       )}
 
-      {/* Share Modal - Responsive */}
+      {/* Share Modal - Responsive - TIDAK DIUBAH */}
       {showShareModal && selectedFile && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-white rounded-xl max-w-md w-full border border-red-100 shadow-2xl">

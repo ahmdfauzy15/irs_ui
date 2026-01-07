@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Bell, 
   CheckCircle, 
@@ -30,485 +30,666 @@ import {
   Award,
   Users,
   Phone,
-  MapPin
+  MapPin,
+  ExternalLink,
+  MessageSquare,
+  BookOpen,
+  Target,
+  TrendingUp,
+  Cpu,
+  BookOpen as BookOpenIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-// Komponen untuk konten detail pengumuman
+// Komponen untuk konten detail pengumuman - DIPERBAIKI DAN DIPERLUAS
 const AnnouncementDetailContent = ({ announcement }) => {
-  switch (announcement.id) {
-    case 1:
-      return (
-        <div className="space-y-6">
-          <p className="text-gray-700 leading-relaxed">
-            Kementerian Keuangan telah merilis panduan terbaru untuk penggunaan sistem e-Reporting tahun 2024. 
-            Panduan ini dirancang untuk memudahkan proses pelaporan dan meningkatkan efisiensi kerja Anda.
-          </p>
-          
-          <div className="bg-blue-50 p-5 rounded-xl border border-blue-200">
-            <h3 className="font-bold text-blue-900 mb-3 text-lg flex items-center">
-              <Zap className="w-5 h-5 mr-2" />
-              Fitur Baru yang Diperkenalkan
-            </h3>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                <div>
-                  <strong className="text-blue-800">Real-time Data Validation:</strong>
-                  <p className="text-blue-700">Sistem sekarang dapat memvalidasi data secara real-time sebelum submit, mengurangi kesalahan input.</p>
+  if (!announcement) return null;
+  
+  // Data deskripsi lengkap untuk setiap pengumuman
+  const announcementDetails = {
+    1: {
+      fullDescription: `Kementerian Keuangan secara resmi merilis Panduan Sistem e-Reporting Tahun 2024 yang merupakan pembaruan komprehensif dari versi sebelumnya. Panduan ini dikembangkan berdasarkan masukan dari pengguna selama setahun terakhir dan mengintegrasikan teknologi terbaru untuk meningkatkan efisiensi pelaporan keuangan negara.`,
+      
+      sections: [
+        {
+          title: "📋 Latar Belakang Pembaruan",
+          content: "Panduan ini dikeluarkan sebagai respon terhadap perkembangan teknologi dan kebutuhan akan sistem pelaporan yang lebih cepat, akurat, dan terintegrasi. Update tahun 2024 fokus pada peningkatan user experience dan keamanan data.",
+          icon: <Info className="w-5 h-5 text-blue-600" />
+        },
+        {
+          title: "🎯 Tujuan Pembaruan",
+          content: "Mempercepat proses pelaporan hingga 40%, mengurangi kesalahan input data, meningkatkan keamanan informasi keuangan, dan menyediakan analitik data real-time untuk pengambilan keputusan.",
+          icon: <Target className="w-5 h-5 text-green-600" />
+        },
+        {
+          title: "⏰ Timeline Implementasi",
+          content: "Implementasi bertahap dimulai Januari 2024 dengan pelatihan nasional. Sistem penuh akan beroperasi mulai Maret 2024. Masa transisi diberikan hingga Juni 2024.",
+          icon: <Calendar className="w-5 h-5 text-purple-600" />
+        }
+      ],
+      
+      features: [
+        {
+          name: "Real-time Validation",
+          description: "Validasi data secara real-time dengan algoritma cerdas yang mendeteksi anomali dan ketidaksesuaian sebelum submit.",
+          benefit: "Mengurangi kesalahan hingga 95%"
+        },
+        {
+          name: "Auto-Save System",
+          description: "Sistem penyimpanan otomatis setiap 2 menit dengan version control yang memungkinkan recovery data hingga 30 hari ke belakang.",
+          benefit: "Mencegah kehilangan data"
+        },
+        {
+          name: "Enhanced Security",
+          description: "Enkripsi AES-256, two-factor authentication, audit trail lengkap, dan monitoring aktivitas real-time.",
+          benefit: "Sertifikasi keamanan ISO 27001"
+        },
+        {
+          name: "Mobile Optimization",
+          description: "Antarmuka responsif yang dioptimalkan untuk smartphone dan tablet dengan performa loading di bawah 3 detik.",
+          benefit: "Akses dari mana saja"
+        }
+      ]
+    },
+    
+    2: {
+      fullDescription: `Workshop Nasional Sistem APOLO 2025 merupakan agenda tahunan Kementerian Keuangan yang bertujuan untuk meningkatkan kompetensi dan pemahaman pengguna terhadap sistem APOLO. Tahun ini, workshop mengangkat tema "Digital Transformation in Public Financial Management" dengan menghadirkan pakar nasional dan internasional.`,
+      
+      sections: [
+        {
+          title: "🎯 Tujuan Workshop",
+          content: "Meningkatkan kemampuan teknis pengguna APOLO, membangun komunitas praktisi, sharing best practices, dan mengumpulkan feedback untuk pengembangan sistem.",
+          icon: <Award className="w-5 h-5 text-red-600" />
+        },
+        {
+          title: "👥 Target Peserta",
+          content: "Operator APOLO dari seluruh instansi pemerintah, supervisor sistem, auditor internal, dan manajer keuangan institusi publik.",
+          icon: <Users className="w-5 h-5 text-blue-600" />
+        },
+        {
+          title: "📊 Metode Pelatihan",
+          content: "Kombinasi teori dan praktik dengan rasio 30:70, studi kasus real, hands-on lab, dan sesi mentoring one-on-one.",
+          icon: <BookOpen className="w-5 h-5 text-green-600" />
+        }
+      ],
+      
+      benefits: [
+        "Sertifikasi resmi Kemenkeu yang diakui nasional",
+        "Akses ke materi eksklusif dan video tutorial",
+        "Networking dengan praktisi dari seluruh Indonesia",
+        "Konsultasi gratis dengan tim developer APOLO",
+        "Diskon 50% untuk pelatihan lanjutan"
+      ]
+    },
+    
+    3: {
+      fullDescription: `SIPINA v3.0 merupakan lompatan besar dalam sistem informasi keuangan pemerintah dengan mengintegrasikan Artificial Intelligence dan machine learning untuk analisis prediktif. Versi ini merupakan hasil pengembangan 2 tahun dengan melibatkan 500+ pengguna dalam proses uji coba.`,
+      
+      sections: [
+        {
+          title: "🚀 Inovasi Utama",
+          content: "Integrasi AI untuk anomaly detection, predictive budgeting, dan automated reporting. Sistem mampu belajar dari pola data historis.",
+          icon: <Zap className="w-5 h-5 text-yellow-600" />
+        },
+        {
+          title: "📈 Peningkatan Performa",
+          content: "Loading time berkurang 70%, kapasitas data meningkat 5x, dan uptime 99.9% dengan disaster recovery system.",
+          icon: <TrendingUp className="w-5 h-5 text-green-600" />
+        },
+        {
+          title: "🔧 Teknologi Dasar",
+          content: "Dibangun dengan React 18, Node.js 20, PostgreSQL 15, dan containerized dengan Docker. Support untuk microservices architecture.",
+          icon: <Cpu className="w-5 h-5 text-blue-600" />
+        }
+      ],
+      
+      technicalSpecs: {
+        "System Requirements": "Windows 10/11, macOS 11+, Linux Ubuntu 20.04+, 8GB RAM minimum, 10GB storage",
+        "Browser Support": "Chrome 90+, Firefox 88+, Safari 14+, Edge 90+",
+        "Database": "PostgreSQL 12+, MySQL 8.0+, dengan auto-backup setiap 6 jam",
+        "Security": "SSL/TLS 1.3, OAuth 2.0, RBAC dengan 5 level akses"
+      }
+    },
+    
+    4: {
+      fullDescription: `Maintenance rutin sistem IRS dilakukan untuk meningkatkan stabilitas, keamanan, dan performa. Maintenance kali ini akan mengimplementasikan patch keamanan terbaru dan optimasi database untuk menghadapi puncak pelaporan akhir tahun.`,
+      
+      impact: "Sistem akan offline total selama maintenance. Semua transaksi yang sedang berjalan akan diselesaikan sebelum maintenance dimulai. Data akan di-backup otomatis.",
+      
+      preparation: [
+        "Simpan dan tutup semua pekerjaan sebelum pukul 23:30 WIB",
+        "Pastikan tidak ada proses batch yang berjalan",
+        "Download report yang diperlukan sebelum maintenance",
+        "Informasikan kepada seluruh pengguna di unit Anda"
+      ]
+    },
+    
+    5: {
+      fullDescription: `Program pelatihan online gratis APOLO merupakan inisiatif Kemenkeu untuk meningkatkan literasi digital pegawai pemerintah di seluruh Indonesia. Program ini tersedia untuk semua level pengguna dari pemula hingga advanced.`,
+      
+      curriculum: {
+        "Basic Level": "Pengenalan APOLO, input data dasar, generate report sederhana (8 sesi)",
+        "Intermediate Level": "Advanced reporting, data validation, troubleshooting common issues (12 sesi)",
+        "Advanced Level": "System administration, custom reporting, API integration (16 sesi)"
+      },
+      
+      schedule: "Setiap Kamis pukul 14:00-16:00 WIB via Zoom. Recorded session tersedia di portal e-learning.",
+      
+      requirements: [
+        "Pegawai pemerintah aktif",
+        "Memiliki akun APOLO yang aktif",
+        "Koneksi internet minimal 5 Mbps",
+        "Komputer/laptop dengan webcam dan microphone"
+      ]
+    }
+  };
+
+  const detail = announcementDetails[announcement.id] || {
+    fullDescription: announcement.shortMessage || "Deskripsi lengkap pengumuman sedang dalam proses pembaruan. Silakan hubungi administrator untuk informasi lebih lanjut."
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Deskripsi Utama */}
+      <div className="prose prose-lg max-w-none">
+        <p className="text-gray-700 leading-relaxed text-lg">
+          {detail.fullDescription}
+        </p>
+      </div>
+
+      {/* Konten Spesifik berdasarkan ID */}
+      {announcement.id === 1 && (
+        <>
+          {/* Sections */}
+          <div className="grid md:grid-cols-3 gap-6">
+            {detail.sections?.map((section, index) => (
+              <div key={index} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div className="flex items-center mb-3">
+                  <div className="p-2 bg-gray-100 rounded-lg mr-3">
+                    {section.icon}
+                  </div>
+                  <h4 className="font-bold text-gray-900">{section.title}</h4>
                 </div>
-              </li>
-              <li className="flex items-start">
-                <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                <div>
-                  <strong className="text-blue-800">Auto-Save Feature:</strong>
-                  <p className="text-blue-700">Data tersimpan otomatis setiap 5 menit untuk mencegah kehilangan data akibat gangguan koneksi.</p>
-                </div>
-              </li>
-              <li className="flex items-start">
-                <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                <div>
-                  <strong className="text-blue-800">Enhanced Security:</strong>
-                  <p className="text-blue-700">Enkripsi end-to-end untuk semua data sensitif dengan sertifikasi keamanan tingkat tinggi.</p>
-                </div>
-              </li>
-              <li className="flex items-start">
-                <Check className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                <div>
-                  <strong className="text-blue-800">Mobile Responsive:</strong>
-                  <p className="text-blue-700">Interface yang dioptimalkan untuk perangkat mobile dengan performa yang lebih cepat.</p>
-                </div>
-              </li>
-            </ul>
+                <p className="text-gray-700 text-sm">{section.content}</p>
+              </div>
+            ))}
           </div>
 
-          <div className="bg-green-50 p-5 rounded-xl border border-green-200">
-            <h3 className="font-bold text-green-900 mb-3 text-lg flex items-center">
-              <Database className="w-5 h-5 mr-2" />
-              Perubahan Penting
+          {/* Features */}
+          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
+            <h3 className="font-bold text-blue-900 mb-4 text-lg flex items-center">
+              <Zap className="w-5 h-5 mr-2" />
+              Fitur Utama e-Reporting 2024
             </h3>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h4 className="font-bold text-green-800 mb-2">Format Laporan</h4>
-                <p className="text-green-700 text-sm">Mengikuti PSAK terbaru dengan template yang lebih intuitif.</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h4 className="font-bold text-green-800 mb-2">Integrasi Sistem</h4>
-                <p className="text-green-700 text-sm">Koneksi langsung dengan sistem perbankan terintegrasi.</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h4 className="font-bold text-green-800 mb-2">Template Otomatis</h4>
-                <p className="text-green-700 text-sm">Generate template otomatis untuk laporan rutin bulanan/tahunan.</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h4 className="font-bold text-green-800 mb-2">Dashboard Analytics</h4>
-                <p className="text-green-700 text-sm">Dashboard analitik yang lebih interaktif dengan grafik real-time.</p>
-              </div>
+              {detail.features?.map((feature, index) => (
+                <div key={index} className="bg-white p-4 rounded-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-blue-800">{feature.name}</h4>
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      {feature.benefit}
+                    </span>
+                  </div>
+                  <p className="text-blue-700 text-sm">{feature.description}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="bg-yellow-50 p-5 rounded-xl border border-yellow-200">
-            <h3 className="font-bold text-yellow-900 mb-3 text-lg flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-2" />
-              Hal-hal yang Perlu Diperhatikan
-            </h3>
-            <ul className="space-y-2">
-              <li className="flex items-center">
-                <Calendar className="w-4 h-4 text-yellow-600 mr-2" />
-                <span className="text-yellow-800">
-                  <strong>Deadline laporan triwulan pertama:</strong> 15 April 2024
-                </span>
-              </li>
-              <li className="flex items-center">
-                <Users className="w-4 h-4 text-yellow-600 mr-2" />
-                <span className="text-yellow-800">
-                  <strong>Training online:</strong> Akan diadakan setiap minggu via Zoom
-                </span>
-              </li>
-              <li className="flex items-center">
-                <Phone className="w-4 h-4 text-yellow-600 mr-2" />
-                <span className="text-yellow-800">
-                  <strong>Support team:</strong> Tersedia 24/7 melalui helpdesk
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-gradient-to-r from-red-50 to-pink-50 p-5 rounded-xl border border-red-200">
-            <h3 className="font-bold text-red-900 mb-2">Kontak Support</h3>
-            <p className="text-red-800">
-              Untuk pertanyaan lebih lanjut, silakan hubungi tim support kami:
-            </p>
-            <div className="grid md:grid-cols-2 gap-4 mt-3">
-              <div>
-                <p className="font-medium text-red-700">Email:</p>
-                <p className="text-red-600">helpdesk@kemenkeu.go.id</p>
-              </div>
-              <div>
-                <p className="font-medium text-red-700">Telepon:</p>
-                <p className="text-red-600">(021) 12345678 (ext. 1234)</p>
+          {/* Additional Info */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-green-50 p-5 rounded-xl border border-green-200">
+              <h3 className="font-bold text-green-900 mb-3 text-lg">📅 Timeline Implementasi</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-green-800">Pelatihan Nasional</span>
+                  <span className="font-bold text-green-900">Jan-Feb 2024</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-green-800">Masa Transisi</span>
+                  <span className="font-bold text-green-900">Mar-Jun 2024</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-green-800">Implementasi Penuh</span>
+                  <span className="font-bold text-green-900">Jul 2024</span>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      );
 
-    case 2:
-      return (
-        <div className="space-y-6">
-          <p className="text-gray-700 leading-relaxed">
-            Dengan hormat, kami mengundang seluruh pengguna sistem APOLO untuk mengikuti Workshop Nasional 
-            yang bertujuan untuk meningkatkan pemahaman dan keterampilan dalam menggunakan sistem APOLO secara optimal.
-          </p>
-          
+            <div className="bg-purple-50 p-5 rounded-xl border border-purple-200">
+              <h3 className="font-bold text-purple-900 mb-3 text-lg">🎯 Target Pencapaian</h3>
+              <ul className="space-y-2">
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-purple-600 mr-2" />
+                  <span className="text-purple-800">100% instansi pemerintah terintegrasi</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-purple-600 mr-2" />
+                  <span className="text-purple-800">Waktu pelaporan berkurang 40%</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-purple-600 mr-2" />
+                  <span className="text-purple-800">Error rate di bawah 1%</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="w-4 h-4 text-purple-600 mr-2" />
+                  <span className="text-purple-800">Kepuasan pengguna di atas 90%</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </>
+      )}
+
+      {announcement.id === 2 && (
+        <>
+          {/* Workshop Details */}
           <div className="bg-gradient-to-r from-red-50 to-orange-50 p-6 rounded-xl border border-red-200">
-            <h3 className="font-bold text-gray-900 mb-4 text-lg flex items-center">
-              <Calendar className="w-5 h-5 mr-2" />
-              Detail Acara Workshop
-            </h3>
-            <div className="grid md:grid-cols-2 gap-6">
+            <h3 className="font-bold text-gray-900 mb-4 text-lg">🎓 Detail Workshop APOLO 2025</h3>
+            
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div className="space-y-4">
                 <div className="flex items-start">
                   <Calendar className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">Tanggal Pelaksanaan</p>
-                    <p className="text-gray-700">20 Januari 2025</p>
+                    <p className="font-medium text-gray-900">Tanggal & Waktu</p>
+                    <p className="text-gray-700">20 Januari 2025, 08:00 - 17:00 WIB</p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <ClockIcon className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <MapPin className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">Waktu Pelaksanaan</p>
-                    <p className="text-gray-700">08.00 - 17.00 WIB</p>
+                    <p className="font-medium text-gray-900">Lokasi</p>
+                    <p className="text-gray-700">Hotel Indonesia Kempinski, Jakarta</p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <Users className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">Kuota Peserta</p>
-                    <p className="text-gray-700">Maksimal 200 orang</p>
+                    <p className="font-medium text-gray-900">Peserta</p>
+                    <p className="text-gray-700">200 orang (instansi pemerintah)</p>
                   </div>
                 </div>
               </div>
-              <div>
+              
+              <div className="space-y-4">
                 <div className="flex items-start">
-                  <MapPin className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <Award className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">Lokasi Acara</p>
-                    <p className="text-gray-700">
-                      Grand Ballroom Hotel Indonesia Kempinski<br/>
-                      Jl. M.H. Thamrin No.1, Jakarta Pusat
-                    </p>
+                    <p className="font-medium text-gray-900">Sertifikasi</p>
+                    <p className="text-gray-700">APOLO Certified Professional (ACP)</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <ClockIcon className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">Durasi</p>
+                    <p className="text-gray-700">8 jam (1 hari penuh)</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <Bookmark className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">Materi</p>
+                    <p className="text-gray-700">Modul cetak + digital</p>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Benefits */}
+            <div className="bg-white p-5 rounded-lg">
+              <h4 className="font-bold text-gray-900 mb-3">Manfaat Mengikuti Workshop</h4>
+              <div className="grid md:grid-cols-2 gap-3">
+                {detail.benefits?.map((benefit, index) => (
+                  <div key={index} className="flex items-start">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-gray-700 text-sm">{benefit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
+          {/* Curriculum */}
           <div className="bg-blue-50 p-5 rounded-xl border border-blue-200">
-            <h3 className="font-bold text-blue-900 mb-3 text-lg">📋 Jadwal Materi Workshop</h3>
+            <h3 className="font-bold text-blue-900 mb-3 text-lg">📚 Kurikulum Workshop</h3>
             <div className="space-y-3">
               <div className="bg-white p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-blue-800">Sesi 1: Advanced Reporting</span>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">08.00-10.00</span>
-                </div>
-                <p className="text-blue-700 text-sm">Teknik pelaporan lanjutan dan best practices</p>
+                <h4 className="font-bold text-blue-800 mb-2">Sesi 1: Fundamental APOLO (08:00-10:00)</h4>
+                <p className="text-blue-700 text-sm">Konsep dasar, navigasi sistem, dan pengenalan modul utama</p>
               </div>
               <div className="bg-white p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-blue-800">Sesi 2: Data Analytics</span>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">10.30-12.30</span>
-                </div>
-                <p className="text-blue-700 text-sm">Integrasi analitik data dan visualisasi</p>
+                <h4 className="font-bold text-blue-800 mb-2">Sesi 2: Advanced Reporting (10:30-12:30)</h4>
+                <p className="text-blue-700 text-sm">Teknik pelaporan kompleks, custom template, dan data validation</p>
               </div>
               <div className="bg-white p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-blue-800">Sesi 3: Troubleshooting</span>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">13.30-15.30</span>
-                </div>
-                <p className="text-blue-700 text-sm">Pemecahan masalah umum dan solusi</p>
+                <h4 className="font-bold text-blue-800 mb-2">Sesi 3: Troubleshooting (13:30-15:30)</h4>
+                <p className="text-blue-700 text-sm">Problem solving, error handling, dan best practices</p>
               </div>
               <div className="bg-white p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-blue-800">Sesi 4: Q&A Session</span>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">16.00-17.00</span>
+                <h4 className="font-bold text-blue-800 mb-2">Sesi 4: Future Roadmap (16:00-17:00)</h4>
+                <p className="text-blue-700 text-sm">Pengembangan sistem dan fitur yang akan datang</p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {announcement.id === 3 && (
+        <>
+          {/* Technical Details */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+            <h3 className="font-bold text-gray-900 mb-4 text-lg">🔧 Spesifikasi Teknis SIPINA v3.0</h3>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Sections */}
+              <div className="space-y-4">
+                {detail.sections?.map((section, index) => (
+                  <div key={index} className="bg-white p-4 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      {section.icon}
+                      <h4 className="font-bold text-gray-900 ml-2">{section.title}</h4>
+                    </div>
+                    <p className="text-gray-700 text-sm">{section.content}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Technical Specs */}
+              <div className="bg-white p-5 rounded-lg">
+                <h4 className="font-bold text-gray-900 mb-3">📋 Requirement System</h4>
+                <div className="space-y-3">
+                  {Object.entries(detail.technicalSpecs || {}).map(([key, value]) => (
+                    <div key={key}>
+                      <p className="font-medium text-gray-900 text-sm">{key}:</p>
+                      <p className="text-gray-700 text-sm">{value}</p>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-blue-700 text-sm">Tanya jawab langsung dengan tim developer</p>
               </div>
             </div>
           </div>
 
+          {/* Migration Guide */}
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-green-50 p-5 rounded-xl border border-green-200">
-              <h3 className="font-bold text-green-900 mb-3 text-lg">💰 Biaya Pendaftaran</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-green-800">Early Bird (s/d 31 Des 2024)</span>
-                  <span className="font-bold text-green-900">Rp 500.000</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-green-800">Regular (1-15 Jan 2025)</span>
-                  <span className="font-bold text-green-900">Rp 750.000</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-green-800">On-spot Registration</span>
-                  <span className="font-bold text-green-900">Rp 1.000.000</span>
-                </div>
-              </div>
-              <p className="mt-4 text-sm text-green-700">
-                *Biaya termasuk: Lunch, coffee break, sertifikat, materi workshop, dan merchandise
-              </p>
-            </div>
-
-            <div className="bg-purple-50 p-5 rounded-xl border border-purple-200">
-              <h3 className="font-bold text-purple-900 mb-3 text-lg">🏆 Fasilitas Peserta</h3>
+            <div className="bg-yellow-50 p-5 rounded-xl border border-yellow-200">
+              <h3 className="font-bold text-yellow-900 mb-3 text-lg">⚠️ Persiapan Migrasi</h3>
               <ul className="space-y-2">
-                <li className="flex items-center">
-                  <Award className="w-4 h-4 text-purple-600 mr-2" />
-                  <span className="text-purple-800">Sertifikat resmi Kemenkeu</span>
+                <li className="flex items-start">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <span className="text-yellow-800">Backup semua data sebelum upgrade</span>
                 </li>
-                <li className="flex items-center">
-                  <FileText className="w-4 h-4 text-purple-600 mr-2" />
-                  <span className="text-purple-800">Modul workshop lengkap</span>
+                <li className="flex items-start">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <span className="text-yellow-800">Pastikan koneksi internet stabil</span>
                 </li>
-                <li className="flex items-center">
-                  <Users className="w-4 h-4 text-purple-600 mr-2" />
-                  <span className="text-purple-800">Networking session</span>
+                <li className="flex items-start">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <span className="text-yellow-800">Hentikan semua proses aktif</span>
                 </li>
-                <li className="flex items-center">
-                  <Shield className="w-4 h-4 text-purple-600 mr-2" />
-                  <span className="text-purple-800">Akses premium ke materi online</span>
+                <li className="flex items-start">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <span className="text-yellow-800">Update browser ke versi terbaru</span>
                 </li>
               </ul>
             </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-5 rounded-xl border border-blue-200">
-            <h3 className="font-bold text-blue-900 mb-2">📞 Informasi Pendaftaran</h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <p className="font-medium text-blue-800">Website Resmi:</p>
-                <a href="#" className="text-blue-600 hover:underline">training.apolo.go.id/workshop2025</a>
-              </div>
-              <div>
-                <p className="font-medium text-blue-800">Email Panitia:</p>
-                <a href="mailto:workshop@apolo.go.id" className="text-blue-600 hover:underline">workshop@apolo.go.id</a>
-              </div>
-              <div>
-                <p className="font-medium text-blue-800">Telepon:</p>
-                <p className="text-blue-700">021-12345678 ext. 456</p>
-              </div>
-              <div>
-                <p className="font-medium text-blue-800">WhatsApp:</p>
-                <p className="text-blue-700">0812-3456-7890</p>
-              </div>
-            </div>
-            <p className="mt-4 text-sm text-blue-700">
-              Pendaftaran dibuka mulai 1 Desember 2024. Kuota terbatas, pastikan mendaftar segera!
-            </p>
-          </div>
-        </div>
-      );
-
-    case 3:
-      return (
-        <div className="space-y-6">
-          <p className="text-gray-700 leading-relaxed">
-            Dengan bangga kami umumkan peluncuran SIPINA v3.0! Versi terbaru ini membawa revolusi 
-            dalam pengalaman pengguna dengan berbagai fitur canggih dan peningkatan performa signifikan.
-          </p>
-          
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
-            <h3 className="font-bold text-gray-900 mb-4 text-lg flex items-center">
-              <Zap className="w-5 h-5 mr-2" />
-              Fitur Utama SIPINA v3.0
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-2">
-                  <div className="p-2 bg-green-100 rounded-lg mr-3">
-                    <Shield className="w-5 h-5 text-green-600" />
-                  </div>
-                  <h4 className="font-bold text-green-800">AI Assistant</h4>
-                </div>
-                <p className="text-green-700 text-sm">
-                  Asisten AI cerdas untuk membantu analisis data, generate report otomatis, 
-                  dan memberikan rekomendasi optimasi.
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-2">
-                  <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                    <Database className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <h4 className="font-bold text-blue-800">Advanced Analytics</h4>
-                </div>
-                <p className="text-blue-700 text-sm">
-                  Dashboard analytics dengan visualisasi data real-time, predictive analysis, 
-                  dan customizable reports.
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-2">
-                  <div className="p-2 bg-red-100 rounded-lg mr-3">
-                    <Lock className="w-5 h-5 text-red-600" />
-                  </div>
-                  <h4 className="font-bold text-red-800">Enhanced Security</h4>
-                </div>
-                <p className="text-red-700 text-sm">
-                  Multi-factor authentication, enkripsi tingkat militer, audit trail lengkap, 
-                  dan proteksi data end-to-end.
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-2">
-                  <div className="p-2 bg-purple-100 rounded-lg mr-3">
-                    <Smartphone className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <h4 className="font-bold text-purple-800">Mobile App</h4>
-                </div>
-                <p className="text-purple-700 text-sm">
-                  Aplikasi mobile native untuk iOS dan Android dengan semua fitur desktop, 
-                  offline mode, dan push notification.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 p-5 rounded-xl border border-blue-200">
-            <h3 className="font-bold text-blue-900 mb-3 text-lg">🔄 Panduan Migrasi v3.0</h3>
-            <div className="space-y-4">
-              <div className="flex items-start bg-white p-4 rounded-lg">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                  <span className="font-bold text-blue-600">1</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-blue-800 mb-1">Backup Data</h4>
-                  <p className="text-blue-700 text-sm">
-                    Backup semua data sebelum update. Tool backup otomatis tersedia di dashboard admin.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start bg-white p-4 rounded-lg">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                  <span className="font-bold text-blue-600">2</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-blue-800 mb-1">System Requirements</h4>
-                  <p className="text-blue-700 text-sm">
-                    Minimum: 4GB RAM, Windows 10/macOS 11+, 2GB storage. Recommended: 8GB RAM, SSD storage.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start bg-white p-4 rounded-lg">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                  <span className="font-bold text-blue-600">3</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-blue-800 mb-1">Jadwal Downtime</h4>
-                  <p className="text-blue-700 text-sm">
-                    Sistem akan offline pada 15 Januari 2024 pukul 00.00-04.00 WIB untuk maintenance.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start bg-white p-4 rounded-lg">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                  <span className="font-bold text-blue-600">4</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-blue-800 mb-1">Training Gratis</h4>
-                  <p className="text-blue-700 text-sm">
-                    Free training akan diadakan pada 18-20 Januari 2024 secara online dan offline.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-yellow-50 p-5 rounded-xl border border-yellow-200">
-              <h3 className="font-bold text-yellow-900 mb-3 text-lg">📞 Technical Support</h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="font-medium text-yellow-800">Email Support:</p>
-                  <p className="text-yellow-700">support@sipina.go.id</p>
-                </div>
-                <div>
-                  <p className="font-medium text-yellow-800">Hotline 24/7:</p>
-                  <p className="text-yellow-700">021-87654321</p>
-                </div>
-                <div>
-                  <p className="font-medium text-yellow-800">Live Chat:</p>
-                  <p className="text-yellow-700">Tersedia di website resmi</p>
-                </div>
-              </div>
-            </div>
 
             <div className="bg-purple-50 p-5 rounded-xl border border-purple-200">
-              <h3 className="font-bold text-purple-900 mb-3 text-lg">🎓 Training Inquiry</h3>
+              <h3 className="font-bold text-purple-900 mb-3 text-lg">📞 Support Migrasi</h3>
               <div className="space-y-3">
                 <div>
-                  <p className="font-medium text-purple-800">Email Training:</p>
-                  <p className="text-purple-700">training@sipina.go.id</p>
+                  <p className="font-medium text-purple-800">Tim Teknis:</p>
+                  <p className="text-purple-700">021-8765-4321 (24/7 selama migrasi)</p>
                 </div>
                 <div>
-                  <p className="font-medium text-purple-800">Telepon:</p>
-                  <p className="text-purple-700">021-87654322</p>
+                  <p className="font-medium text-purple-800">Emergency Email:</p>
+                  <p className="text-purple-700">emergency@sipina.go.id</p>
                 </div>
                 <div>
-                  <p className="font-medium text-purple-800">Website:</p>
-                  <a href="#" className="text-purple-600 hover:underline">training.sipina.go.id</a>
+                  <p className="font-medium text-purple-800">Dokumentasi:</p>
+                  <a href="#" className="text-purple-600 hover:underline text-sm">
+                    docs.sipina.go.id/migration-v3
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {announcement.id === 4 && (
+        <>
+          {/* Maintenance Details */}
+          <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl border border-gray-200">
+            <h3 className="font-bold text-gray-900 mb-4 text-lg">🔧 Detail Maintenance Sistem IRS</h3>
+            
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 className="font-bold text-gray-900 mb-2">⏰ Jadwal Maintenance</h4>
+                <div className="bg-white p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-700">Mulai</span>
+                    <span className="font-bold text-gray-900">12 Jan 2025, 00:00 WIB</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">Selesai</span>
+                    <span className="font-bold text-gray-900">12 Jan 2025, 04:00 WIB</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-gray-900 mb-2">📊 Estimasi Downtime</h4>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">4 Jam</div>
+                  <p className="text-gray-600 text-sm">Total waktu sistem tidak tersedia</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Impact */}
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <h4 className="font-bold text-yellow-900 mb-2 flex items-center">
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                Dampak Maintenance
+              </h4>
+              <p className="text-yellow-800">{detail.impact}</p>
+            </div>
+          </div>
+
+          {/* Preparation Steps */}
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <h3 className="font-bold text-gray-900 mb-3 text-lg">📋 Langkah Persiapan</h3>
+            <div className="space-y-3">
+              {detail.preparation?.map((step, index) => (
+                <div key={index} className="flex items-start bg-gray-50 p-3 rounded-lg">
+                  <div className="w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                    {index + 1}
+                  </div>
+                  <span className="text-gray-700">{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recovery Plan */}
+          <div className="bg-green-50 p-5 rounded-xl border border-green-200">
+            <h3 className="font-bold text-green-900 mb-3 text-lg">🔄 Proses Recovery</h3>
+            <div className="space-y-3">
+              <div className="flex items-start bg-white p-3 rounded-lg">
+                <div className="w-6 h-6 bg-green-100 text-green-800 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                  1
+                </div>
+                <div>
+                  <p className="font-medium text-green-800">Post-Maintenance Check (04:00-04:30)</p>
+                  <p className="text-green-700 text-sm">Verifikasi semua sistem berjalan normal</p>
+                </div>
+              </div>
+              <div className="flex items-start bg-white p-3 rounded-lg">
+                <div className="w-6 h-6 bg-green-100 text-green-800 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                  2
+                </div>
+                <div>
+                  <p className="font-medium text-green-800">Monitoring Intensif (04:30-06:00)</p>
+                  <p className="text-green-700 text-sm">Pemantauan performa dan stabilitas sistem</p>
+                </div>
+              </div>
+              <div className="flex items-start bg-white p-3 rounded-lg">
+                <div className="w-6 h-6 bg-green-100 text-green-800 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                  3
+                </div>
+                <div>
+                  <p className="font-medium text-green-800">Full Availability (06:00 onwards)</p>
+                  <p className="text-green-700 text-sm">Sistem tersedia penuh untuk semua pengguna</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {announcement.id === 5 && (
+        <>
+          {/* Training Program Details */}
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-200">
+            <h3 className="font-bold text-gray-900 mb-4 text-lg">🎓 Program Pelatihan Online APOLO</h3>
+            
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-purple-600">Gratis</div>
+                <p className="text-gray-700 text-sm">Biaya Pendaftaran</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-purple-600">36 Sesi</div>
+                <p className="text-gray-700 text-sm">Total Materi</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-purple-600">24/7</div>
+                <p className="text-gray-700 text-sm">Akses Materi</p>
+              </div>
+            </div>
+
+            {/* Curriculum Details */}
+            <div className="bg-white p-5 rounded-lg">
+              <h4 className="font-bold text-gray-900 mb-3">📚 Level Pelatihan</h4>
+              <div className="space-y-4">
+                {Object.entries(detail.curriculum || {}).map(([level, desc]) => (
+                  <div key={level} className="border-l-4 border-purple-500 pl-4">
+                    <h5 className="font-bold text-purple-800">{level}</h5>
+                    <p className="text-gray-700 text-sm">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Requirements */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-blue-50 p-5 rounded-xl border border-blue-200">
+              <h3 className="font-bold text-blue-900 mb-3 text-lg">✅ Persyaratan Peserta</h3>
+              <ul className="space-y-2">
+                {detail.requirements?.map((req, index) => (
+                  <li key={index} className="flex items-start">
+                    <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-blue-800">{req}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-green-50 p-5 rounded-xl border border-green-200">
+              <h3 className="font-bold text-green-900 mb-3 text-lg">📅 Jadwal Reguler</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center bg-white p-3 rounded-lg">
+                  <span className="text-green-800">Hari</span>
+                  <span className="font-bold text-green-900">Setiap Kamis</span>
+                </div>
+                <div className="flex justify-between items-center bg-white p-3 rounded-lg">
+                  <span className="text-green-800">Waktu</span>
+                  <span className="font-bold text-green-900">14:00 - 16:00 WIB</span>
+                </div>
+                <div className="flex justify-between items-center bg-white p-3 rounded-lg">
+                  <span className="text-green-800">Platform</span>
+                  <span className="font-bold text-green-900">Zoom + LMS</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-teal-50 p-5 rounded-xl border border-green-200">
-            <h3 className="font-bold text-green-900 mb-2">⏰ Timeline Rilis</h3>
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <span className="font-bold text-green-600">15 Jan</span>
-                </div>
-                <p className="text-sm font-medium">Rilis v3.0</p>
+          {/* Registration Info */}
+          <div className="bg-gradient-to-r from-orange-50 to-yellow-50 p-5 rounded-xl border border-orange-200">
+            <h3 className="font-bold text-orange-900 mb-2">📝 Informasi Pendaftaran</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="font-medium text-orange-800">Website Pendaftaran:</p>
+                <a href="#" className="text-orange-600 hover:underline">training.apolo.go.id/online</a>
               </div>
-              <div className="flex-1 h-1 bg-green-200 mx-4"></div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <span className="font-bold text-blue-600">18-20 Jan</span>
-                </div>
-                <p className="text-sm font-medium">Training</p>
+              <div>
+                <p className="font-medium text-orange-800">Email Konfirmasi:</p>
+                <a href="mailto:online-training@apolo.go.id" className="text-orange-600 hover:underline">
+                  online-training@apolo.go.id
+                </a>
               </div>
-              <div className="flex-1 h-1 bg-green-200 mx-4"></div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <span className="font-bold text-purple-600">31 Jan</span>
-                </div>
-                <p className="text-sm font-medium">Support Phase 1</p>
+              <div>
+                <p className="font-medium text-orange-800">Batch Terbuka:</p>
+                <p className="text-orange-700">Setiap awal bulan</p>
+              </div>
+              <div>
+                <p className="font-medium text-orange-800">Kuota per Batch:</p>
+                <p className="text-orange-700">500 peserta</p>
               </div>
             </div>
           </div>
-        </div>
-      );
+        </>
+      )}
 
-    default:
-      return (
-        <div className="space-y-6">
-          <p className="text-gray-700 leading-relaxed">
-            Pengumuman detail sedang dalam proses pembaruan. Silakan hubungi administrator untuk informasi lebih lanjut.
+      {/* Default content for announcements without specific detail */}
+      {![1, 2, 3, 4, 5].includes(announcement.id) && (
+        <div className="bg-yellow-50 p-5 rounded-xl border border-yellow-200">
+          <h3 className="font-bold text-yellow-900 mb-2">Informasi Detail</h3>
+          <p className="text-yellow-800">
+            Konten detail untuk pengumuman ini sedang dalam proses penyempurnaan. 
+            Untuk informasi lebih lengkap, silakan hubungi administrator sistem atau 
+            kunjungi helpdesk kami.
           </p>
-          <div className="bg-yellow-50 p-5 rounded-xl border border-yellow-200">
-            <h3 className="font-bold text-yellow-900 mb-2">Informasi Sementara</h3>
-            <p className="text-yellow-800">
-              Konten detail untuk pengumuman ini akan segera tersedia. Terima kasih atas pengertiannya.
+          <div className="mt-4 p-3 bg-white rounded-lg">
+            <p className="text-gray-700 text-sm">
+              <strong>Catatan:</strong> Informasi lebih lanjut akan diupdate secara berkala. 
+              Pastikan untuk selalu memeriksa versi terbaru dari pengumuman ini.
             </p>
           </div>
         </div>
-      );
-  }
+      )}
+
+      {/* Contact Information for all announcements */}
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200">
+        <h3 className="font-bold text-gray-900 mb-3 text-lg">📞 Kontak & Informasi Lanjutan</h3>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <p className="font-medium text-gray-800">Helpdesk Kemenkeu:</p>
+            <p className="text-gray-700">021-1234-5678 (ext. 1234)</p>
+          </div>
+          <div>
+            <p className="font-medium text-gray-800">Email Support:</p>
+            <a href="mailto:helpdesk@kemenkeu.go.id" className="text-gray-600 hover:underline">
+              helpdesk@kemenkeu.go.id
+            </a>
+          </div>
+          <div>
+            <p className="font-medium text-gray-800">Jam Operasional:</p>
+            <p className="text-gray-700">Senin-Jumat, 08:00-17:00 WIB</p>
+          </div>
+          <div>
+            <p className="font-medium text-gray-800">Website Resmi:</p>
+            <a href="#" className="text-gray-600 hover:underline">www.kemenkeu.go.id</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const Korespondensi = () => {
@@ -569,7 +750,7 @@ const Korespondensi = () => {
     }
   ];
 
-  // Sample data untuk pengumuman
+  // Sample data untuk pengumuman - DITAMBAHKAN FIELD BARU
   const announcements = [
     {
       id: 1,
@@ -588,7 +769,11 @@ const Korespondensi = () => {
       image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop",
       important: true,
       views: 1250,
-      downloadCount: 842
+      downloadCount: 842,
+      // Field baru untuk detail
+      readTime: "8 menit",
+      lastUpdated: new Date('2024-01-09'),
+      version: "v1.2"
     },
     {
       id: 2,
@@ -606,7 +791,10 @@ const Korespondensi = () => {
       image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&h=400&fit=crop",
       important: true,
       views: 890,
-      downloadCount: 567
+      downloadCount: 567,
+      readTime: "10 menit",
+      lastUpdated: new Date('2024-01-04'),
+      version: "v1.0"
     },
     {
       id: 3,
@@ -626,7 +814,10 @@ const Korespondensi = () => {
       image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop",
       important: false,
       views: 1560,
-      downloadCount: 1203
+      downloadCount: 1203,
+      readTime: "15 menit",
+      lastUpdated: new Date('2024-01-02'),
+      version: "v3.0"
     },
     {
       id: 4,
@@ -643,7 +834,10 @@ const Korespondensi = () => {
       image: "https://images.unsplash.com/photo-1573164713714-d95e436ab284?w=800&h=400&fit=crop",
       important: false,
       views: 720,
-      downloadCount: 310
+      downloadCount: 310,
+      readTime: "5 menit",
+      lastUpdated: new Date('2024-01-01'),
+      version: "v1.1"
     },
     {
       id: 5,
@@ -662,7 +856,10 @@ const Korespondensi = () => {
       image: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=400&fit=crop",
       important: true,
       views: 2100,
-      downloadCount: 1540
+      downloadCount: 1540,
+      readTime: "12 menit",
+      lastUpdated: new Date('2023-12-30'),
+      version: "v2.0"
     }
   ];
 
@@ -752,6 +949,10 @@ const Korespondensi = () => {
     return format(date, 'EEEE, dd MMMM yyyy', { locale: id });
   };
 
+  const formatDateTime = (date) => {
+    return format(date, 'dd MMM yyyy HH:mm', { locale: id });
+  };
+
   // Handler untuk mengganti tab
   const handleTabChange = (tab) => {
     if (tab === 'notifikasi') {
@@ -765,30 +966,6 @@ const Korespondensi = () => {
   const handleViewDetail = (announcement) => {
     setSelectedAnnouncement(announcement);
     setIsModalOpen(true);
-  };
-
-  // Handler untuk download
-  const handleDownload = (e, announcement) => {
-    e.stopPropagation();
-    // Logic untuk download
-    console.log('Download announcement:', announcement.title);
-    alert(`Mengunduh: ${announcement.title}`);
-  };
-
-  // Handler untuk bookmark
-  const handleBookmark = (e, announcement) => {
-    e.stopPropagation();
-    // Logic untuk bookmark
-    console.log('Bookmark announcement:', announcement.title);
-    alert(`Pengumuman "${announcement.title}" telah disimpan!`);
-  };
-
-  // Handler untuk share
-  const handleShare = (e, announcement) => {
-    e.stopPropagation();
-    // Logic untuk share
-    console.log('Share announcement:', announcement.title);
-    alert(`Berbagi pengumuman: ${announcement.title}`);
   };
 
   return (
@@ -1007,7 +1184,7 @@ const Korespondensi = () => {
                           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400' viewBox='0 0 800 400'%3E%3Crect width='800' height='400' fill='%23fee2e2'/%3E%3Ctext x='400' y='200' text-anchor='middle' font-family='Arial' font-size='24' fill='%23dc2626'%3E${announcement.category.toUpperCase()}%3C/text%3E%3C/svg%3E";
+                            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400' viewBox='0 0 800 400'%3E%3Crect width='800' height='400' fill='%23fee2e2'/%3E%3Ctext x='400' y='200' text-anchor='middle' font-family='Arial' font-size='24' fill='%23dc2626'%3E"+announcement.category.toUpperCase()+"%3C/text%3E%3C/svg%3E";
                           }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -1048,34 +1225,16 @@ const Korespondensi = () => {
                           ))}
                         </div>
 
-                        {/* Stats & Actions */}
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                          <div className="flex items-center space-x-3 text-gray-500 text-xs">
-                            <span className="flex items-center space-x-1">
-                              <Eye className="w-3 h-3" />
-                              <span>{announcement.views.toLocaleString()}</span>
-                            </span>
-                            <span className="flex items-center space-x-1">
-                              <Download className="w-3 h-3" />
-                              <span>{announcement.downloadCount.toLocaleString()}</span>
-                            </span>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2">
-                            <button 
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-full transition-all hover:scale-110"
-                              title="Simpan"
-                              onClick={(e) => handleBookmark(e, announcement)}
-                            >
-                              <Bookmark className="w-4 h-4" />
-                            </button>
-                            <button 
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-full transition-all hover:scale-110"
-                              title="Lihat Detail"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          </div>
+                        {/* Stats */}
+                        <div className="flex items-center space-x-3 text-gray-500 text-xs pt-4 border-t border-gray-100">
+                          <span className="flex items-center space-x-1">
+                            <Eye className="w-3 h-3" />
+                            <span>{announcement.views.toLocaleString()}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <ClockIcon className="w-3 h-3" />
+                            <span>{announcement.readTime}</span>
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1104,11 +1263,11 @@ const Korespondensi = () => {
               <p className="text-red-100 text-sm">
                 {activeTab === 'notifikasi' 
                   ? 'Notifikasi bersifat real-time dan otomatis dari sistem'
-                  : 'Klik pada pengumuman untuk melihat detail lengkap'}
+                  : 'Klik pada pengumuman untuk melihat deskripsi lengkap'}
               </p>
             </div>
             <div className="mt-4 md:mt-0 text-sm text-red-100">
-              <p>Data diperbarui secara otomatis</p>
+              <p>Data diperbarui: {formatDateTime(new Date())}</p>
             </div>
           </div>
         </div>
@@ -1116,12 +1275,12 @@ const Korespondensi = () => {
         {/* Footer Note */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">
-            Klik pada pengumuman untuk melihat detail lengkap. Untuk informasi lebih lanjut hubungi administrator.
+            Klik pada pengumuman untuk melihat deskripsi lengkap. Untuk informasi lebih lanjut hubungi administrator.
           </p>
         </div>
       </div>
 
-      {/* Modal Detail Pengumuman */}
+      {/* Modal Detail Pengumuman - VERSI DIPERBAIKI */}
       {isModalOpen && selectedAnnouncement && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Backdrop */}
@@ -1132,7 +1291,7 @@ const Korespondensi = () => {
 
           {/* Modal */}
           <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="relative bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
               {/* Modal Header */}
               <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-6">
                 <div className="flex items-center justify-between">
@@ -1142,7 +1301,7 @@ const Korespondensi = () => {
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-gray-900">{selectedAnnouncement.title}</h2>
-                      <div className="flex items-center space-x-3 mt-1">
+                      <div className="flex flex-wrap items-center gap-3 mt-1">
                         <span className="text-sm text-gray-600 flex items-center">
                           <User className="w-3 h-3 mr-1" />
                           {selectedAnnouncement.author}
@@ -1150,6 +1309,10 @@ const Korespondensi = () => {
                         <span className="text-sm text-gray-600 flex items-center">
                           <Calendar className="w-3 h-3 mr-1" />
                           {formatFullDate(selectedAnnouncement.publishDate)}
+                        </span>
+                        <span className="text-sm text-gray-600 flex items-center">
+                          <ClockIcon className="w-3 h-3 mr-1" />
+                          {selectedAnnouncement.readTime} membaca
                         </span>
                       </div>
                     </div>
@@ -1163,37 +1326,35 @@ const Korespondensi = () => {
                 </div>
               </div>
 
-              {/* Modal Content */}
+              {/* Modal Content - DIPERBAIKI DENGAN DESKRIPSI LENGKAP */}
               <div className="overflow-y-auto p-6">
                 {/* Hero Image */}
-                <div className="relative h-64 rounded-xl overflow-hidden mb-6">
+                <div className="relative h-72 rounded-xl overflow-hidden mb-6">
                   <img 
                     src={selectedAnnouncement.image} 
                     alt={selectedAnnouncement.title}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400' viewBox='0 0 800 400'%3E%3Crect width='800' height='400' fill='%23fee2e2'/%3E%3Ctext x='400' y='200' text-anchor='middle' font-family='Arial' font-size='24' fill='%23dc2626'%3E"+selectedAnnouncement.category.toUpperCase()+"%3C/text%3E%3C/svg%3E";
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                   <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
                     {getCategoryBadge(selectedAnnouncement.category)}
                     {selectedAnnouncement.important && (
-                      <span className="px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold rounded-full">
-                        ⚠️ PENTING
+                      <span className="px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold rounded-full flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        PENTING
                       </span>
                     )}
+                    <span className="px-3 py-1 bg-white/90 text-gray-700 text-xs rounded-full">
+                      Versi: {selectedAnnouncement.version}
+                    </span>
                   </div>
                 </div>
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {selectedAnnouncement.tags.map((tag, index) => (
-                    <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full flex items-center">
-                      <Tag className="w-3 h-3 mr-1" />
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Stats */}
+                {/* Metadata */}
                 <div className="grid grid-cols-3 gap-4 mb-8 p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-xl">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-gray-900">{selectedAnnouncement.views.toLocaleString()}</div>
@@ -1218,11 +1379,29 @@ const Korespondensi = () => {
                   </div>
                 </div>
 
-                {/* Full Content - MENGGUNAKAN KOMPONEN REACT */}
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {selectedAnnouncement.tags.map((tag, index) => (
+                    <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full flex items-center">
+                      <Tag className="w-3 h-3 mr-1" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Full Content dengan Deskripsi Lengkap */}
                 <div className="mb-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                    Deskripsi Lengkap
-                  </h3>
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                    <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                      <MessageSquare className="w-5 h-5 mr-2" />
+                      Deskripsi Lengkap
+                    </h3>
+                    <span className="text-sm text-gray-500">
+                      Terakhir update: {formatDateTime(selectedAnnouncement.lastUpdated)}
+                    </span>
+                  </div>
+                  
+                  {/* Komponen Detail dengan Data Lengkap */}
                   <AnnouncementDetailContent announcement={selectedAnnouncement} />
                 </div>
 
@@ -1244,9 +1423,14 @@ const Korespondensi = () => {
                             </div>
                           </div>
                           <button 
-                            onClick={(e) => handleDownload(e, selectedAnnouncement)}
-                            className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm rounded-lg hover:from-red-600 hover:to-red-700 transition-all"
+                            className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm rounded-lg hover:from-red-600 hover:to-red-700 transition-all flex items-center"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Logic untuk download attachment
+                              alert(`Mengunduh: ${attachment.name}`);
+                            }}
                           >
+                            <Download className="w-4 h-4 mr-2" />
                             Unduh
                           </button>
                         </div>
@@ -1260,29 +1444,21 @@ const Korespondensi = () => {
               <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">
-                    ID: {selectedAnnouncement.id} • {formatTimeAgo(selectedAnnouncement.timestamp)}
+                    ID: {selectedAnnouncement.id} • Dipublikasikan: {formatTimeAgo(selectedAnnouncement.timestamp)}
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <button 
-                      onClick={(e) => handleBookmark(e, selectedAnnouncement)}
-                      className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center"
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => window.print()}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all flex items-center"
                     >
-                      <Bookmark className="w-4 h-4 mr-2" />
-                      Simpan
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print
                     </button>
-                    <button 
-                      onClick={(e) => handleShare(e, selectedAnnouncement)}
-                      className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center"
+                    <button
+                      onClick={() => setIsModalOpen(false)}
+                      className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all"
                     >
-                      <Share2 className="w-4 h-4 mr-2" />
-                      Bagikan
-                    </button>
-                    <button 
-                      onClick={(e) => handleDownload(e, selectedAnnouncement)}
-                      className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all flex items-center"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Unduh Semua
+                      Tutup
                     </button>
                   </div>
                 </div>

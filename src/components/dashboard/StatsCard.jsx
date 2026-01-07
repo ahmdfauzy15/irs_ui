@@ -53,14 +53,7 @@ const StatsCard = ({ number, label, icon, color, trend }) => {
         </div>
       </div>
       
-      <div className="p-4 bg-white">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">Lihat detail</span>
-          <button className="text-blue-600 hover:text-blue-800 font-medium hover:underline">
-            Selengkapnya →
-          </button>
-        </div>
-      </div>
+      
     </div>
   );
 };
