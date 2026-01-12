@@ -63,82 +63,18 @@ const DownloadCenter = () => {
 
   // Data aplikasi pendukung dengan tema merah
   const aplikasiPendukung = [
+   
     {
       id: 1,
-      name: 'APOLO Desktop App',
-      version: 'v2.5.1',
-      size: '185 MB',
-      description: 'Aplikasi desktop untuk manajemen data APOLO dengan antarmuka yang intuitif',
-      requirements: 'Windows 10/11, 4GB RAM, 2GB Storage',
-      downloadLink: '#',
-      category: 'desktop',
-      aplikasi: 'APOLO',
-      icon: Monitor,
-      color: 'from-red-500 to-red-600'
-    },
-    {
-      id: 2,
-      name: 'APOLO Mobile App',
-      version: 'v1.8.3',
-      size: '78 MB',
-      description: 'Aplikasi mobile untuk akses APOLO di perangkat Android',
-      requirements: 'Android 8.0+, 2GB RAM',
-      downloadLink: '#',
-      category: 'mobile',
-      aplikasi: 'APOLO',
-      icon: Smartphone,
-      color: 'from-red-400 to-red-500'
-    },
-    {
-      id: 3,
-      name: 'EREPORTING Client',
+      name: 'APOLO Client',
       version: 'v3.2.0',
-      size: '210 MB',
-      description: 'Klien desktop untuk sistem eReporting dengan fitur reporting lengkap',
-      requirements: 'Windows 10/11, 8GB RAM, 5GB Storage',
+      size: '2 MB',
+      description: 'Klien APOLO untuk sistem APOLO dengan fitur Pelengkap',
+      requirements: 'Windows 10/11, 2GB RAM, 100mb Storage',
       downloadLink: '#',
       category: 'desktop',
-      aplikasi: 'EREPORTING',
+      aplikasi: 'APOLO',
       icon: Terminal,
-      color: 'from-red-600 to-red-700'
-    },
-    {
-      id: 4,
-      name: 'SIPINA Web Client',
-      version: 'v1.5.2',
-      size: '45 MB',
-      description: 'Ekstensi browser untuk mengakses SIPINA dengan lebih cepat',
-      requirements: 'Chrome/Firefox, 2GB RAM',
-      downloadLink: '#',
-      category: 'web',
-      aplikasi: 'SIPINA',
-      icon: Code,
-      color: 'from-red-500 to-red-600'
-    },
-    {
-      id: 5,
-      name: 'Database Tool',
-      version: 'v4.0.1',
-      size: '320 MB',
-      description: 'Tools untuk manajemen database dan backup data',
-      requirements: 'Windows Server 2016+, 16GB RAM, 10GB Storage',
-      downloadLink: '#',
-      category: 'server',
-      aplikasi: 'ALL',
-      icon: Database,
-      color: 'from-red-700 to-red-800'
-    },
-    {
-      id: 6,
-      name: 'API Integration Kit',
-      version: 'v2.1.0',
-      size: '95 MB',
-      description: 'Kit integrasi API untuk koneksi dengan sistem eksternal',
-      requirements: 'Windows/Linux, 4GB RAM, 1GB Storage',
-      downloadLink: '#',
-      category: 'development',
-      aplikasi: 'ALL',
-      icon: Cpu,
       color: 'from-red-600 to-red-700'
     }
   ];
@@ -444,7 +380,7 @@ const DownloadCenter = () => {
                     Pusat Unduhan
                   </h1>
                   <p className="text-sm text-red-600 mt-1">
-                    Unduh aplikasi pendukung dan dokumentasi sistem
+                    Unduh aplikasi pendukung dan semua dokumen pelaporan
                   </p>
                 </div>
               </div>
@@ -471,7 +407,7 @@ const DownloadCenter = () => {
                   }`}
                 >
                   <BookOpen className="w-4 h-4" />
-                  <span className="truncate">Dokumentasi</span>
+                  <span className="truncate">Dokumen Pelaporan</span>
                 </button>
               </div>
             </div>

@@ -9,7 +9,7 @@ import {
   XCircle
 } from 'lucide-react';
 
-const StatsCard = ({ number, label, icon, color, trend }) => {
+const StatsCard = ({ number, label, icon, color }) => {
   const getIcon = (iconName) => {
     switch(iconName) {
       case 'FileText':
@@ -25,12 +25,7 @@ const StatsCard = ({ number, label, icon, color, trend }) => {
     }
   };
 
-  const getTrendIcon = (trendType) => {
-    if (trendType === 'up') {
-      return <TrendingUp className="w-4 h-4 text-green-400" />;
-    }
-    return <TrendingDown className="w-4 h-4 text-red-400" />;
-  };
+ 
 
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
@@ -44,13 +39,13 @@ const StatsCard = ({ number, label, icon, color, trend }) => {
             {getIcon(icon)}
           </div>
         </div>
-        
+{/*         
         <div className="flex items-center space-x-2 mt-4">
           {getTrendIcon(trend)}
           <span className="text-white/80 text-sm">
             {trend === 'up' ? '+12%' : '-5%'} dari bulan lalu
           </span>
-        </div>
+        </div> */}
       </div>
       
       

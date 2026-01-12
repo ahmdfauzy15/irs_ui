@@ -25,28 +25,24 @@ import {
 } from 'lucide-react';
 
 const EReporting = () => {
-  // Fungsi untuk mendapatkan waktu saat ini di WIB (UTC+7)
+  // Fungsi untuk mendapatkan waktu saat ini di WIB (menggunakan local time Indonesia)
   const getCurrentWIBTime = () => {
     const now = new Date();
-    const wibOffset = 7 * 60 * 60 * 1000; // 7 jam dalam milidetik
-    const wibTime = new Date(now.getTime() + wibOffset);
-    return wibTime;
+    return now;
   };
 
   // State untuk waktu real-time
   const [currentDateTime, setCurrentDateTime] = useState(getCurrentWIBTime());
   const [reportsWithPeriod, setReportsWithPeriod] = useState([]);
   
-  // State untuk periode tanggal - default bulan berjalan
+  // State untuk periode tanggal - default 2 tahun kebelakang hingga 1 tahun ke depan
   const [dateRange, setDateRange] = useState(() => {
     const currentDate = getCurrentWIBTime();
     const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1; // 1-indexed
-    const lastDay = new Date(currentYear, currentMonth, 0).getDate();
     
     return {
-      startDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`,
-      endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${lastDay}`
+      startDate: `${currentYear - 2}-01-01`, // 2 tahun ke belakang
+      endDate: `${currentYear + 1}-12-31`    // 1 tahun ke depan
     };
   });
   
@@ -74,10 +70,55 @@ const EReporting = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Data reports eReporting dengan tanggal real-time
+  // Data reports eReporting dengan tanggal real-time - DIPERBAIKI
   const initialReports = useMemo(() => {
     const currentYear = currentDateTime.getFullYear();
     const currentMonth = currentDateTime.getMonth() + 1; // 1-indexed
+    
+    // Fungsi untuk mendapatkan tanggal yang aman (handle rollover tahun)
+    const getSafeDate = (year, month, day) => {
+      let safeMonth = month;
+      let safeYear = year;
+      
+      // Handle jika bulan minus (dari tahun sebelumnya)
+      if (safeMonth <= 0) {
+        safeMonth += 12;
+        safeYear -= 1;
+      }
+      // Handle jika bulan lebih dari 12 (dari tahun depan)
+      else if (safeMonth > 12) {
+        safeMonth -= 12;
+        safeYear += 1;
+      }
+      
+      // Pastikan hari valid untuk bulan tersebut
+      const lastDayOfMonth = new Date(safeYear, safeMonth, 0).getDate();
+      const safeDay = Math.min(day, lastDayOfMonth);
+      
+      return { year: safeYear, month: safeMonth, day: safeDay };
+    };
+    
+    // Hitung tanggal yang aman untuk berbagai periode
+    const prevMonth15 = getSafeDate(currentYear, currentMonth - 1, 15);
+    const prevMonth31 = getSafeDate(currentYear, currentMonth - 1, 31);
+    const prevMonth10 = getSafeDate(currentYear, currentMonth - 1, 10);
+    const prevMonth25 = getSafeDate(currentYear, currentMonth - 1, 25);
+    const prevMonth30 = getSafeDate(currentYear, currentMonth - 1, 30);
+    
+    const currentMonth5 = getSafeDate(currentYear, currentMonth, 5);
+    const currentMonth7 = getSafeDate(currentYear, currentMonth, 7);
+    const currentMonth10 = getSafeDate(currentYear, currentMonth, 10);
+    const currentMonth15 = getSafeDate(currentYear, currentMonth, 15);
+    const currentMonth20 = getSafeDate(currentYear, currentMonth, 20);
+    const currentMonth25 = getSafeDate(currentYear, currentMonth, 25);
+    const currentMonth28 = getSafeDate(currentYear, currentMonth, 28);
+    const currentMonth30 = getSafeDate(currentYear, currentMonth, 30);
+    
+    const nextMonth5 = getSafeDate(currentYear, currentMonth + 1, 5);
+    const nextMonth10 = getSafeDate(currentYear, currentMonth + 1, 10);
+    const nextMonth15 = getSafeDate(currentYear, currentMonth + 1, 15);
+    const nextMonth20 = getSafeDate(currentYear, currentMonth + 1, 20);
+    const nextMonth25 = getSafeDate(currentYear, currentMonth + 1, 25);
     
     return [
       {
@@ -87,10 +128,10 @@ const EReporting = () => {
         namaLaporan: "Laporan Kegiatan Penjamin Emisi Efek",
         periodeLaporan: "Semesteran",
         batasWaktu: "HK 12 bulan berikutnya (Juli dan Januari)",
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-15T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T14:30:00`,
-        waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T14:30:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-15T23:59:59`,
+        deadlineDate: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day - 5).padStart(2, '0')}T14:30:00`,
+        waktuSubmit: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day - 5).padStart(2, '0')}T14:30:00`,
+        waktuDeadline: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Berhasil",
         statusKetepatan: "Tepat Waktu"
       },
@@ -101,10 +142,10 @@ const EReporting = () => {
         namaLaporan: "Laporan Kegiataan Perantara Perdagangan Efek",
         periodeLaporan: "Bulanan",
         batasWaktu: "HK 12 bulan berikutnya",
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-05T09:15:00`,
-        waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-05T09:15:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T23:59:59`,
+        deadlineDate: `${prevMonth10.year}-${String(prevMonth10.month).padStart(2, '0')}-${String(prevMonth10.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${prevMonth10.year}-${String(prevMonth10.month).padStart(2, '0')}-${String(prevMonth10.day - 5).padStart(2, '0')}T09:15:00`,
+        waktuSubmit: `${prevMonth10.year}-${String(prevMonth10.month).padStart(2, '0')}-${String(prevMonth10.day - 5).padStart(2, '0')}T09:15:00`,
+        waktuDeadline: `${prevMonth10.year}-${String(prevMonth10.month).padStart(2, '0')}-${String(prevMonth10.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Berhasil",
         statusKetepatan: "Tepat Waktu"
       },
@@ -213,10 +254,10 @@ const EReporting = () => {
         namaLaporan: "Revisi laporan penerapan Tata Kelola",
         periodeLaporan: "setiap perubahan",
         batasWaktu: "insidental",
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-25T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-20T14:30:00`,
-        waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-20T14:30:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-25T23:59:59`,
+        deadlineDate: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day - 5).padStart(2, '0')}T14:30:00`,
+        waktuSubmit: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day - 5).padStart(2, '0')}T14:30:00`,
+        waktuDeadline: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Berhasil",
         statusKetepatan: "Tepat Waktu"
       },
@@ -284,11 +325,11 @@ const EReporting = () => {
         namaLaporan: "Laporan Monitoring Transaksi Mencurigakan",
         periodeLaporan: "Bulanan",
         batasWaktu: "HK 10 bulan berikutnya",
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T23:59:59`,
+        deadlineDate: `${currentMonth10.year}-${String(currentMonth10.month).padStart(2, '0')}-${String(currentMonth10.day).padStart(2, '0')}T23:59:59`,
         submissionDate: null,
         waktuSubmit: null,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T23:59:59`,
-        statusPengiriman: "Tidak Berhasil",
+        waktuDeadline: `${currentMonth10.year}-${String(currentMonth10.month).padStart(2, '0')}-${String(currentMonth10.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Gagal",
         statusKetepatan: "Terlambat"
       },
       {
@@ -298,17 +339,60 @@ const EReporting = () => {
         namaLaporan: "Laporan Insidentil Khusus",
         periodeLaporan: "Insidentil",
         batasWaktu: "24 jam setelah kejadian",
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-05T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-06T10:30:00`,
-        waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-06T10:30:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-05T23:59:59`,
+        deadlineDate: `${currentMonth5.year}-${String(currentMonth5.month).padStart(2, '0')}-${String(currentMonth5.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${currentMonth5.year}-${String(currentMonth5.month).padStart(2, '0')}-${String(currentMonth5.day + 1).padStart(2, '0')}T10:30:00`,
+        waktuSubmit: `${currentMonth5.year}-${String(currentMonth5.month).padStart(2, '0')}-${String(currentMonth5.day + 1).padStart(2, '0')}T10:30:00`,
+        waktuDeadline: `${currentMonth5.year}-${String(currentMonth5.month).padStart(2, '0')}-${String(currentMonth5.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Berhasil",
         statusKetepatan: "Terlambat"
+      },
+      // Data tambahan untuk variasi status
+      {
+        id: 17,
+        aplikasi: "Ereporting",
+        jenisLJK: "PEE, PPE AB",
+        namaLaporan: "Laporan Evaluasi Mandiri",
+        periodeLaporan: "Semesteran",
+        batasWaktu: "30 Juni dan 31 Desember",
+        deadlineDate: `${currentYear}-06-30T23:59:59`,
+        submissionDate: `${currentYear}-06-30T14:00:00`,
+        waktuSubmit: `${currentYear}-06-30T14:00:00`,
+        waktuDeadline: `${currentYear}-06-30T23:59:59`,
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Tepat Waktu"
+      },
+      {
+        id: 18,
+        aplikasi: "Ereporting",
+        jenisLJK: "PEE, PPE AB, PPE Non AB",
+        namaLaporan: "Laporan Pelaksanaan Rapat Umum Pemegang Saham",
+        periodeLaporan: "Insidentil",
+        batasWaktu: "30 hari setelah RUPS",
+        deadlineDate: `${nextMonth10.year}-${String(nextMonth10.month).padStart(2, '0')}-${String(nextMonth10.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: null,
+        waktuSubmit: null,
+        waktuDeadline: `${nextMonth10.year}-${String(nextMonth10.month).padStart(2, '0')}-${String(nextMonth10.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Belum Lapor",
+        statusKetepatan: "Belum Submit"
+      },
+      {
+        id: 19,
+        aplikasi: "Ereporting",
+        jenisLJK: "PPE AB, PPE Non AB",
+        namaLaporan: "Laporan Audit Internal",
+        periodeLaporan: "Tahunan",
+        batasWaktu: "31 Maret tahun berikutnya",
+        deadlineDate: `${currentYear}-03-31T23:59:59`,
+        submissionDate: `${currentYear}-03-31T16:45:00`,
+        waktuSubmit: `${currentYear}-03-31T16:45:00`,
+        waktuDeadline: `${currentYear}-03-31T23:59:59`,
+        statusPengiriman: "Gagal",
+        statusKetepatan: "Gagal Kirim"
       }
     ];
   }, [currentDateTime]);
 
-  // Proses data reports dengan tanggal dan hitung status
+  // Proses data reports dengan tanggal dan hitung status - MODIFIKASI UNTUK TAMPILKAN SISA WAKTU Gagal
   useEffect(() => {
     const startDate = new Date(dateRange.startDate);
     startDate.setHours(0, 0, 0, 0);
@@ -337,8 +421,8 @@ const EReporting = () => {
       
       if (submissionDate) {
         // Sudah ada submission
-        if (report.statusPengiriman === 'Tidak Berhasil') {
-          // Status tidak berhasil
+        if (report.statusPengiriman === 'Gagal' || report.id === 19) {
+          // Status Gagal
           periodeStatus = 'aktif';
         } else {
           const isSubmittedOnTime = submissionDate <= deadlineDate;
@@ -362,15 +446,15 @@ const EReporting = () => {
       // Tentukan status pengiriman dan ketepatan waktu
       let status = 'belum-lapor';
       let statusPengiriman = 'Belum Lapor';
-      let statusKetepatanWaktu = 'Akan Ditentukan';
+      let statusKetepatanWaktu = 'Belum Submit';
       
       if (submissionDate) {
         const isSubmittedOnTime = submissionDate <= deadlineDate;
         
-        // Untuk data tidak berhasil
-        if (report.statusPengiriman === 'Tidak Berhasil') {
-          status = 'tidak-berhasil';
-          statusPengiriman = 'Tidak Berhasil';
+        // Untuk data Gagal
+        if (report.statusPengiriman === 'Gagal' || report.id === 19) {
+          status = 'gagal';
+          statusPengiriman = 'Gagal';
           statusKetepatanWaktu = 'Gagal Kirim';
         } else {
           status = 'berhasil';
@@ -382,7 +466,7 @@ const EReporting = () => {
         if (isDeadlinePassed) {
           statusKetepatanWaktu = 'Terlambat';
         } else {
-          statusKetepatanWaktu = 'Akan Ditentukan';
+          statusKetepatanWaktu = 'Belum Submit';
         }
       }
       
@@ -399,16 +483,13 @@ const EReporting = () => {
         hoursLate = Math.floor(Math.abs(timeDiffMs) / (1000 * 60 * 60));
       }
       
-      // Format tanggal untuk display dengan WIB
-      const formatDateTime = (date) => {
+      // Format tanggal untuk display dengan WIB - HANYA TANGGAL SAJA
+      const formatDateOnly = (date) => {
         if (!date) return 'Belum ada';
         return date.toLocaleDateString('id-ID', {
           day: '2-digit',
           month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'Asia/Jakarta'
+          year: 'numeric'
         });
       };
       
@@ -423,8 +504,8 @@ const EReporting = () => {
         isDeadlinePassed,
         hoursRemaining,
         hoursLate,
-        displayDeadline: formatDateTime(deadlineDate),
-        displaySubmit: submissionDate ? formatDateTime(submissionDate) : 'Belum submit',
+        displayDeadline: formatDateOnly(deadlineDate),
+        displaySubmit: submissionDate ? formatDateOnly(submissionDate) : 'Belum submit',
         deadlineObj: deadlineDate,
         submitObj: submissionDate,
         waktuSubmit: submissionDate ? submissionDate.toISOString() : null,
@@ -452,8 +533,8 @@ const EReporting = () => {
             return report.status === 'berhasil' && report.statusKetepatanWaktu === 'Tepat Waktu';
           case 'belum-lapor':
             return report.status === 'belum-lapor' && report.periodeStatus === 'aktif';
-          case 'tidak-berhasil':
-            return report.status === 'tidak-berhasil' && report.periodeStatus === 'aktif';
+          case 'gagal':
+            return report.status === 'gagal' && report.periodeStatus === 'aktif';
           case 'sudah-lapor':
             return report.status === 'berhasil' && report.periodeStatus === 'terlambat';
           case 'belum-lapor-terlambat':
@@ -521,7 +602,7 @@ const EReporting = () => {
       berhasilTerlambat: lateReports.filter(r => r.status === 'berhasil' && r.statusKetepatanWaktu === 'Terlambat').length,
       belumLaporAktif: activeReports.filter(r => r.status === 'belum-lapor').length,
       belumLaporTerlambat: lateReports.filter(r => r.status === 'belum-lapor').length,
-      tidakBerhasil: activeReports.filter(r => r.status === 'tidak-berhasil').length,
+      gagal: activeReports.filter(r => r.status === 'gagal').length,
     };
   }, [reportsWithPeriod]);
 
@@ -537,23 +618,35 @@ const EReporting = () => {
     return summary;
   }, [reportsWithPeriod]);
 
-  // Get date suggestions untuk tahun berjalan
+  // Get date suggestions untuk 1 tahun kebelakang dan bulan realtime saat ini
   const getDateSuggestions = () => {
     const currentYear = currentDateTime.getFullYear();
-    return [
-      { label: 'Januari ' + currentYear, start: `${currentYear}-01-01`, end: `${currentYear}-01-31` },
-      { label: 'Februari ' + currentYear, start: `${currentYear}-02-01`, end: `${currentYear}-02-28` },
-      { label: 'Maret ' + currentYear, start: `${currentYear}-03-01`, end: `${currentYear}-03-31` },
-      { label: 'April ' + currentYear, start: `${currentYear}-04-01`, end: `${currentYear}-04-30` },
-      { label: 'Mei ' + currentYear, start: `${currentYear}-05-01`, end: `${currentYear}-05-31` },
-      { label: 'Juni ' + currentYear, start: `${currentYear}-06-01`, end: `${currentYear}-06-30` },
-      { label: 'Juli ' + currentYear, start: `${currentYear}-07-01`, end: `${currentYear}-07-31` },
-      { label: 'Agustus ' + currentYear, start: `${currentYear}-08-01`, end: `${currentYear}-08-31` },
-      { label: 'September ' + currentYear, start: `${currentYear}-09-01`, end: `${currentYear}-09-30` },
-      { label: 'Oktober ' + currentYear, start: `${currentYear}-10-01`, end: `${currentYear}-10-31` },
-      { label: 'November ' + currentYear, start: `${currentYear}-11-01`, end: `${currentYear}-11-30` },
-      { label: 'Desember ' + currentYear, start: `${currentYear}-12-01`, end: `${currentYear}-12-31` },
-    ];
+    const currentMonth = currentDateTime.getMonth() + 1;
+    
+    const suggestions = [];
+    
+    // Tambahkan bulan-bulan dari 1 tahun kebelakang
+    for (let year = currentYear - 1; year <= currentYear; year++) {
+      const startMonth = year === currentYear - 1 ? 1 : 1;
+      const endMonth = year === currentYear - 1 ? 12 : currentMonth;
+      
+      for (let month = startMonth; month <= endMonth; month++) {
+        const monthNames = [
+          'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        
+        const lastDay = new Date(year, month, 0).getDate();
+        
+        suggestions.push({
+          label: `${monthNames[month - 1]} ${year}`,
+          start: `${year}-${String(month).padStart(2, '0')}-01`,
+          end: `${year}-${String(month).padStart(2, '0')}-${lastDay}`
+        });
+      }
+    }
+    
+    return suggestions;
   };
 
   // Sub-filter options
@@ -563,7 +656,7 @@ const EReporting = () => {
         { value: 'all', label: 'Semua Status' },
         { value: 'berhasil-sesuai-waktu', label: 'Berhasil Sesuai Waktu' },
         { value: 'belum-lapor', label: 'Belum Lapor' },
-        { value: 'tidak-berhasil', label: 'Tidak Berhasil' }
+        { value: 'gagal', label: 'Gagal' }
       ];
     } else if (filters.periodeStatus === 'terlambat') {
       return [
@@ -577,12 +670,10 @@ const EReporting = () => {
 
   const resetFilters = () => {
     const currentYear = currentDateTime.getFullYear();
-    const currentMonth = currentDateTime.getMonth() + 1; // 1-indexed
-    const lastDay = new Date(currentYear, currentMonth, 0).getDate();
     
     setDateRange({
-      startDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`,
-      endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${lastDay}`
+      startDate: `${currentYear - 2}-01-01`,
+      endDate: `${currentYear + 1}-12-31`
     });
     
     setFilters({
@@ -634,13 +725,13 @@ const EReporting = () => {
     const styles = {
       'berhasil': 'bg-green-100 text-green-800 border-green-200',
       'belum-lapor': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'tidak-berhasil': 'bg-red-100 text-red-800 border-red-200',
+      'gagal': 'bg-red-100 text-red-800 border-red-200',
     };
 
     const labels = {
       'berhasil': 'Berhasil',
       'belum-lapor': 'Belum Lapor',
-      'tidak-berhasil': 'Tidak Berhasil',
+      'gagal': 'Gagal',
     };
 
     return (
@@ -687,7 +778,6 @@ const EReporting = () => {
       'PEE, PPE AB, PPE Non AB': 'bg-purple-100 text-purple-800 border-purple-200',
       'PEE, PPE AB': 'bg-indigo-100 text-indigo-800 border-indigo-200',
       'PPE AB': 'bg-pink-100 text-pink-800 border-pink-200',
-      'PPE AB, PPE Non AB, BANK, PPU': 'bg-teal-100 text-teal-800 border-teal-200',
     };
 
     const defaultStyle = 'bg-gray-100 text-gray-800 border-gray-200';
@@ -699,64 +789,55 @@ const EReporting = () => {
     );
   };
 
+  // MODIFIKASI: Tampilkan sisa waktu untuk laporan aktif yang Gagal dan Belum Lapor dalam HARI
   const getTimeDisplay = (report) => {
     if (report.periodeStatus === 'aktif') {
+      const daysRemaining = Math.floor(report.hoursRemaining / 24);
+      
       if (report.status === 'berhasil') {
         return (
           <div className="space-y-1">
-            <div className="text-xs text-green-600 flex items-center">
-              <CheckCircle className="w-3 h-3 mr-1" />
+            <div className="text-xs text-green-600">
               <span>Submit: {report.displaySubmit}</span>
             </div>
-            <div className="text-xs text-blue-600 flex items-center">
-              <CalendarIcon className="w-3 h-3 mr-1" />
+            <div className="text-xs text-blue-600">
               <span>Deadline: {report.displayDeadline}</span>
-            </div>
-            <div className="text-xs text-green-500 font-medium">
-              {report.statusKetepatanWaktu === 'Tepat Waktu' ? '✅ Sesuai deadline' : '⚠ Terlambat'}
             </div>
           </div>
         );
-      } else if (report.status === 'tidak-berhasil') {
+      } else if (report.status === 'gagal') {
+        // TAMBAHKAN SISA WAKTU UNTUK LAPORAN AKTIF YANG Gagal (dalam hari)
         return (
           <div className="space-y-1">
-            <div className="text-xs text-red-600 flex items-center">
-              <XCircle className="w-3 h-3 mr-1" />
-              <span>Tidak Berhasil: {report.displaySubmit}</span>
-            </div>
-            <div className="text-xs text-blue-600 flex items-center">
-              <CalendarIcon className="w-3 h-3 mr-1" />
+            <div className="text-xs text-red-600">
               <span>Deadline: {report.displayDeadline}</span>
             </div>
-            <div className="text-xs text-red-500 font-medium">
-              ❌ Gagal kirim
+            <div className="text-xs text-yellow-600">
+              <span>
+                {report.hoursRemaining > 0 ? (
+                  <>
+                    Sisa waktu: {daysRemaining > 0 ? `${daysRemaining} hari` : 'Kurang dari 1 hari'}
+                  </>
+                ) : 'Sisa waktu: Segera!'}
+              </span>
             </div>
           </div>
         );
       } else {
         // Belum lapor
-        const daysRemaining = Math.floor(report.hoursRemaining / 24);
-        const hoursRemaining = report.hoursRemaining % 24;
-        
         return (
           <div className="space-y-1">
-            <div className="text-xs text-blue-600 flex items-center">
-              <CalendarIcon className="w-3 h-3 mr-1" />
+            <div className="text-xs text-blue-600">
               <span>Deadline: {report.displayDeadline}</span>
             </div>
-            <div className="text-xs text-yellow-600 flex items-center">
-              <Clock className="w-3 h-3 mr-1" />
+            <div className="text-xs text-yellow-600">
               <span>
                 {report.hoursRemaining > 0 ? (
                   <>
-                    Sisa waktu: {daysRemaining > 0 ? `${daysRemaining} hari` : ''} 
-                    {hoursRemaining > 0 ? ` ${hoursRemaining} jam` : ' Segera!'}
+                    Sisa waktu: {daysRemaining > 0 ? `${daysRemaining} hari` : 'Kurang dari 1 hari'}
                   </>
                 ) : 'Sisa waktu: Segera!'}
               </span>
-            </div>
-            <div className="text-xs text-yellow-500 font-medium">
-              ⏳ Belum submit
             </div>
           </div>
         );
@@ -764,28 +845,23 @@ const EReporting = () => {
     } else {
       // Terlambat
       const daysLate = Math.floor(Math.abs(report.hoursLate) / 24);
-      const hoursLate = Math.abs(report.hoursLate) % 24;
       
       return (
         <div className="space-y-1">
           {report.status === 'berhasil' ? (
-            <div className="text-xs text-green-600 flex items-center">
-              <CheckCircle className="w-3 h-3 mr-1" />
+            <div className="text-xs text-green-600">
               <span>Submit: {report.displaySubmit}</span>
             </div>
           ) : (
-            <div className="text-xs text-yellow-600 flex items-center">
-              <ClockAlert className="w-3 h-3 mr-1" />
+            <div className="text-xs text-yellow-600">
               <span>Belum submit</span>
             </div>
           )}
-          <div className="text-xs text-red-600 flex items-center">
-            <CalendarIcon className="w-3 h-3 mr-1" />
+          <div className="text-xs text-red-600">
             <span>Deadline: {report.displayDeadline}</span>
           </div>
-          <div className="text-xs text-red-500 font-medium">
-            ⚠ Terlambat: {daysLate > 0 ? `${daysLate} hari` : ''} 
-            {hoursLate > 0 ? ` ${hoursLate} jam` : ' 0 jam'}
+          <div className="text-xs text-red-500">
+            Terlambat: {daysLate > 0 ? `${daysLate} hari` : 'Kurang dari 1 hari'}
           </div>
         </div>
       );
@@ -799,16 +875,20 @@ const EReporting = () => {
   const handleExportData = () => {
     const exportData = filteredReports.map(report => ({
       'No': report.id,
-      'Aplikasi': report.aplikasi,
       'Jenis LJK': report.jenisLJK,
       'Nama Laporan': report.namaLaporan,
-      'Periode Laporan': report.periodeLaporan,
-      'Batas Waktu': report.batasWaktu,
-      'Waktu Submit': report.displaySubmit,
-      'Waktu Deadline': report.displayDeadline,
+      'Deadline': report.displayDeadline,
+      'Submit': report.displaySubmit,
       'Status Periode': report.periodeStatus === 'aktif' ? 'Periode Aktif' : 'Terlambat',
       'Status Pengiriman': report.statusPengiriman,
-      'Status Ketepatan Waktu': report.statusKetepatanWaktu
+      'Status Ketepatan Waktu': report.statusKetepatanWaktu,
+      'Sisa Waktu': report.periodeStatus === 'aktif' ? 
+        (report.hoursRemaining > 0 ? 
+          `${Math.floor(report.hoursRemaining / 24)} hari` : 
+          'Segera!') : 
+        (report.hoursLate > 0 ? 
+          `Terlambat ${Math.floor(report.hoursLate / 24)} hari` : 
+          'Terlambat')
     }));
 
     const csv = convertToCSV(exportData);
@@ -837,8 +917,7 @@ const EReporting = () => {
     return date.toLocaleDateString('id-ID', {
       day: '2-digit',
       month: 'long',
-      year: 'numeric',
-      timeZone: 'Asia/Jakarta'
+      year: 'numeric'
     });
   };
 
@@ -848,8 +927,16 @@ const EReporting = () => {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      timeZone: 'Asia/Jakarta'
+      day: 'numeric'
+    });
+  };
+
+  // Format current time display
+  const getCurrentTimeDisplay = () => {
+    return currentDateTime.toLocaleTimeString('id-ID', { 
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -867,12 +954,7 @@ const EReporting = () => {
             <div className="flex items-center space-x-4 mt-1">
               <p className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-200">
                 <Clock className="w-3 h-3 inline mr-1" />
-                Waktu Real-time WIB: {currentDateTime.toLocaleTimeString('id-ID', { 
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                  timeZone: 'Asia/Jakarta'
-                })}
+                Waktu Real-time: {getCurrentTimeDisplay()}
               </p>
               <p className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-200">
                 <Calendar className="w-3 h-3 inline mr-1" />
@@ -924,17 +1006,21 @@ const EReporting = () => {
           <div className="p-6">
             {/* Level 0: Periode Tanggal Filter */}
             <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-4">Level 0: Pilih Rentang Tanggal Deadline (Tahun {currentDateTime.getFullYear()})</h4>
+              <h4 className="text-sm font-medium text-gray-700 mb-4">
+                Level 0: Pilih Rentang Tanggal Deadline ({currentDateTime.getFullYear() - 2} - {currentDateTime.getFullYear() + 1})
+              </h4>
               
-              {/* Quick Date Suggestions */}
+              {/* Quick Date Suggestions - MODIFIKASI: 1 tahun kebelakang dan bulan realtime */}
               <div className="mb-4">
-                <div className="text-xs text-gray-600 mb-2">Pilihan Cepat Periode {currentDateTime.getFullYear()} (Bulanan):</div>
-                <div className="flex flex-wrap gap-2">
+                <div className="text-xs text-gray-600 mb-2">
+                  Pilihan Cepat Periode {currentDateTime.getFullYear() - 1} - {currentDateTime.getFullYear()} (Bulanan):
+                </div>
+                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                   {getDateSuggestions().map((suggestion, index) => (
                     <button
                       key={index}
                       onClick={() => handleDateSuggestion(suggestion)}
-                      className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                      className={`px-3 py-1.5 text-xs rounded-lg border transition-colors flex-shrink-0 ${
                         dateRange.startDate === suggestion.start && dateRange.endDate === suggestion.end
                           ? 'bg-blue-100 text-blue-700 border-blue-300'
                           : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
@@ -950,30 +1036,30 @@ const EReporting = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Mulai
+                    Tanggal Mulai ({currentDateTime.getFullYear() - 2})
                   </label>
                   <input
                     type="date"
                     value={dateRange.startDate}
                     onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                    min={`${currentDateTime.getFullYear()}-01-01`}
-                    max={`${currentDateTime.getFullYear()}-12-31`}
+                    min={`${currentDateTime.getFullYear() - 2}-01-01`}
+                    max={`${currentDateTime.getFullYear() + 1}-12-31`}
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Akhir
+                    Tanggal Akhir ({currentDateTime.getFullYear() + 1})
                   </label>
                   <input
                     type="date"
                     value={dateRange.endDate}
                     onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                    min={`${currentDateTime.getFullYear()}-01-01`}
-                    max={`${currentDateTime.getFullYear()}-12-31`}
+                    min={`${currentDateTime.getFullYear() - 2}-01-01`}
+                    max={`${currentDateTime.getFullYear() + 1}-12-31`}
                   />
                 </div>
                 
@@ -991,7 +1077,7 @@ const EReporting = () => {
                       Aktif: {stats.aktif} • Terlambat: {stats.terlambat}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                      Tanggal saat ini: {getCurrentDateDisplay()}
+                      Rentang: {currentDateTime.getFullYear() - 2} - {currentDateTime.getFullYear() + 1}
                     </div>
                   </div>
                 </div>
@@ -1018,7 +1104,7 @@ const EReporting = () => {
                       <div className="font-bold text-gray-900">Periode Aktif</div>
                       <div className="text-sm text-gray-600">{periodeStatusSummary.aktif || 0} laporan</div>
                       <div className="text-xs text-green-600">
-                        Status: Berhasil, Belum Lapor, Tidak Berhasil
+                        Status: Berhasil, Belum Lapor, Gagal
                       </div>
                     </div>
                   </div>
@@ -1059,7 +1145,7 @@ const EReporting = () => {
                         {getCurrentDateDisplay()}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Tahun {currentDateTime.getFullYear()} • Waktu Real-time WIB
+                        Tahun {currentDateTime.getFullYear()} • Waktu: {getCurrentTimeDisplay()}
                       </div>
                     </div>
                   </div>
@@ -1124,8 +1210,8 @@ const EReporting = () => {
                                 ? 'Laporan berhasil sesuai deadline'
                                 : option.value === 'belum-lapor'
                                 ? 'Belum melakukan pelaporan'
-                                : option.value === 'tidak-berhasil'
-                                ? 'Tidak berhasil dalam pelaporan'
+                                : option.value === 'gagal'
+                                ? 'Gagal dalam pelaporan (tampilkan sisa waktu)'
                                 : option.value === 'sudah-lapor'
                                 ? 'Sudah lapor tapi terlambat'
                                 : 'Belum lapor dan terlambat'}
@@ -1312,14 +1398,11 @@ const EReporting = () => {
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">No</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Periode</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aplikasi</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jenis LJK</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Laporan</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Periode Laporan</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Batas Waktu</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Pengiriman</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Ketepatan</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Detail Waktu</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Deadline & Sisa Waktu</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
@@ -1333,29 +1416,11 @@ const EReporting = () => {
                       {getPeriodeStatusBadge(report.periodeStatus)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className="p-1.5 bg-red-50 rounded-lg">
-                          <FileCheck className="w-4 h-4 text-red-600" />
-                        </div>
-                        <span className="text-sm font-bold text-red-700">{report.aplikasi}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       {getJenisLKJBadge(report.jenisLJK)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900 max-w-md">
                         {report.namaLaporan}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700">
-                        {report.periodeLaporan}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700">
-                        {report.batasWaktu}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -1378,24 +1443,6 @@ const EReporting = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {report.status === 'berhasil' && (
-                          <button
-                            onClick={() => alert(`Download laporan ${report.namaLaporan}`)}
-                            className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Download laporan"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                        )}
-                        {(report.status === 'belum-lapor' || report.status === 'tidak-berhasil') && (
-                          <button
-                            onClick={() => alert(`Kirim reminder untuk laporan ${report.namaLaporan}`)}
-                            className="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded-lg transition-colors"
-                            title="Kirim reminder"
-                          >
-                            <Clock className="w-4 h-4" />
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -1424,7 +1471,7 @@ const EReporting = () => {
           <div className="px-6 py-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">
-                Data diperbarui berdasarkan waktu real-time WIB • 
+                Data diperbarui berdasarkan waktu real-time • 
                 Periode: {formatDateDisplay(dateRange.startDate)} - {formatDateDisplay(dateRange.endDate)}
               </div>
               <div className="flex items-center space-x-2">
@@ -1467,10 +1514,6 @@ const EReporting = () => {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Aplikasi</h4>
-                  <p className="text-lg font-bold text-red-700">{selectedReport.aplikasi}</p>
-                </div>
-                <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Jenis LJK</h4>
                   {getJenisLKJBadge(selectedReport.jenisLJK)}
                 </div>
@@ -1490,12 +1533,7 @@ const EReporting = () => {
                       {getCurrentDateDisplay()}
                     </p>
                     <p className="text-sm text-blue-700">
-                      {currentDateTime.toLocaleTimeString('id-ID', { 
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        timeZone: 'Asia/Jakarta'
-                      })}
+                      {getCurrentTimeDisplay()}
                     </p>
                   </div>
                 </div>
@@ -1504,26 +1542,6 @@ const EReporting = () => {
                   <p className="text-lg font-medium text-gray-900 bg-gray-50 p-4 rounded-lg">
                     {selectedReport.namaLaporan}
                   </p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Periode Laporan</h4>
-                  <p className="text-lg font-medium text-gray-900">
-                    {selectedReport.periodeLaporan}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Batas Waktu Penyampaian</h4>
-                  <div className={`p-3 rounded-lg ${selectedReport.periodeStatus === 'terlambat' ? 'bg-red-50' : 'bg-green-50'}`}>
-                    <p className="text-lg font-medium text-gray-900">
-                      {selectedReport.batasWaktu}
-                    </p>
-                    <div className="mt-2 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <CalendarIcon className="w-4 h-4 mr-2" />
-                        Deadline: {selectedReport.displayDeadline}
-                      </div>
-                    </div>
-                  </div>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Waktu Submit</h4>
@@ -1536,7 +1554,7 @@ const EReporting = () => {
                     </p>
                     <div className="mt-2 text-sm text-gray-600">
                       {selectedReport.status === 'berhasil' ? '✅ Berhasil submit' : 
-                       selectedReport.status === 'belum-lapor' ? '⏳ Belum submit' : '❌ Tidak berhasil submit'}
+                       selectedReport.status === 'belum-lapor' ? '⏳ Belum submit' : '❌ Gagal submit'}
                     </div>
                   </div>
                 </div>
@@ -1552,13 +1570,12 @@ const EReporting = () => {
                       ) : (
                         <div className="text-blue-600">
                           ⏳ Sisa waktu: {selectedReport.hoursRemaining > 0 ? 
-                            `${Math.floor(selectedReport.hoursRemaining / 24)} hari ${selectedReport.hoursRemaining % 24} jam` : 
+                            `${Math.floor(selectedReport.hoursRemaining / 24)} hari` : 
                             'Segera!'}
                         </div>
                       )
                     ) : (
                       <div className="text-red-600">
-                        ⚠ Terlambat: {Math.floor(selectedReport.hoursLate / 24)} hari {selectedReport.hoursLate % 24} jam
                       </div>
                     )}
                   </div>
@@ -1571,7 +1588,7 @@ const EReporting = () => {
                       ? 'Laporan berhasil dikirim' 
                       : selectedReport.status === 'belum-lapor'
                       ? 'Belum melakukan pengiriman'
-                      : 'Tidak berhasil dalam pengiriman'}
+                      : 'Gagal dalam pengiriman'}
                   </p>
                 </div>
               </div>
@@ -1583,22 +1600,6 @@ const EReporting = () => {
                 >
                   Tutup
                 </button>
-                {selectedReport.status === 'berhasil' && (
-                  <button
-                    onClick={() => alert(`Download laporan ${selectedReport.namaLaporan}`)}
-                    className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Download Laporan
-                  </button>
-                )}
-                {(selectedReport.status === 'belum-lapor' || selectedReport.status === 'tidak-berhasil') && (
-                  <button
-                    onClick={() => alert(`Kirim reminder untuk laporan ${selectedReport.namaLaporan}`)}
-                    className="px-4 py-2 text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors"
-                  >
-                    Kirim Reminder
-                  </button>
-                )}
               </div>
             </div>
           </div>

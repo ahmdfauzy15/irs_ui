@@ -38,7 +38,7 @@ const Dashboard = () => {
   
   // Hitung statistik tambahan
   const totalLJKTypes = Object.keys(processedData.reportsByLJKType).length;
-  const uniquePeriods = Object.keys(processedData.reportsByPeriod).length;
+  // const uniquePeriods = Object.keys(processedData.reportsByPeriod).length;
   
   // Data aktivitas berdasarkan JSON
   const activityData = recentActivityData;
@@ -80,7 +80,7 @@ const Dashboard = () => {
       </div>
 
       {/* Laporan Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-xl border border-purple-100 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -132,7 +132,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Recent Activity and Reports */}
       <div className="space-y-6">
@@ -232,38 +232,14 @@ const Dashboard = () => {
               <h4 className="font-bold text-lg">Analisis Data</h4>
             </div>
             <p className="text-red-100 text-sm">
-              Analisis {processedData.totalReports} laporan dari {totalLJKTypes} jenis LJK untuk insight komprehensif.
+              Analisis {processedData.totalReports} laporan dari 3 jenis aplikasi pelaporan untuk insight komprehensif.
             </p>
           </div>
         </div>
       </div>
 
       {/* Quick Stats Footer */}
-      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-r from-red-50 to-white p-4 rounded-xl border border-red-100 shadow-sm">
-          <div className="text-red-900 font-bold text-2xl">{realTimeStats.successRate}%</div>
-          <div className="text-red-700 text-sm font-medium">Tingkat Keberhasilan</div>
-          <div className="text-red-500 text-xs">Laporan yang disetujui</div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-red-50 to-white p-4 rounded-xl border border-red-100 shadow-sm">
-          <div className="text-red-900 font-bold text-2xl">{processedData.activeReports}</div>
-          <div className="text-red-700 text-sm font-medium">Laporan Aktif</div>
-          <div className="text-red-500 text-xs">Dalam sistem</div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-red-50 to-white p-4 rounded-xl border border-red-100 shadow-sm">
-          <div className="text-red-900 font-bold text-2xl">{realTimeStats.needsAttention}</div>
-          <div className="text-red-700 text-sm font-medium">Perlu Perhatian</div>
-          <div className="text-red-500 text-xs">Laporan bermasalah</div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-red-50 to-white p-4 rounded-xl border border-red-100 shadow-sm">
-          <div className="text-red-900 font-bold text-2xl">{realTimeStats.monthlyReports}</div>
-          <div className="text-red-700 text-sm font-medium">Laporan Bulanan</div>
-          <div className="text-red-500 text-xs">Periode reguler</div>
-        </div>
-      </div>
+   
 
       {/* Sistem Info */}
       <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-white rounded-xl border border-blue-100">

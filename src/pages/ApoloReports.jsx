@@ -25,29 +25,24 @@ import {
 } from 'lucide-react';
 
 const ApoloReports = () => {
-  // Fungsi untuk mendapatkan waktu saat ini di WIB (UTC+7)
+  // Fungsi untuk mendapatkan waktu saat ini di WIB (menggunakan local time Indonesia)
   const getCurrentWIBTime = () => {
     const now = new Date();
-    // WIB adalah UTC+7, jadi kita tambahkan 7 jam
-    const wibOffset = 7 * 60 * 60 * 1000; // 7 jam dalam milidetik
-    const wibTime = new Date(now.getTime() + wibOffset);
-    return wibTime;
+    return now;
   };
 
   // State untuk waktu real-time
   const [currentDateTime, setCurrentDateTime] = useState(getCurrentWIBTime());
   const [reportsWithPeriod, setReportsWithPeriod] = useState([]);
   
-  // State untuk periode tanggal - default bulan berjalan
+  // State untuk periode tanggal - default 2 tahun kebelakang hingga 1 tahun ke depan
   const [dateRange, setDateRange] = useState(() => {
     const currentDate = getCurrentWIBTime();
     const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1; // 1-indexed
-    const lastDay = new Date(currentYear, currentMonth, 0).getDate();
     
     return {
-      startDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`,
-      endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${lastDay}`
+      startDate: `${currentYear - 2}-01-01`, // 2 tahun ke belakang
+      endDate: `${currentYear + 1}-12-31`    // 1 tahun ke depan
     };
   });
   
@@ -75,175 +70,322 @@ const ApoloReports = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Data reports dengan tanggal real-time
+  // Data reports APOLO dengan tanggal real-time
   const initialReports = useMemo(() => {
     const currentYear = currentDateTime.getFullYear();
     const currentMonth = currentDateTime.getMonth() + 1; // 1-indexed
     
+    // Fungsi untuk mendapatkan tanggal yang aman (handle rollover tahun)
+    const getSafeDate = (year, month, day) => {
+      let safeMonth = month;
+      let safeYear = year;
+      
+      // Handle jika bulan minus (dari tahun sebelumnya)
+      if (safeMonth <= 0) {
+        safeMonth += 12;
+        safeYear -= 1;
+      }
+      // Handle jika bulan lebih dari 12 (dari tahun depan)
+      else if (safeMonth > 12) {
+        safeMonth -= 12;
+        safeYear += 1;
+      }
+      
+      // Pastikan hari valid untuk bulan tersebut
+      const lastDayOfMonth = new Date(safeYear, safeMonth, 0).getDate();
+      const safeDay = Math.min(day, lastDayOfMonth);
+      
+      return { year: safeYear, month: safeMonth, day: safeDay };
+    };
+    
+    // Hitung tanggal yang aman untuk berbagai periode
+    const prevMonth15 = getSafeDate(currentYear, currentMonth - 1, 15);
+    const prevMonth31 = getSafeDate(currentYear, currentMonth - 1, 31);
+    const prevMonth10 = getSafeDate(currentYear, currentMonth - 1, 10);
+    const prevMonth25 = getSafeDate(currentYear, currentMonth - 1, 25);
+    const prevMonth30 = getSafeDate(currentYear, currentMonth - 1, 30);
+    
+    const currentMonth5 = getSafeDate(currentYear, currentMonth, 5);
+    const currentMonth7 = getSafeDate(currentYear, currentMonth, 7);
+    const currentMonth10 = getSafeDate(currentYear, currentMonth, 10);
+    const currentMonth15 = getSafeDate(currentYear, currentMonth, 15);
+    const currentMonth20 = getSafeDate(currentYear, currentMonth, 20);
+    const currentMonth25 = getSafeDate(currentYear, currentMonth, 25);
+    const currentMonth28 = getSafeDate(currentYear, currentMonth, 28);
+    const currentMonth30 = getSafeDate(currentYear, currentMonth, 30);
+    
+    const nextMonth5 = getSafeDate(currentYear, currentMonth + 1, 5);
+    const nextMonth10 = getSafeDate(currentYear, currentMonth + 1, 10);
+    const nextMonth15 = getSafeDate(currentYear, currentMonth + 1, 15);
+    const nextMonth20 = getSafeDate(currentYear, currentMonth + 1, 20);
+    const nextMonth25 = getSafeDate(currentYear, currentMonth + 1, 25);
+    
     return [
-      // Data bulan sebelumnya
       {
         id: 1,
-        aplikasi: 'APOLO',
-        jenisLJK: 'BU',
-        namaLaporan: 'LCR Individual',
-        periodeLaporan: 'Bulanan',
-        batasWaktu: 'Tanggal 15 bulan berikutnya',
-        deadlineDate: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-15T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-10T14:30:00`,
-        waktuSubmit: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-10T14:30:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-15T23:59:59`
+        aplikasi: "APOLO",
+        jenisLJK: "BU",
+        namaLaporan: "LCR Individual",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Tanggal 15 bulan berikutnya",
+        deadlineDate: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day - 5).padStart(2, '0')}T14:30:00`,
+        waktuSubmit: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day - 5).padStart(2, '0')}T14:30:00`,
+        waktuDeadline: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Tepat Waktu"
       },
       {
         id: 2,
-        aplikasi: 'APOLO',
-        jenisLJK: 'BU',
-        namaLaporan: 'LCR Konsolidasi',
-        periodeLaporan: 'Bulanan',
-        batasWaktu: 'Akhir bulan berikutnya',
-        deadlineDate: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-31T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-31T10:15:00`,
-        waktuSubmit: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-31T10:15:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-31T23:59:59`
+        aplikasi: "APOLO",
+        jenisLJK: "BU",
+        namaLaporan: "LCR Konsolidasi",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Akhir bulan berikutnya",
+        deadlineDate: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day).padStart(2, '0')}T10:15:00`,
+        waktuSubmit: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day).padStart(2, '0')}T10:15:00`,
+        waktuDeadline: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Tepat Waktu"
       },
-      // Data bulan berjalan
       {
         id: 3,
-        aplikasi: 'APOLO',
-        jenisLJK: 'BPR / BPRS',
-        namaLaporan: 'Laporan Bulanan BPR/BPRS',
-        periodeLaporan: 'Bulanan',
-        batasWaktu: 'Tanggal 10 bulan berikutnya',
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T23:59:59`,
+        aplikasi: "APOLO",
+        jenisLJK: "BPR / BPRS",
+        namaLaporan: "Laporan Bulanan BPR/BPRS",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Tanggal 10 bulan berikutnya",
+        deadlineDate: `${currentMonth10.year}-${String(currentMonth10.month).padStart(2, '0')}-${String(currentMonth10.day).padStart(2, '0')}T23:59:59`,
         submissionDate: null,
         waktuSubmit: null,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T23:59:59`
+        waktuDeadline: `${currentMonth10.year}-${String(currentMonth10.month).padStart(2, '0')}-${String(currentMonth10.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Belum Lapor",
+        statusKetepatan: "Belum Submit"
       },
       {
         id: 4,
-        aplikasi: 'APOLO',
-        jenisLJK: 'Biro Administrasi Efek',
-        namaLaporan: 'Laporan Biro Administrasi Efek',
-        periodeLaporan: 'Triwulanan',
-        batasWaktu: 'Tanggal deadline sesuai ketentuan',
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-30T23:59:59`,
+        aplikasi: "APOLO",
+        jenisLJK: "Biro Administrasi Efek",
+        namaLaporan: "Laporan Biro Administrasi Efek",
+        periodeLaporan: "Triwulanan",
+        batasWaktu: "Tanggal deadline sesuai ketentuan",
+        deadlineDate: `${currentMonth30.year}-${String(currentMonth30.month).padStart(2, '0')}-${String(currentMonth30.day).padStart(2, '0')}T23:59:59`,
         submissionDate: null,
         waktuSubmit: null,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-30T23:59:59`
+        waktuDeadline: `${currentMonth30.year}-${String(currentMonth30.month).padStart(2, '0')}-${String(currentMonth30.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Belum Lapor",
+        statusKetepatan: "Belum Submit"
       },
-      // Data bulan berikutnya
       {
         id: 5,
-        aplikasi: 'APOLO',
-        jenisLJK: 'Perusahaan Pemeringkat Efek',
-        namaLaporan: 'Laporan Perusahaan Pemeringkat Efek',
-        periodeLaporan: 'Tahunan',
-        batasWaktu: 'Tanggal deadline sesuai ketentuan',
-        deadlineDate: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-15T23:59:59`,
+        aplikasi: "APOLO",
+        jenisLJK: "Perusahaan Pemeringkat Efek",
+        namaLaporan: "Laporan Perusahaan Pemeringkat Efek",
+        periodeLaporan: "Tahunan",
+        batasWaktu: "Tanggal deadline sesuai ketentuan",
+        deadlineDate: `${nextMonth15.year}-${String(nextMonth15.month).padStart(2, '0')}-${String(nextMonth15.day).padStart(2, '0')}T23:59:59`,
         submissionDate: null,
         waktuSubmit: null,
-        waktuDeadline: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-15T23:59:59`
+        waktuDeadline: `${nextMonth15.year}-${String(nextMonth15.month).padStart(2, '0')}-${String(nextMonth15.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Belum Lapor",
+        statusKetepatan: "Belum Submit"
       },
       {
         id: 6,
-        aplikasi: 'APOLO',
-        jenisLJK: 'Bank Kustodian',
-        namaLaporan: 'Laporan Aktivitas Bank Kustodian',
-        periodeLaporan: 'Bulanan',
-        batasWaktu: '12 H pada bulan berikutnya',
-        deadlineDate: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-20T12:00:00`,
+        aplikasi: "APOLO",
+        jenisLJK: "Bank Kustodian",
+        namaLaporan: "Laporan Aktivitas Bank Kustodian",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "12 H pada bulan berikutnya",
+        deadlineDate: `${nextMonth20.year}-${String(nextMonth20.month).padStart(2, '0')}-${String(nextMonth20.day).padStart(2, '0')}T12:00:00`,
         submissionDate: null,
         waktuSubmit: null,
-        waktuDeadline: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-20T12:00:00`
+        waktuDeadline: `${nextMonth20.year}-${String(nextMonth20.month).padStart(2, '0')}-${String(nextMonth20.day).padStart(2, '0')}T12:00:00`,
+        statusPengiriman: "Belum Lapor",
+        statusKetepatan: "Belum Submit"
       },
-      // Data dengan status berhasil tepat waktu
       {
         id: 7,
-        aplikasi: 'APOLO',
-        jenisLJK: 'Bank Kustodian',
-        namaLaporan: 'Laporan Hasil Pemeriksaan Operasional',
-        periodeLaporan: 'Tahunan',
-        batasWaktu: '90 H setelah laporan tahunan berakhir',
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-15T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-14T09:30:00`,
-        waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-14T09:30:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-15T23:59:59`
+        aplikasi: "APOLO",
+        jenisLJK: "Bank Kustodian",
+        namaLaporan: "Laporan Hasil Pemeriksaan Operasional",
+        periodeLaporan: "Tahunan",
+        batasWaktu: "90 H setelah laporan tahunan berakhir",
+        deadlineDate: `${currentMonth15.year}-${String(currentMonth15.month).padStart(2, '0')}-${String(currentMonth15.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${currentMonth15.year}-${String(currentMonth15.month).padStart(2, '0')}-${String(currentMonth15.day - 1).padStart(2, '0')}T09:30:00`,
+        waktuSubmit: `${currentMonth15.year}-${String(currentMonth15.month).padStart(2, '0')}-${String(currentMonth15.day - 1).padStart(2, '0')}T09:30:00`,
+        waktuDeadline: `${currentMonth15.year}-${String(currentMonth15.month).padStart(2, '0')}-${String(currentMonth15.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Tepat Waktu"
       },
-      // Data dengan status gagal
       {
         id: 8,
-        aplikasi: 'APOLO',
-        jenisLJK: 'Wali Amanat',
-        namaLaporan: 'Laporan Wali Amanat',
-        periodeLaporan: 'Semesteran',
-        batasWaktu: 'Tanggal deadline sesuai ketentuan',
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T10:30:00`,
-        waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T10:30:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T23:59:59`
+        aplikasi: "APOLO",
+        jenisLJK: "Lembaga Pembiayaan",
+        namaLaporan: "Laporan Lembaga Pembiayaan",
+        periodeLaporan: "Insidentil",
+        batasWaktu: "Tanggal deadline sesuai ketentuan",
+        deadlineDate: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day).padStart(2, '0')}T14:00:00`,
+        waktuSubmit: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day).padStart(2, '0')}T14:00:00`,
+        waktuDeadline: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Gagal",
+        statusKetepatan: "Gagal Kirim"
       },
       {
         id: 9,
-        aplikasi: 'APOLO',
-        jenisLJK: 'Lembaga Pembiayaan',
-        namaLaporan: 'Laporan Lembaga Pembiayaan',
-        periodeLaporan: 'Insidentil',
-        batasWaktu: 'Tanggal deadline sesuai ketentuan',
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-25T23:59:59`,
+        aplikasi: "APOLO",
+        jenisLJK: "BU",
+        namaLaporan: "Laporan Bulanan BU",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Tanggal 20 bulan berikutnya",
+        deadlineDate: `${nextMonth20.year}-${String(nextMonth20.month).padStart(2, '0')}-${String(nextMonth20.day).padStart(2, '0')}T23:59:59`,
         submissionDate: null,
         waktuSubmit: null,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-25T23:59:59`
+        waktuDeadline: `${nextMonth20.year}-${String(nextMonth20.month).padStart(2, '0')}-${String(nextMonth20.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Belum Lapor",
+        statusKetepatan: "Belum Submit"
       },
       {
         id: 10,
-        aplikasi: 'APOLO',
-        jenisLJK: 'BU',
-        namaLaporan: 'Laporan Bulanan BU',
-        periodeLaporan: 'Bulanan',
-        batasWaktu: 'Tanggal 20 bulan berikutnya',
-        deadlineDate: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-20T23:59:59`,
-        submissionDate: null,
-        waktuSubmit: null,
-        waktuDeadline: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-20T23:59:59`
+        aplikasi: "APOLO",
+        jenisLJK: "BPR / BPRS",
+        namaLaporan: "Laporan Triwulan BPR/BPRS",
+        periodeLaporan: "Triwulanan",
+        batasWaktu: "Tanggal 15 bulan berikutnya",
+        deadlineDate: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day + 1).padStart(2, '0')}T14:30:00`,
+        waktuSubmit: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day + 1).padStart(2, '0')}T14:30:00`,
+        waktuDeadline: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Terlambat"
       },
-      // Data terlambat dengan submit setelah deadline
       {
         id: 11,
-        aplikasi: 'APOLO',
-        jenisLJK: 'BPR / BPRS',
-        namaLaporan: 'Laporan Triwulan BPR/BPRS',
-        periodeLaporan: 'Triwulanan',
-        batasWaktu: 'Tanggal 15 bulan berikutnya',
-        deadlineDate: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-15T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-16T14:30:00`,
-        waktuSubmit: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-16T14:30:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-15T23:59:59`
+        aplikasi: "APOLO",
+        jenisLJK: "Bank Kustodian",
+        namaLaporan: "Laporan Triwulan Bank Kustodian",
+        periodeLaporan: "Triwulanan",
+        batasWaktu: "Tanggal 30 bulan berikutnya",
+        deadlineDate: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day).padStart(2, '0')}T23:59:59`,
+        waktuSubmit: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day).padStart(2, '0')}T23:59:59`,
+        waktuDeadline: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Tepat Waktu"
       },
-      // Data dengan submit tepat waktu
       {
         id: 12,
-        aplikasi: 'APOLO',
-        jenisLJK: 'Bank Kustodian',
-        namaLaporan: 'Laporan Triwulan Bank Kustodian',
-        periodeLaporan: 'Triwulanan',
-        batasWaktu: 'Tanggal 30 bulan berikutnya',
-        deadlineDate: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-30T23:59:59`,
-        submissionDate: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-30T23:59:59`,
-        waktuSubmit: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-30T23:59:59`,
-        waktuDeadline: `${currentYear}-${String(currentMonth - 1).padStart(2, '0')}-30T23:59:59`
+        aplikasi: "APOLO",
+        jenisLJK: "Perusahaan Efek",
+        namaLaporan: "Laporan Keuangan Perusahaan Efek",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Tanggal 5 bulan berikutnya",
+        deadlineDate: `${nextMonth5.year}-${String(nextMonth5.month).padStart(2, '0')}-${String(nextMonth5.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: null,
+        waktuSubmit: null,
+        waktuDeadline: `${nextMonth5.year}-${String(nextMonth5.month).padStart(2, '0')}-${String(nextMonth5.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Belum Lapor",
+        statusKetepatan: "Belum Submit"
       },
-      // Data dengan gagal submit
       {
         id: 13,
-        aplikasi: 'APOLO',
-        jenisLJK: 'Asuransi Jiwa',
-        namaLaporan: 'Laporan Asuransi Jiwa',
-        periodeLaporan: 'Bulanan',
-        batasWaktu: 'Tanggal deadline sesuai ketentuan',
-        deadlineDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-05T23:59:59`,
+        aplikasi: "APOLO",
+        jenisLJK: "Perusahaan Asuransi",
+        namaLaporan: "Laporan Bulanan Asuransi",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Tanggal 25 bulan berikutnya",
+        deadlineDate: `${nextMonth25.year}-${String(nextMonth25.month).padStart(2, '0')}-${String(nextMonth25.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${nextMonth25.year}-${String(nextMonth25.month).padStart(2, '0')}-${String(nextMonth25.day - 2).padStart(2, '0')}T11:20:00`,
+        waktuSubmit: `${nextMonth25.year}-${String(nextMonth25.month).padStart(2, '0')}-${String(nextMonth25.day - 2).padStart(2, '0')}T11:20:00`,
+        waktuDeadline: `${nextMonth25.year}-${String(nextMonth25.month).padStart(2, '0')}-${String(nextMonth25.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Gagal",
+        statusKetepatan: "Gagal Kirim"
+      },
+      {
+        id: 14,
+        aplikasi: "APOLO",
+        jenisLJK: "Dana Pensiun",
+        namaLaporan: "Laporan Triwulan Dana Pensiun",
+        periodeLaporan: "Triwulanan",
+        batasWaktu: "Tanggal 20 bulan berikutnya",
+        deadlineDate: `${nextMonth20.year}-${String(nextMonth20.month).padStart(2, '0')}-${String(nextMonth20.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: null,
+        waktuSubmit: null,
+        waktuDeadline: `${nextMonth20.year}-${String(nextMonth20.month).padStart(2, '0')}-${String(nextMonth20.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Belum Lapor",
+        statusKetepatan: "Belum Submit"
+      },
+      {
+        id: 15,
+        aplikasi: "APOLO",
+        jenisLJK: "Perusahaan Gadai",
+        namaLaporan: "Laporan Bulanan Perusahaan Gadai",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Tanggal 8 bulan berikutnya",
+        deadlineDate: `${currentMonth28.year}-${String(currentMonth28.month).padStart(2, '0')}-${String(currentMonth28.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${currentMonth28.year}-${String(currentMonth28.month).padStart(2, '0')}-${String(currentMonth28.day).padStart(2, '0')}T14:00:00`,
+        waktuSubmit: `${currentMonth28.year}-${String(currentMonth28.month).padStart(2, '0')}-${String(currentMonth28.day).padStart(2, '0')}T14:00:00`,
+        waktuDeadline: `${currentMonth28.year}-${String(currentMonth28.month).padStart(2, '0')}-${String(currentMonth28.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Gagal",
+        statusKetepatan: "Gagal Kirim"
+      },
+      {
+        id: 16,
+        aplikasi: "APOLO",
+        jenisLJK: "Perusahaan Modal Ventura",
+        namaLaporan: "Laporan Tahunan Modal Ventura",
+        periodeLaporan: "Tahunan",
+        batasWaktu: "Tanggal 31 Maret",
+        deadlineDate: `${currentYear}-03-31T23:59:59`,
+        submissionDate: `${currentYear}-03-31T16:45:00`,
+        waktuSubmit: `${currentYear}-03-31T16:45:00`,
+        waktuDeadline: `${currentYear}-03-31T23:59:59`,
+        statusPengiriman: "Gagal",
+        statusKetepatan: "Gagal Kirim"
+      },
+      {
+        id: 17,
+        aplikasi: "APOLO",
+        jenisLJK: "Perusahaan Penjaminan",
+        namaLaporan: "Laporan Semesteran Penjaminan",
+        periodeLaporan: "Semesteran",
+        batasWaktu: "Tanggal 30 Juni dan 31 Desember",
+        deadlineDate: `${currentYear}-06-30T23:59:59`,
+        submissionDate: `${currentYear}-06-30T11:20:00`,
+        waktuSubmit: `${currentYear}-06-30T11:20:00`,
+        waktuDeadline: `${currentYear}-06-30T23:59:59`,
+        statusPengiriman: "Gagal",
+        statusKetepatan: "Gagal Kirim"
+      },
+      {
+        id: 18,
+        aplikasi: "APOLO",
+        jenisLJK: "Wali Amanat",
+        namaLaporan: "Laporan Wali Amanat",
+        periodeLaporan: "Semesteran",
+        batasWaktu: "Tanggal deadline sesuai ketentuan",
+        deadlineDate: `${nextMonth10.year}-${String(nextMonth10.month).padStart(2, '0')}-${String(nextMonth10.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T10:30:00`,
+        waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T10:30:00`,
+        waktuDeadline: `${nextMonth10.year}-${String(nextMonth10.month).padStart(2, '0')}-${String(nextMonth10.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Gagal",
+        statusKetepatan: "Gagal Kirim"
+      },
+      {
+        id: 19,
+        aplikasi: "APOLO",
+        jenisLJK: "Asuransi Jiwa",
+        namaLaporan: "Laporan Asuransi Jiwa",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Tanggal deadline sesuai ketentuan",
+        deadlineDate: `${nextMonth25.year}-${String(nextMonth25.month).padStart(2, '0')}-${String(nextMonth25.day).padStart(2, '0')}T23:59:59`,
         submissionDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-05T10:30:00`,
         waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-05T10:30:00`,
-        waktuDeadline: `${currentYear}-${String(currentMonth).padStart(2, '0')}-05T23:59:59`
+        waktuDeadline: `${nextMonth25.year}-${String(nextMonth25.month).padStart(2, '0')}-${String(nextMonth25.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Gagal",
+        statusKetepatan: "Gagal Kirim"
       }
     ];
   }, [currentDateTime]);
@@ -277,8 +419,8 @@ const ApoloReports = () => {
       
       if (submissionDate) {
         // Sudah ada submission
-        if (report.id === 8 || report.id === 13) {
-          // Status gagal
+        if (report.statusPengiriman === 'Gagal' || report.id === 8 || report.id === 13 || report.id === 15 || report.id === 16 || report.id === 17 || report.id === 18 || report.id === 19) {
+          // Status Gagal
           periodeStatus = 'aktif';
         } else {
           const isSubmittedOnTime = submissionDate <= deadlineDate;
@@ -302,13 +444,13 @@ const ApoloReports = () => {
       // Tentukan status pengiriman dan ketepatan waktu
       let status = 'belum-lapor';
       let statusPengiriman = 'Belum Lapor';
-      let statusKetepatanWaktu = 'Akan Ditentukan';
+      let statusKetepatanWaktu = 'Belum Submit';
       
       if (submissionDate) {
         const isSubmittedOnTime = submissionDate <= deadlineDate;
         
-        // Untuk data gagal
-        if (report.id === 8 || report.id === 13) {
+        // Untuk data Gagal
+        if (report.statusPengiriman === 'Gagal' || report.id === 8 || report.id === 13 || report.id === 15 || report.id === 16 || report.id === 17 || report.id === 18 || report.id === 19) {
           status = 'gagal';
           statusPengiriman = 'Gagal';
           statusKetepatanWaktu = 'Gagal Kirim';
@@ -322,7 +464,7 @@ const ApoloReports = () => {
         if (isDeadlinePassed) {
           statusKetepatanWaktu = 'Terlambat';
         } else {
-          statusKetepatanWaktu = 'Akan Ditentukan';
+          statusKetepatanWaktu = 'Belum Submit';
         }
       }
       
@@ -339,16 +481,13 @@ const ApoloReports = () => {
         hoursLate = Math.floor(Math.abs(timeDiffMs) / (1000 * 60 * 60));
       }
       
-      // Format tanggal untuk display dengan WIB
-      const formatDateTime = (date) => {
+      // Format tanggal untuk display dengan WIB - HANYA TANGGAL SAJA
+      const formatDateOnly = (date) => {
         if (!date) return 'Belum ada';
         return date.toLocaleDateString('id-ID', {
           day: '2-digit',
           month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'Asia/Jakarta'
+          year: 'numeric'
         });
       };
       
@@ -363,8 +502,8 @@ const ApoloReports = () => {
         isDeadlinePassed,
         hoursRemaining,
         hoursLate,
-        displayDeadline: formatDateTime(deadlineDate),
-        displaySubmit: submissionDate ? formatDateTime(submissionDate) : 'Belum submit',
+        displayDeadline: formatDateOnly(deadlineDate),
+        displaySubmit: submissionDate ? formatDateOnly(submissionDate) : 'Belum submit',
         deadlineObj: deadlineDate,
         submitObj: submissionDate,
         waktuSubmit: submissionDate ? submissionDate.toISOString() : null,
@@ -477,23 +616,35 @@ const ApoloReports = () => {
     return summary;
   }, [reportsWithPeriod]);
 
-  // Get date suggestions untuk tahun berjalan - TIDAK MENGUBAH STATE DI DALAMNYA
+  // Get date suggestions untuk 1 tahun kebelakang dan bulan realtime saat ini
   const getDateSuggestions = () => {
     const currentYear = currentDateTime.getFullYear();
-    return [
-      { label: 'Januari ' + currentYear, start: `${currentYear}-01-01`, end: `${currentYear}-01-31` },
-      { label: 'Februari ' + currentYear, start: `${currentYear}-02-01`, end: `${currentYear}-02-28` },
-      { label: 'Maret ' + currentYear, start: `${currentYear}-03-01`, end: `${currentYear}-03-31` },
-      { label: 'April ' + currentYear, start: `${currentYear}-04-01`, end: `${currentYear}-04-30` },
-      { label: 'Mei ' + currentYear, start: `${currentYear}-05-01`, end: `${currentYear}-05-31` },
-      { label: 'Juni ' + currentYear, start: `${currentYear}-06-01`, end: `${currentYear}-06-30` },
-      { label: 'Juli ' + currentYear, start: `${currentYear}-07-01`, end: `${currentYear}-07-31` },
-      { label: 'Agustus ' + currentYear, start: `${currentYear}-08-01`, end: `${currentYear}-08-31` },
-      { label: 'September ' + currentYear, start: `${currentYear}-09-01`, end: `${currentYear}-09-30` },
-      { label: 'Oktober ' + currentYear, start: `${currentYear}-10-01`, end: `${currentYear}-10-31` },
-      { label: 'November ' + currentYear, start: `${currentYear}-11-01`, end: `${currentYear}-11-30` },
-      { label: 'Desember ' + currentYear, start: `${currentYear}-12-01`, end: `${currentYear}-12-31` },
-    ];
+    const currentMonth = currentDateTime.getMonth() + 1;
+    
+    const suggestions = [];
+    
+    // Tambahkan bulan-bulan dari 1 tahun kebelakang
+    for (let year = currentYear - 1; year <= currentYear; year++) {
+      const startMonth = year === currentYear - 1 ? 1 : 1;
+      const endMonth = year === currentYear - 1 ? 12 : currentMonth;
+      
+      for (let month = startMonth; month <= endMonth; month++) {
+        const monthNames = [
+          'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        
+        const lastDay = new Date(year, month, 0).getDate();
+        
+        suggestions.push({
+          label: `${monthNames[month - 1]} ${year}`,
+          start: `${year}-${String(month).padStart(2, '0')}-01`,
+          end: `${year}-${String(month).padStart(2, '0')}-${lastDay}`
+        });
+      }
+    }
+    
+    return suggestions;
   };
 
   // Sub-filter options
@@ -517,12 +668,10 @@ const ApoloReports = () => {
 
   const resetFilters = () => {
     const currentYear = currentDateTime.getFullYear();
-    const currentMonth = currentDateTime.getMonth() + 1; // 1-indexed
-    const lastDay = new Date(currentYear, currentMonth, 0).getDate();
     
     setDateRange({
-      startDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`,
-      endDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${lastDay}`
+      startDate: `${currentYear - 2}-01-01`,
+      endDate: `${currentYear + 1}-12-31`
     });
     
     setFilters({
@@ -627,9 +776,15 @@ const ApoloReports = () => {
       'Bank Kustodian': 'bg-purple-100 text-purple-800 border-purple-200',
       'Biro Administrasi Efek': 'bg-indigo-100 text-indigo-800 border-indigo-200',
       'Perusahaan Pemeringkat Efek': 'bg-pink-100 text-pink-800 border-pink-200',
-      'Wali Amanat': 'bg-teal-100 text-teal-800 border-teal-200',
+      'Lembaga Pembiayaan': 'bg-teal-100 text-teal-800 border-teal-200',
+      'Perusahaan Efek': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      'Perusahaan Asuransi': 'bg-sky-100 text-sky-800 border-sky-200',
+      'Dana Pensiun': 'bg-violet-100 text-violet-800 border-violet-200',
+      'Perusahaan Gadai': 'bg-rose-100 text-rose-800 border-rose-200',
+      'Perusahaan Modal Ventura': 'bg-lime-100 text-lime-800 border-lime-200',
+      'Perusahaan Penjaminan': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200',
+      'Wali Amanat': 'bg-amber-100 text-amber-800 border-amber-200',
       'Asuransi Jiwa': 'bg-cyan-100 text-cyan-800 border-cyan-200',
-      'Lembaga Pembiayaan': 'bg-amber-100 text-amber-800 border-amber-200',
     };
 
     const defaultStyle = 'bg-gray-100 text-gray-800 border-gray-200';
@@ -641,64 +796,55 @@ const ApoloReports = () => {
     );
   };
 
+  // MODIFIKASI: Tampilkan sisa waktu untuk laporan aktif yang Gagal dan Belum Lapor dalam HARI
   const getTimeDisplay = (report) => {
     if (report.periodeStatus === 'aktif') {
+      const daysRemaining = Math.floor(report.hoursRemaining / 24);
+      
       if (report.status === 'berhasil') {
         return (
           <div className="space-y-1">
-            <div className="text-xs text-green-600 flex items-center">
-              <CheckCircle className="w-3 h-3 mr-1" />
+            <div className="text-xs text-green-600">
               <span>Submit: {report.displaySubmit}</span>
             </div>
-            <div className="text-xs text-blue-600 flex items-center">
-              <CalendarIcon className="w-3 h-3 mr-1" />
+            <div className="text-xs text-blue-600">
               <span>Deadline: {report.displayDeadline}</span>
-            </div>
-            <div className="text-xs text-green-500 font-medium">
-              {report.statusKetepatanWaktu === 'Tepat Waktu' ? '✅ Sesuai deadline' : '⚠ Terlambat'}
             </div>
           </div>
         );
       } else if (report.status === 'gagal') {
+        // TAMBAHKAN SISA WAKTU UNTUK LAPORAN AKTIF YANG Gagal (dalam hari)
         return (
           <div className="space-y-1">
-            <div className="text-xs text-red-600 flex items-center">
-              <XCircle className="w-3 h-3 mr-1" />
-              <span>Gagal: {report.displaySubmit}</span>
-            </div>
-            <div className="text-xs text-blue-600 flex items-center">
-              <CalendarIcon className="w-3 h-3 mr-1" />
+            <div className="text-xs text-red-600">
               <span>Deadline: {report.displayDeadline}</span>
             </div>
-            <div className="text-xs text-red-500 font-medium">
-              ❌ Gagal kirim
+            <div className="text-xs text-yellow-600">
+              <span>
+                {report.hoursRemaining > 0 ? (
+                  <>
+                    Sisa waktu: {daysRemaining > 0 ? `${daysRemaining} hari` : 'Kurang dari 1 hari'}
+                  </>
+                ) : 'Sisa waktu: Segera!'}
+              </span>
             </div>
           </div>
         );
       } else {
         // Belum lapor
-        const daysRemaining = Math.floor(report.hoursRemaining / 24);
-        const hoursRemaining = report.hoursRemaining % 24;
-        
         return (
           <div className="space-y-1">
-            <div className="text-xs text-blue-600 flex items-center">
-              <CalendarIcon className="w-3 h-3 mr-1" />
+            <div className="text-xs text-blue-600">
               <span>Deadline: {report.displayDeadline}</span>
             </div>
-            <div className="text-xs text-yellow-600 flex items-center">
-              <Clock className="w-3 h-3 mr-1" />
+            <div className="text-xs text-yellow-600">
               <span>
                 {report.hoursRemaining > 0 ? (
                   <>
-                    Sisa waktu: {daysRemaining > 0 ? `${daysRemaining} hari` : ''} 
-                    {hoursRemaining > 0 ? ` ${hoursRemaining} jam` : ' Segera!'}
+                    Sisa waktu: {daysRemaining > 0 ? `${daysRemaining} hari` : 'Kurang dari 1 hari'}
                   </>
                 ) : 'Sisa waktu: Segera!'}
               </span>
-            </div>
-            <div className="text-xs text-yellow-500 font-medium">
-              ⏳ Belum submit
             </div>
           </div>
         );
@@ -706,28 +852,23 @@ const ApoloReports = () => {
     } else {
       // Terlambat
       const daysLate = Math.floor(Math.abs(report.hoursLate) / 24);
-      const hoursLate = Math.abs(report.hoursLate) % 24;
       
       return (
         <div className="space-y-1">
           {report.status === 'berhasil' ? (
-            <div className="text-xs text-green-600 flex items-center">
-              <CheckCircle className="w-3 h-3 mr-1" />
+            <div className="text-xs text-green-600">
               <span>Submit: {report.displaySubmit}</span>
             </div>
           ) : (
-            <div className="text-xs text-yellow-600 flex items-center">
-              <ClockAlert className="w-3 h-3 mr-1" />
+            <div className="text-xs text-yellow-600">
               <span>Belum submit</span>
             </div>
           )}
-          <div className="text-xs text-red-600 flex items-center">
-            <CalendarIcon className="w-3 h-3 mr-1" />
+          <div className="text-xs text-red-600">
             <span>Deadline: {report.displayDeadline}</span>
           </div>
-          <div className="text-xs text-red-500 font-medium">
-            ⚠ Terlambat: {daysLate > 0 ? `${daysLate} hari` : ''} 
-            {hoursLate > 0 ? ` ${hoursLate} jam` : ' 0 jam'}
+          <div className="text-xs text-red-500">
+            Terlambat: {daysLate > 0 ? `${daysLate} hari` : 'Kurang dari 1 hari'}
           </div>
         </div>
       );
@@ -741,16 +882,20 @@ const ApoloReports = () => {
   const handleExportData = () => {
     const exportData = filteredReports.map(report => ({
       'No': report.id,
-      'Aplikasi': report.aplikasi,
       'Jenis LJK': report.jenisLJK,
       'Nama Laporan': report.namaLaporan,
-      'Periode Laporan': report.periodeLaporan,
-      'Batas Waktu': report.batasWaktu,
-      'Waktu Submit': report.displaySubmit,
-      'Waktu Deadline': report.displayDeadline,
+      'Deadline': report.displayDeadline,
+      'Submit': report.displaySubmit,
       'Status Periode': report.periodeStatus === 'aktif' ? 'Periode Aktif' : 'Terlambat',
       'Status Pengiriman': report.statusPengiriman,
-      'Status Ketepatan Waktu': report.statusKetepatanWaktu
+      'Status Ketepatan Waktu': report.statusKetepatanWaktu,
+      'Sisa Waktu': report.periodeStatus === 'aktif' ? 
+        (report.hoursRemaining > 0 ? 
+          `${Math.floor(report.hoursRemaining / 24)} hari` : 
+          'Segera!') : 
+        (report.hoursLate > 0 ? 
+          `Terlambat ${Math.floor(report.hoursLate / 24)} hari` : 
+          'Terlambat')
     }));
 
     const csv = convertToCSV(exportData);
@@ -779,8 +924,7 @@ const ApoloReports = () => {
     return date.toLocaleDateString('id-ID', {
       day: '2-digit',
       month: 'long',
-      year: 'numeric',
-      timeZone: 'Asia/Jakarta'
+      year: 'numeric'
     });
   };
 
@@ -790,8 +934,16 @@ const ApoloReports = () => {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      timeZone: 'Asia/Jakarta'
+      day: 'numeric'
+    });
+  };
+
+  // Format current time display
+  const getCurrentTimeDisplay = () => {
+    return currentDateTime.toLocaleTimeString('id-ID', { 
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -809,12 +961,7 @@ const ApoloReports = () => {
             <div className="flex items-center space-x-4 mt-1">
               <p className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-200">
                 <Clock className="w-3 h-3 inline mr-1" />
-                Waktu Real-time WIB: {currentDateTime.toLocaleTimeString('id-ID', { 
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                  timeZone: 'Asia/Jakarta'
-                })}
+                Waktu Real-time: {getCurrentTimeDisplay()}
               </p>
               <p className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-200">
                 <Calendar className="w-3 h-3 inline mr-1" />
@@ -839,70 +986,6 @@ const ApoloReports = () => {
           </button>
         </div>
       </div>
-
-      {/* Stats Overview */}
-      {/* <div className="px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-700">Periode Aktif</p>
-                <p className="text-2xl font-bold text-green-900">{stats.aktif}</p>
-              </div>
-              <CalendarCheck className="w-8 h-8 text-green-600" />
-            </div>
-            <div className="mt-2 text-xs text-green-700">
-              {stats.berhasilTepatWaktu} berhasil • {stats.belumLaporAktif} belum lapor • {stats.gagal} gagal
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-xl border border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-red-700">Terlambat</p>
-                <p className="text-2xl font-bold text-red-900">{stats.terlambat}</p>
-              </div>
-              <ClockAlert className="w-8 h-8 text-red-600" />
-            </div>
-            <div className="mt-2 text-xs text-red-700">
-              {stats.berhasilTerlambat} sudah lapor • {stats.belumLaporTerlambat} belum lapor
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-700">Total Laporan</p>
-                <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
-              </div>
-              <FileText className="w-8 h-8 text-blue-600" />
-            </div>
-            <div className="mt-2 text-xs text-blue-700">
-              Dalam periode: {formatDateDisplay(dateRange.startDate)} - {formatDateDisplay(dateRange.endDate)}
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-purple-700">Tanggal Saat Ini</p>
-                <p className="text-lg font-bold text-purple-900">
-                  {currentDateTime.toLocaleDateString('id-ID', { 
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                    timeZone: 'Asia/Jakarta'
-                  })}
-                </p>
-              </div>
-              <Calendar className="w-8 h-8 text-purple-600" />
-            </div>
-            <div className="mt-2 text-xs text-purple-700">
-              Waktu Indonesia Barat (WIB)
-            </div>
-          </div>
-        </div>
-      </div> */}
 
       {/* Filter Section */}
       <div className="px-6">
@@ -930,17 +1013,21 @@ const ApoloReports = () => {
           <div className="p-6">
             {/* Level 0: Periode Tanggal Filter */}
             <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-4">Level 0: Pilih Rentang Tanggal Deadline (Tahun {currentDateTime.getFullYear()})</h4>
+              <h4 className="text-sm font-medium text-gray-700 mb-4">
+                Level 0: Pilih Rentang Tanggal Deadline ({currentDateTime.getFullYear() - 2} - {currentDateTime.getFullYear() + 1})
+              </h4>
               
-              {/* Quick Date Suggestions */}
+              {/* Quick Date Suggestions - MODIFIKASI: 1 tahun kebelakang dan bulan realtime */}
               <div className="mb-4">
-                <div className="text-xs text-gray-600 mb-2">Pilihan Cepat Periode {currentDateTime.getFullYear()} (Bulanan):</div>
-                <div className="flex flex-wrap gap-2">
+                <div className="text-xs text-gray-600 mb-2">
+                  Pilihan Cepat Periode {currentDateTime.getFullYear() - 1} - {currentDateTime.getFullYear()} (Bulanan):
+                </div>
+                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                   {getDateSuggestions().map((suggestion, index) => (
                     <button
                       key={index}
                       onClick={() => handleDateSuggestion(suggestion)}
-                      className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                      className={`px-3 py-1.5 text-xs rounded-lg border transition-colors flex-shrink-0 ${
                         dateRange.startDate === suggestion.start && dateRange.endDate === suggestion.end
                           ? 'bg-blue-100 text-blue-700 border-blue-300'
                           : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
@@ -956,30 +1043,30 @@ const ApoloReports = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Mulai
+                    Tanggal Mulai ({currentDateTime.getFullYear() - 2})
                   </label>
                   <input
                     type="date"
                     value={dateRange.startDate}
                     onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                    min={`${currentDateTime.getFullYear()}-01-01`}
-                    max={`${currentDateTime.getFullYear()}-12-31`}
+                    min={`${currentDateTime.getFullYear() - 2}-01-01`}
+                    max={`${currentDateTime.getFullYear() + 1}-12-31`}
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Akhir
+                    Tanggal Akhir ({currentDateTime.getFullYear() + 1})
                   </label>
                   <input
                     type="date"
                     value={dateRange.endDate}
                     onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                    min={`${currentDateTime.getFullYear()}-01-01`}
-                    max={`${currentDateTime.getFullYear()}-12-31`}
+                    min={`${currentDateTime.getFullYear() - 2}-01-01`}
+                    max={`${currentDateTime.getFullYear() + 1}-12-31`}
                   />
                 </div>
                 
@@ -997,7 +1084,7 @@ const ApoloReports = () => {
                       Aktif: {stats.aktif} • Terlambat: {stats.terlambat}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                      Tanggal saat ini: {getCurrentDateDisplay()}
+                      Rentang: {currentDateTime.getFullYear() - 2} - {currentDateTime.getFullYear() + 1}
                     </div>
                   </div>
                 </div>
@@ -1065,7 +1152,7 @@ const ApoloReports = () => {
                         {getCurrentDateDisplay()}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Tahun {currentDateTime.getFullYear()} • Waktu Real-time WIB
+                        Tahun {currentDateTime.getFullYear()} • Waktu: {getCurrentTimeDisplay()}
                       </div>
                     </div>
                   </div>
@@ -1131,7 +1218,7 @@ const ApoloReports = () => {
                                 : option.value === 'belum-lapor'
                                 ? 'Belum melakukan pelaporan'
                                 : option.value === 'gagal'
-                                ? 'Gagal dalam pelaporan'
+                                ? 'Gagal dalam pelaporan (tampilkan sisa waktu)'
                                 : option.value === 'sudah-lapor'
                                 ? 'Sudah lapor tapi terlambat'
                                 : 'Belum lapor dan terlambat'}
@@ -1318,14 +1405,11 @@ const ApoloReports = () => {
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">No</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Periode</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aplikasi</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jenis LJK</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Laporan</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Periode Laporan</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Batas Waktu</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Pengiriman</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Ketepatan</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Detail Waktu</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Deadline & Sisa Waktu</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
@@ -1339,29 +1423,11 @@ const ApoloReports = () => {
                       {getPeriodeStatusBadge(report.periodeStatus)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className="p-1.5 bg-red-50 rounded-lg">
-                          <FileCheck className="w-4 h-4 text-red-600" />
-                        </div>
-                        <span className="text-sm font-bold text-red-700">{report.aplikasi}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       {getJenisLKJBadge(report.jenisLJK)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900 max-w-md">
                         {report.namaLaporan}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700">
-                        {report.periodeLaporan}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700">
-                        {report.batasWaktu}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -1384,24 +1450,6 @@ const ApoloReports = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {report.status === 'berhasil' && (
-                          <button
-                            onClick={() => alert(`Download laporan ${report.namaLaporan}`)}
-                            className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Download laporan"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                        )}
-                        {(report.status === 'belum-lapor' || report.status === 'gagal') && (
-                          <button
-                            onClick={() => alert(`Kirim reminder untuk laporan ${report.namaLaporan}`)}
-                            className="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded-lg transition-colors"
-                            title="Kirim reminder"
-                          >
-                            <Clock className="w-4 h-4" />
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -1430,7 +1478,7 @@ const ApoloReports = () => {
           <div className="px-6 py-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">
-                Data diperbarui berdasarkan waktu real-time WIB • 
+                Data diperbarui berdasarkan waktu real-time • 
                 Periode: {formatDateDisplay(dateRange.startDate)} - {formatDateDisplay(dateRange.endDate)}
               </div>
               <div className="flex items-center space-x-2">
@@ -1473,10 +1521,6 @@ const ApoloReports = () => {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Aplikasi</h4>
-                  <p className="text-lg font-bold text-red-700">{selectedReport.aplikasi}</p>
-                </div>
-                <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Jenis LJK</h4>
                   {getJenisLKJBadge(selectedReport.jenisLJK)}
                 </div>
@@ -1496,12 +1540,7 @@ const ApoloReports = () => {
                       {getCurrentDateDisplay()}
                     </p>
                     <p className="text-sm text-blue-700">
-                      {currentDateTime.toLocaleTimeString('id-ID', { 
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        timeZone: 'Asia/Jakarta'
-                      })}
+                      {getCurrentTimeDisplay()}
                     </p>
                   </div>
                 </div>
@@ -1510,26 +1549,6 @@ const ApoloReports = () => {
                   <p className="text-lg font-medium text-gray-900 bg-gray-50 p-4 rounded-lg">
                     {selectedReport.namaLaporan}
                   </p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Periode Laporan</h4>
-                  <p className="text-lg font-medium text-gray-900">
-                    {selectedReport.periodeLaporan}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Batas Waktu Penyampaian</h4>
-                  <div className={`p-3 rounded-lg ${selectedReport.periodeStatus === 'terlambat' ? 'bg-red-50' : 'bg-green-50'}`}>
-                    <p className="text-lg font-medium text-gray-900">
-                      {selectedReport.batasWaktu}
-                    </p>
-                    <div className="mt-2 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <CalendarIcon className="w-4 h-4 mr-2" />
-                        Deadline: {selectedReport.displayDeadline}
-                      </div>
-                    </div>
-                  </div>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Waktu Submit</h4>
@@ -1558,13 +1577,12 @@ const ApoloReports = () => {
                       ) : (
                         <div className="text-blue-600">
                           ⏳ Sisa waktu: {selectedReport.hoursRemaining > 0 ? 
-                            `${Math.floor(selectedReport.hoursRemaining / 24)} hari ${selectedReport.hoursRemaining % 24} jam` : 
+                            `${Math.floor(selectedReport.hoursRemaining / 24)} hari` : 
                             'Segera!'}
                         </div>
                       )
                     ) : (
                       <div className="text-red-600">
-                        ⚠ Terlambat: {Math.floor(selectedReport.hoursLate / 24)} hari {selectedReport.hoursLate % 24} jam
                       </div>
                     )}
                   </div>
@@ -1589,22 +1607,6 @@ const ApoloReports = () => {
                 >
                   Tutup
                 </button>
-                {selectedReport.status === 'berhasil' && (
-                  <button
-                    onClick={() => alert(`Download laporan ${selectedReport.namaLaporan}`)}
-                    className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Download Laporan
-                  </button>
-                )}
-                {(selectedReport.status === 'belum-lapor' || selectedReport.status === 'gagal') && (
-                  <button
-                    onClick={() => alert(`Kirim reminder untuk laporan ${selectedReport.namaLaporan}`)}
-                    className="px-4 py-2 text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors"
-                  >
-                    Kirim Reminder
-                  </button>
-                )}
               </div>
             </div>
           </div>
