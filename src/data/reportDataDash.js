@@ -161,21 +161,21 @@ export const recentActivityData = [
     title: `Laporan APOLO "${laporann[0]?.Nama_Laporan}" berhasil dikirim`,
     time: 'Hari ini, 09:00',
     system: 'APOLO'
-  },
-  {
-    id: 2,
-    type: 'warning',
-    title: `Laporan ${laporann[47]?.Nama_Laporan} mengalami keterlambatan`,
-    time: 'Kemarin, 16:30',
-    system: 'APOLO'
-  },
-  {
-    id: 3,
-    type: 'danger',
-    title: `Laporan ${laporann[56]?.Nama_Laporan} gagal dikirim`,
-    time: '2 hari lalu, 11:45',
-    system: 'APOLO'
   }
+  // {
+  //   id: 2,
+  //   type: 'warning',
+  //   title: `Laporan ${laporann[47]?.Nama_Laporan} mengalami keterlambatan`,
+  //   time: 'Kemarin, 16:30',
+  //   system: 'APOLO'
+  // },
+  // {
+  //   id: 3,
+  //   type: 'danger',
+  //   title: `Laporan ${laporann[56]?.Nama_Laporan} gagal dikirim`,
+  //   time: '2 hari lalu, 11:45',
+  //   system: 'APOLO'
+  // }
 ];
 
 // Fungsi untuk mendapatkan statistik real-time

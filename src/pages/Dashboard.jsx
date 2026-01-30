@@ -12,7 +12,9 @@ import {
   AlertCircle,
   Building,
   Calendar,
-  XCircle
+  XCircle,
+  Key,
+  User
 } from 'lucide-react';
 import WelcomeBanner from '../components/dashboard/WelcomeBanner';
 import StatsCard from '../components/dashboard/StatsCard';
@@ -20,6 +22,7 @@ import QuickAccessCard from '../components/dashboard/QuickAccessCard';
 import ActivityList from '../components/dashboard/ActivityList';
 import RecentReports from '../components/dashboard/RecentReports';
 import DashboardCarousel from '../components/dashboard/DashboardCarousel';
+import { Link } from 'react-router-dom'; // TAMBAHKAN INI
 import { 
   homeReportsData, 
   welcomeStats, 
@@ -77,62 +80,50 @@ const Dashboard = () => {
             link={card.link}     
           />
         ))}
+        
+        {/* Tambahkan card untuk Access Management */}
+        <Link to="/Profile">
+          <div className="bg-gradient-to-br from-red-50/30 to-white border border-red-100 hover:border-red-300 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer h-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow group-hover:scale-110 transition-transform duration-300">
+                  <Key className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                    Baru
+                  </span>
+                </div>
+              </div>
+              
+              <h4 className="text-lg font-bold text-red-900 mb-2">Management Account</h4>
+              <p className="text-red-600 text-sm mb-4">
+                Kelola hak akses dan profil pengguna aplikasi pelaporan OJK
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Akses Aktif</span>
+                  <span className="font-bold text-red-700">3</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Status Akun</span>
+                  <span className="font-medium text-green-600">Aktif</span>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex items-center justify-between">
+                <span className="text-sm font-medium text-red-600 group-hover:text-red-700 transition-colors">
+                  Akses Profil & Role
+                </span>
+                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white group-hover:translate-x-1 transition-transform duration-300">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
-
-      {/* Laporan Overview */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-xl border border-purple-100 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-purple-900 font-bold text-2xl">{totalLJKTypes}</div>
-              <div className="text-purple-700 text-sm font-medium">Jenis LJK</div>
-              <div className="text-purple-500 text-xs">Tipe Lembaga</div>
-            </div>
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Building className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-indigo-900 font-bold text-2xl">{uniquePeriods}</div>
-              <div className="text-indigo-700 text-sm font-medium">Periode Laporan</div>
-              <div className="text-indigo-500 text-xs">Variasi periode</div>
-            </div>
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Calendar className="w-6 h-6 text-indigo-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-pink-50 to-white p-4 rounded-xl border border-pink-100 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-pink-900 font-bold text-2xl">{processedData.lateReports}</div>
-              <div className="text-pink-700 text-sm font-medium">Terlambat</div>
-              <div className="text-pink-500 text-xs">Laporan overdue</div>
-            </div>
-            <div className="p-2 bg-pink-100 rounded-lg">
-              <AlertCircle className="w-6 h-6 text-pink-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-orange-50 to-white p-4 rounded-xl border border-orange-100 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-orange-900 font-bold text-2xl">{realTimeStats.daysToDeadline}</div>
-              <div className="text-orange-700 text-sm font-medium">Deadline Dekat</div>
-              <div className="text-orange-500 text-xs">Perlu perhatian</div>
-            </div>
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Clock className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-        </div>
-      </div> */}
 
       {/* Recent Activity and Reports */}
       <div className="space-y-6">
@@ -169,8 +160,8 @@ const Dashboard = () => {
                   <FileText className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-red-900">Analisis Laporan IRS</h3>
-                  <p className="text-sm text-red-600/80">Visualisasi data dari {processedData.totalReports} laporan</p>
+                  <h3 className="text-lg font-bold text-red-900">Analisis Laporan IRS Terbaru</h3>
+                  <p className="text-sm text-red-600/80">Visualisasi data dari laporan hari ini</p>
                 </div>
               </div>
               <div className="relative">
@@ -199,7 +190,7 @@ const Dashboard = () => {
 
       {/* Additional Dashboard Info */}
       <div className="mt-8 p-6 bg-gradient-to-r from-red-600 to-red-700 rounded-xl shadow-lg">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-white">
           <div className="space-y-2">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -235,16 +226,27 @@ const Dashboard = () => {
               Analisis {processedData.totalReports} laporan dari 3 jenis aplikasi pelaporan untuk insight komprehensif.
             </p>
           </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                <User className="w-5 h-5" />
+              </div>
+              <h4 className="font-bold text-lg">Manajemen Akun</h4>
+            </div>
+            <p className="text-red-100 text-sm">
+              <Link to="/AccessManagement" className="underline hover:text-white transition-colors">
+                Akses profil dan kelola role pengguna
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-
-      {/* Quick Stats Footer */}
-   
 
       {/* Sistem Info */}
       <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-white rounded-xl border border-blue-100">
         <h3 className="text-lg font-bold text-blue-900 mb-4">Informasi Sistem</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -270,6 +272,17 @@ const Dashboard = () => {
             </div>
             <p className="text-xs text-gray-600">
               {processedData.reportsBySystem.SiPina?.length || 0} laporan nasabah asing
+            </p>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-700">Role & Access</span>
+            </div>
+            <p className="text-xs text-gray-600">
+              <Link to="/AccessManagement" className="text-red-600 hover:text-red-700 hover:underline">
+                Akses manajemen akun pengguna
+              </Link>
             </p>
           </div>
         </div>

@@ -21,7 +21,11 @@ import {
   CalendarCheck,
   CalendarDays,
   ClockAlert,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Clock4,
+  CheckSquare,
+  Hourglass,
+  AlertOctagon
 } from 'lucide-react';
 
 const ApoloReports = () => {
@@ -35,25 +39,26 @@ const ApoloReports = () => {
   const [currentDateTime, setCurrentDateTime] = useState(getCurrentWIBTime());
   const [reportsWithPeriod, setReportsWithPeriod] = useState([]);
   
-  // State untuk periode tanggal - default 2 tahun kebelakang hingga 1 tahun ke depan
+  // State untuk periode tanggal - default 1 tahun kebelakang dari hari ini
   const [dateRange, setDateRange] = useState(() => {
     const currentDate = getCurrentWIBTime();
     const currentYear = currentDate.getFullYear();
     
     return {
-      startDate: `${currentYear - 2}-01-01`, // 2 tahun ke belakang
-      endDate: `${currentYear + 1}-12-31`    // 1 tahun ke depan
+      startDate: `${currentYear - 1}-01-01`, // 1 tahun ke belakang
+      endDate: `${currentYear}-12-31`        // tahun berjalan
     };
   });
   
-  // State untuk filter
+  // State untuk filter - DIPERBAHARUI untuk struktur baru
   const [filters, setFilters] = useState({
     periodeStatus: 'aktif',
     subFilters: {
       statusDetail: 'all',
       jenisLJK: 'all',
       periode: 'all',
-      searchTerm: ''
+      searchTerm: '',
+      reviewStatus: 'all' // Status review untuk filter level 3
     }
   });
   
@@ -74,36 +79,35 @@ const ApoloReports = () => {
   const initialReports = useMemo(() => {
     const currentYear = currentDateTime.getFullYear();
     const currentMonth = currentDateTime.getMonth() + 1; // 1-indexed
+    const currentDay = currentDateTime.getDate();
     
-    // Fungsi untuk mendapatkan tanggal yang aman (handle rollover tahun)
+    // Fungsi untuk mendapatkan tanggal yang aman
     const getSafeDate = (year, month, day) => {
       let safeMonth = month;
       let safeYear = year;
       
-      // Handle jika bulan minus (dari tahun sebelumnya)
       if (safeMonth <= 0) {
         safeMonth += 12;
         safeYear -= 1;
-      }
-      // Handle jika bulan lebih dari 12 (dari tahun depan)
-      else if (safeMonth > 12) {
+      } else if (safeMonth > 12) {
         safeMonth -= 12;
         safeYear += 1;
       }
       
-      // Pastikan hari valid untuk bulan tersebut
       const lastDayOfMonth = new Date(safeYear, safeMonth, 0).getDate();
       const safeDay = Math.min(day, lastDayOfMonth);
       
       return { year: safeYear, month: safeMonth, day: safeDay };
     };
     
-    // Hitung tanggal yang aman untuk berbagai periode
-    const prevMonth15 = getSafeDate(currentYear, currentMonth - 1, 15);
-    const prevMonth31 = getSafeDate(currentYear, currentMonth - 1, 31);
+    // Hitung tanggal yang aman untuk semua variabel yang dibutuhkan
+    const prevMonth5 = getSafeDate(currentYear, currentMonth - 1, 5);
     const prevMonth10 = getSafeDate(currentYear, currentMonth - 1, 10);
+    const prevMonth15 = getSafeDate(currentYear, currentMonth - 1, 15);
+    const prevMonth20 = getSafeDate(currentYear, currentMonth - 1, 20);
     const prevMonth25 = getSafeDate(currentYear, currentMonth - 1, 25);
     const prevMonth30 = getSafeDate(currentYear, currentMonth - 1, 30);
+    const prevMonth31 = getSafeDate(currentYear, currentMonth - 1, 31);
     
     const currentMonth5 = getSafeDate(currentYear, currentMonth, 5);
     const currentMonth7 = getSafeDate(currentYear, currentMonth, 7);
@@ -113,12 +117,14 @@ const ApoloReports = () => {
     const currentMonth25 = getSafeDate(currentYear, currentMonth, 25);
     const currentMonth28 = getSafeDate(currentYear, currentMonth, 28);
     const currentMonth30 = getSafeDate(currentYear, currentMonth, 30);
+    const currentMonth31 = getSafeDate(currentYear, currentMonth, 31);
     
     const nextMonth5 = getSafeDate(currentYear, currentMonth + 1, 5);
     const nextMonth10 = getSafeDate(currentYear, currentMonth + 1, 10);
     const nextMonth15 = getSafeDate(currentYear, currentMonth + 1, 15);
     const nextMonth20 = getSafeDate(currentYear, currentMonth + 1, 20);
     const nextMonth25 = getSafeDate(currentYear, currentMonth + 1, 25);
+    const nextMonth30 = getSafeDate(currentYear, currentMonth + 1, 30);
     
     return [
       {
@@ -133,7 +139,8 @@ const ApoloReports = () => {
         waktuSubmit: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day - 5).padStart(2, '0')}T14:30:00`,
         waktuDeadline: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Berhasil",
-        statusKetepatan: "Tepat Waktu"
+        statusKetepatan: "Tepat Waktu",
+        statusReview: "belum-review"
       },
       {
         id: 2,
@@ -143,11 +150,12 @@ const ApoloReports = () => {
         periodeLaporan: "Bulanan",
         batasWaktu: "Akhir bulan berikutnya",
         deadlineDate: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day).padStart(2, '0')}T23:59:59`,
-        submissionDate: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day).padStart(2, '0')}T10:15:00`,
-        waktuSubmit: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day).padStart(2, '0')}T10:15:00`,
+        submissionDate: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day - 2).padStart(2, '0')}T10:15:00`,
+        waktuSubmit: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day - 2).padStart(2, '0')}T10:15:00`,
         waktuDeadline: `${prevMonth31.year}-${String(prevMonth31.month).padStart(2, '0')}-${String(prevMonth31.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Berhasil",
-        statusKetepatan: "Tepat Waktu"
+        statusKetepatan: "Tepat Waktu",
+        statusReview: "belum-review"
       },
       {
         id: 3,
@@ -161,7 +169,8 @@ const ApoloReports = () => {
         waktuSubmit: null,
         waktuDeadline: `${currentMonth10.year}-${String(currentMonth10.month).padStart(2, '0')}-${String(currentMonth10.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Belum Lapor",
-        statusKetepatan: "Belum Submit"
+        statusKetepatan: "Belum Submit",
+        statusReview: null
       },
       {
         id: 4,
@@ -171,11 +180,12 @@ const ApoloReports = () => {
         periodeLaporan: "Triwulanan",
         batasWaktu: "Tanggal deadline sesuai ketentuan",
         deadlineDate: `${currentMonth30.year}-${String(currentMonth30.month).padStart(2, '0')}-${String(currentMonth30.day).padStart(2, '0')}T23:59:59`,
-        submissionDate: null,
-        waktuSubmit: null,
+        submissionDate: `${currentMonth30.year}-${String(currentMonth30.month).padStart(2, '0')}-${String(currentMonth30.day - 5).padStart(2, '0')}T11:45:00`,
+        waktuSubmit: `${currentMonth30.year}-${String(currentMonth30.month).padStart(2, '0')}-${String(currentMonth30.day - 5).padStart(2, '0')}T11:45:00`,
         waktuDeadline: `${currentMonth30.year}-${String(currentMonth30.month).padStart(2, '0')}-${String(currentMonth30.day).padStart(2, '0')}T23:59:59`,
-        statusPengiriman: "Belum Lapor",
-        statusKetepatan: "Belum Submit"
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Tepat Waktu",
+        statusReview: "sedang-review"
       },
       {
         id: 5,
@@ -189,7 +199,8 @@ const ApoloReports = () => {
         waktuSubmit: null,
         waktuDeadline: `${nextMonth15.year}-${String(nextMonth15.month).padStart(2, '0')}-${String(nextMonth15.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Belum Lapor",
-        statusKetepatan: "Belum Submit"
+        statusKetepatan: "Belum Submit",
+        statusReview: null
       },
       {
         id: 6,
@@ -203,7 +214,8 @@ const ApoloReports = () => {
         waktuSubmit: null,
         waktuDeadline: `${nextMonth20.year}-${String(nextMonth20.month).padStart(2, '0')}-${String(nextMonth20.day).padStart(2, '0')}T12:00:00`,
         statusPengiriman: "Belum Lapor",
-        statusKetepatan: "Belum Submit"
+        statusKetepatan: "Belum Submit",
+        statusReview: null
       },
       {
         id: 7,
@@ -217,7 +229,8 @@ const ApoloReports = () => {
         waktuSubmit: `${currentMonth15.year}-${String(currentMonth15.month).padStart(2, '0')}-${String(currentMonth15.day - 1).padStart(2, '0')}T09:30:00`,
         waktuDeadline: `${currentMonth15.year}-${String(currentMonth15.month).padStart(2, '0')}-${String(currentMonth15.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Berhasil",
-        statusKetepatan: "Tepat Waktu"
+        statusKetepatan: "Tepat Waktu",
+        statusReview: "sudah-review"
       },
       {
         id: 8,
@@ -231,7 +244,8 @@ const ApoloReports = () => {
         waktuSubmit: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day).padStart(2, '0')}T14:00:00`,
         waktuDeadline: `${currentMonth25.year}-${String(currentMonth25.month).padStart(2, '0')}-${String(currentMonth25.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Gagal",
-        statusKetepatan: "Gagal Kirim"
+        statusKetepatan: "Gagal Kirim",
+        statusReview: null
       },
       {
         id: 9,
@@ -245,7 +259,8 @@ const ApoloReports = () => {
         waktuSubmit: null,
         waktuDeadline: `${nextMonth20.year}-${String(nextMonth20.month).padStart(2, '0')}-${String(nextMonth20.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Belum Lapor",
-        statusKetepatan: "Belum Submit"
+        statusKetepatan: "Belum Submit",
+        statusReview: null
       },
       {
         id: 10,
@@ -259,7 +274,8 @@ const ApoloReports = () => {
         waktuSubmit: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day + 1).padStart(2, '0')}T14:30:00`,
         waktuDeadline: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Berhasil",
-        statusKetepatan: "Terlambat"
+        statusKetepatan: "Terlambat",
+        statusReview: "sedang-review"
       },
       {
         id: 11,
@@ -273,7 +289,8 @@ const ApoloReports = () => {
         waktuSubmit: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day).padStart(2, '0')}T23:59:59`,
         waktuDeadline: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Berhasil",
-        statusKetepatan: "Tepat Waktu"
+        statusKetepatan: "Tepat Waktu",
+        statusReview: "belum-review"
       },
       {
         id: 12,
@@ -287,7 +304,8 @@ const ApoloReports = () => {
         waktuSubmit: null,
         waktuDeadline: `${nextMonth5.year}-${String(nextMonth5.month).padStart(2, '0')}-${String(nextMonth5.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Belum Lapor",
-        statusKetepatan: "Belum Submit"
+        statusKetepatan: "Belum Submit",
+        statusReview: null
       },
       {
         id: 13,
@@ -301,7 +319,8 @@ const ApoloReports = () => {
         waktuSubmit: `${nextMonth25.year}-${String(nextMonth25.month).padStart(2, '0')}-${String(nextMonth25.day - 2).padStart(2, '0')}T11:20:00`,
         waktuDeadline: `${nextMonth25.year}-${String(nextMonth25.month).padStart(2, '0')}-${String(nextMonth25.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Gagal",
-        statusKetepatan: "Gagal Kirim"
+        statusKetepatan: "Gagal Kirim",
+        statusReview: null
       },
       {
         id: 14,
@@ -315,7 +334,8 @@ const ApoloReports = () => {
         waktuSubmit: null,
         waktuDeadline: `${nextMonth20.year}-${String(nextMonth20.month).padStart(2, '0')}-${String(nextMonth20.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Belum Lapor",
-        statusKetepatan: "Belum Submit"
+        statusKetepatan: "Belum Submit",
+        statusReview: null
       },
       {
         id: 15,
@@ -329,7 +349,8 @@ const ApoloReports = () => {
         waktuSubmit: `${currentMonth28.year}-${String(currentMonth28.month).padStart(2, '0')}-${String(currentMonth28.day).padStart(2, '0')}T14:00:00`,
         waktuDeadline: `${currentMonth28.year}-${String(currentMonth28.month).padStart(2, '0')}-${String(currentMonth28.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Gagal",
-        statusKetepatan: "Gagal Kirim"
+        statusKetepatan: "Gagal Kirim",
+        statusReview: null
       },
       {
         id: 16,
@@ -342,8 +363,9 @@ const ApoloReports = () => {
         submissionDate: `${currentYear}-03-31T16:45:00`,
         waktuSubmit: `${currentYear}-03-31T16:45:00`,
         waktuDeadline: `${currentYear}-03-31T23:59:59`,
-        statusPengiriman: "Gagal",
-        statusKetepatan: "Gagal Kirim"
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Tepat Waktu",
+        statusReview: "sudah-review"
       },
       {
         id: 17,
@@ -356,8 +378,9 @@ const ApoloReports = () => {
         submissionDate: `${currentYear}-06-30T11:20:00`,
         waktuSubmit: `${currentYear}-06-30T11:20:00`,
         waktuDeadline: `${currentYear}-06-30T23:59:59`,
-        statusPengiriman: "Gagal",
-        statusKetepatan: "Gagal Kirim"
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Tepat Waktu",
+        statusReview: "belum-review"
       },
       {
         id: 18,
@@ -370,8 +393,9 @@ const ApoloReports = () => {
         submissionDate: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T10:30:00`,
         waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10T10:30:00`,
         waktuDeadline: `${nextMonth10.year}-${String(nextMonth10.month).padStart(2, '0')}-${String(nextMonth10.day).padStart(2, '0')}T23:59:59`,
-        statusPengiriman: "Gagal",
-        statusKetepatan: "Gagal Kirim"
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Tepat Waktu",
+        statusReview: "sedang-review"
       },
       {
         id: 19,
@@ -385,10 +409,75 @@ const ApoloReports = () => {
         waktuSubmit: `${currentYear}-${String(currentMonth).padStart(2, '0')}-05T10:30:00`,
         waktuDeadline: `${nextMonth25.year}-${String(nextMonth25.month).padStart(2, '0')}-${String(nextMonth25.day).padStart(2, '0')}T23:59:59`,
         statusPengiriman: "Gagal",
-        statusKetepatan: "Gagal Kirim"
+        statusKetepatan: "Gagal Kirim",
+        statusReview: null
+      },
+      // Data tambahan untuk periode terlambat dengan berbagai status review
+      {
+        id: 20,
+        aplikasi: "APOLO",
+        jenisLJK: "BU",
+        namaLaporan: "Laporan GWM Individual",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Tanggal 10 bulan berikutnya",
+        deadlineDate: `${prevMonth10.year}-${String(prevMonth10.month).padStart(2, '0')}-${String(prevMonth10.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${prevMonth10.year}-${String(prevMonth10.month).padStart(2, '0')}-${String(prevMonth10.day + 3).padStart(2, '0')}T14:30:00`, // 3 hari terlambat
+        waktuSubmit: `${prevMonth10.year}-${String(prevMonth10.month).padStart(2, '0')}-${String(prevMonth10.day + 3).padStart(2, '0')}T14:30:00`,
+        waktuDeadline: `${prevMonth10.year}-${String(prevMonth10.month).padStart(2, '0')}-${String(prevMonth10.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Terlambat",
+        statusReview: "sedang-review"
+      },
+      {
+        id: 21,
+        aplikasi: "APOLO",
+        jenisLJK: "BU",
+        namaLaporan: "Laporan GWM Konsolidasi",
+        periodeLaporan: "Bulanan",
+        batasWaktu: "Tanggal 15 bulan berikutnya",
+        deadlineDate: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day + 5).padStart(2, '0')}T11:45:00`, // 5 hari terlambat
+        waktuSubmit: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day + 5).padStart(2, '0')}T11:45:00`,
+        waktuDeadline: `${prevMonth15.year}-${String(prevMonth15.month).padStart(2, '0')}-${String(prevMonth15.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Terlambat",
+        statusReview: "sudah-review"
+      },
+      {
+        id: 22,
+        aplikasi: "APOLO",
+        jenisLJK: "BPR / BPRS",
+        namaLaporan: "Laporan Semesteran BPR/BPRS",
+        periodeLaporan: "Semesteran",
+        batasWaktu: "Tanggal 30 hari setelah semester",
+        deadlineDate: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day).padStart(2, '0')}T23:59:59`,
+        submissionDate: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day + 7).padStart(2, '0')}T16:20:00`, // 7 hari terlambat
+        waktuSubmit: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day + 7).padStart(2, '0')}T16:20:00`,
+        waktuDeadline: `${prevMonth30.year}-${String(prevMonth30.month).padStart(2, '0')}-${String(prevMonth30.day).padStart(2, '0')}T23:59:59`,
+        statusPengiriman: "Berhasil",
+        statusKetepatan: "Terlambat",
+        statusReview: "belum-review"
       }
     ];
   }, [currentDateTime]);
+
+  // Fungsi untuk menghitung hari terlambat
+  const calculateLateDays = (deadlineDate, submissionDate) => {
+    if (!submissionDate) return null;
+    
+    const deadline = new Date(deadlineDate);
+    const submission = new Date(submissionDate);
+    
+    // PERBAIKAN: Cek apakah tanggal valid
+    if (isNaN(deadline.getTime()) || isNaN(submission.getTime())) {
+      return null;
+    }
+    
+    const diffMs = submission - deadline;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    
+    return diffDays > 0 ? diffDays : 0;
+  };
 
   // Proses data reports dengan tanggal dan hitung status
   useEffect(() => {
@@ -411,33 +500,54 @@ const ApoloReports = () => {
         return null;
       }
       
-      // Hitung apakah deadline sudah lewat
-      const isDeadlinePassed = deadlineDate < now;
+      // Hitung hari terlambat jika ada submission
+      const lateDays = calculateLateDays(report.deadlineDate, report.submissionDate);
       
       // Tentukan periodeStatus berdasarkan aturan
       let periodeStatus = '';
+      let isDeadlinePassed = false;
+      let hoursRemaining = 0;
+      let hoursLate = 0;
       
       if (submissionDate) {
         // Sudah ada submission
-        if (report.statusPengiriman === 'Gagal' || report.id === 8 || report.id === 13 || report.id === 15 || report.id === 16 || report.id === 17 || report.id === 18 || report.id === 19) {
-          // Status Gagal
+        const daysLate = lateDays || 0;
+        
+        if (report.statusPengiriman === 'Gagal') {
           periodeStatus = 'aktif';
-        } else {
-          const isSubmittedOnTime = submissionDate <= deadlineDate;
-          if (isSubmittedOnTime) {
-            // Berhasil dan tepat waktu -> masuk periode aktif
-            periodeStatus = 'aktif';
+          const timeDiffMs = deadlineDate - now;
+          if (timeDiffMs > 0) {
+            hoursRemaining = Math.floor(timeDiffMs / (1000 * 60 * 60));
           } else {
-            // Berhasil tapi terlambat -> masuk terlambat
+            hoursLate = Math.floor(Math.abs(timeDiffMs) / (1000 * 60 * 60));
+            isDeadlinePassed = true;
+          }
+        } else {
+          if (daysLate > 0) {
             periodeStatus = 'terlambat';
+            hoursLate = daysLate * 24;
+            isDeadlinePassed = true;
+          } else {
+            periodeStatus = 'aktif';
+            const timeDiffMs = deadlineDate - now;
+            if (timeDiffMs > 0) {
+              hoursRemaining = Math.floor(timeDiffMs / (1000 * 60 * 60));
+            } else {
+              hoursLate = Math.floor(Math.abs(timeDiffMs) / (1000 * 60 * 60));
+              isDeadlinePassed = true;
+            }
           }
         }
       } else {
         // Belum submit
-        if (isDeadlinePassed) {
-          periodeStatus = 'terlambat';
-        } else {
+        const timeDiffMs = deadlineDate - now;
+        if (timeDiffMs > 0) {
           periodeStatus = 'aktif';
+          hoursRemaining = Math.floor(timeDiffMs / (1000 * 60 * 60));
+        } else {
+          periodeStatus = 'terlambat';
+          hoursLate = Math.floor(Math.abs(timeDiffMs) / (1000 * 60 * 60));
+          isDeadlinePassed = true;
         }
       }
       
@@ -447,41 +557,39 @@ const ApoloReports = () => {
       let statusKetepatanWaktu = 'Belum Submit';
       
       if (submissionDate) {
-        const isSubmittedOnTime = submissionDate <= deadlineDate;
+        const isSubmittedOnTime = lateDays === 0 || lateDays === null;
         
-        // Untuk data Gagal
-        if (report.statusPengiriman === 'Gagal' || report.id === 8 || report.id === 13 || report.id === 15 || report.id === 16 || report.id === 17 || report.id === 18 || report.id === 19) {
+        if (report.statusPengiriman === 'Gagal') {
           status = 'gagal';
           statusPengiriman = 'Gagal';
           statusKetepatanWaktu = 'Gagal Kirim';
         } else {
           status = 'berhasil';
           statusPengiriman = 'Berhasil';
-          statusKetepatanWaktu = isSubmittedOnTime ? 'Tepat Waktu' : 'Terlambat';
+          
+          // Jika periode terlambat, tampilkan status review
+          if (periodeStatus === 'terlambat' && report.statusReview) {
+            const reviewStatusMap = {
+              'sedang-review': 'Sedang Direview',
+              'sudah-review': 'Sudah Direview',
+              'belum-review': 'Belum Direview'
+            };
+            statusPengiriman = `Berhasil - ${reviewStatusMap[report.statusReview]}`;
+          }
+          
+          statusKetepatanWaktu = isSubmittedOnTime ? 'Tepat Waktu' : `${lateDays} Hari Terlambat`;
         }
       } else {
         // Belum submit
         if (isDeadlinePassed) {
-          statusKetepatanWaktu = 'Terlambat';
+          const daysLate = Math.ceil(hoursLate / 24);
+          statusKetepatanWaktu = `${daysLate} Hari Terlambat`;
         } else {
           statusKetepatanWaktu = 'Belum Submit';
         }
       }
       
-      // Hitung waktu remaining atau terlambat
-      const timeDiffMs = deadlineDate - now;
-      let hoursRemaining = 0;
-      let hoursLate = 0;
-      
-      if (timeDiffMs > 0) {
-        // Masih ada waktu
-        hoursRemaining = Math.floor(timeDiffMs / (1000 * 60 * 60));
-      } else {
-        // Sudah terlambat
-        hoursLate = Math.floor(Math.abs(timeDiffMs) / (1000 * 60 * 60));
-      }
-      
-      // Format tanggal untuk display dengan WIB - HANYA TANGGAL SAJA
+      // Format tanggal untuk display
       const formatDateOnly = (date) => {
         if (!date) return 'Belum ada';
         return date.toLocaleDateString('id-ID', {
@@ -491,10 +599,16 @@ const ApoloReports = () => {
         });
       };
       
+      // PERBAIKAN: Pastikan tanggal valid sebelum konversi ke ISO
+      const safeDateToISO = (date) => {
+        if (!date || isNaN(date.getTime())) return null;
+        return date.toISOString();
+      };
+      
       return {
         ...report,
-        deadlineDate: deadlineDate.toISOString(),
-        submissionDate: submissionDate ? submissionDate.toISOString() : null,
+        deadlineDate: safeDateToISO(deadlineDate),
+        submissionDate: safeDateToISO(submissionDate),
         status,
         statusPengiriman,
         statusKetepatanWaktu,
@@ -502,19 +616,78 @@ const ApoloReports = () => {
         isDeadlinePassed,
         hoursRemaining,
         hoursLate,
+        lateDays: lateDays || 0,
         displayDeadline: formatDateOnly(deadlineDate),
         displaySubmit: submissionDate ? formatDateOnly(submissionDate) : 'Belum submit',
         deadlineObj: deadlineDate,
         submitObj: submissionDate,
-        waktuSubmit: submissionDate ? submissionDate.toISOString() : null,
-        waktuDeadline: deadlineDate.toISOString()
+        waktuSubmit: safeDateToISO(submissionDate),
+        waktuDeadline: safeDateToISO(deadlineDate),
+        statusReview: report.statusReview
       };
     }).filter(report => report !== null);
     
     setReportsWithPeriod(updatedReports);
   }, [dateRange, initialReports, currentDateTime]);
 
-  // Hitung filteredReports berdasarkan filter
+  // Sub-filter options - STRUKTUR BARU
+  const getSubFilterOptions = () => {
+    if (filters.periodeStatus === 'aktif') {
+      return [
+        { value: 'all', label: 'Semua Status' },
+        { value: 'berhasil-sesuai-waktu', label: 'Berhasil Sesuai Waktu' },
+        { value: 'belum-lapor', label: 'Belum Lapor' },
+        { value: 'gagal', label: 'Gagal' }
+      ];
+    } else if (filters.periodeStatus === 'terlambat') {
+      return [
+        { value: 'all', label: 'Semua Status' },
+        { value: 'sudah-lapor', label: 'Sudah Lapor' },
+        { value: 'belum-lapor-terlambat', label: 'Belum Lapor' }
+      ];
+    }
+    return [];
+  };
+
+  // Status review options untuk filter level 3
+  const getReviewStatusOptions = () => {
+    if (filters.subFilters.statusDetail === 'sudah-lapor') {
+      return [
+        { value: 'all', label: 'Semua Status Review' },
+        { value: 'belum-direview', label: 'Belum Direview' },
+        { value: 'sedang-direview', label: 'Sedang Direview' },
+        { value: 'sudah-direview', label: 'Sudah Direview' }
+      ];
+    }
+    return [];
+  };
+
+  // Handle sub filter change - DIPERBAHARUI untuk reset review status ketika mengganti status detail
+  const handleSubFilterChange = (key, value) => {
+    setFilters(prev => {
+      // Jika mengubah statusDetail, reset reviewStatus ke 'all'
+      if (key === 'statusDetail') {
+        return {
+          ...prev,
+          subFilters: {
+            ...prev.subFilters,
+            [key]: value,
+            reviewStatus: value === 'sudah-lapor' ? 'all' : ''
+          }
+        };
+      }
+      
+      return {
+        ...prev,
+        subFilters: {
+          ...prev.subFilters,
+          [key]: value
+        }
+      };
+    });
+  };
+
+  // Hitung filteredReports berdasarkan filter - STRUKTUR BARU
   const filteredReports = useMemo(() => {
     let filtered = [...reportsWithPeriod];
 
@@ -523,16 +696,17 @@ const ApoloReports = () => {
       filtered = filtered.filter(report => report.periodeStatus === filters.periodeStatus);
     }
     
-    // Filter sub-filters
+    // Filter sub-filters - STRUKTUR BARU
     if (filters.subFilters.statusDetail !== 'all') {
       filtered = filtered.filter(report => {
         switch(filters.subFilters.statusDetail) {
           case 'berhasil-sesuai-waktu':
             return report.status === 'berhasil' && report.statusKetepatanWaktu === 'Tepat Waktu';
           case 'belum-lapor':
-            return report.status === 'belum-lapor' && report.periodeStatus === 'aktif';
+            return report.status === 'belum-lapor';
           case 'gagal':
-            return report.status === 'gagal' && report.periodeStatus === 'aktif';
+            return report.status === 'gagal';
+          // Filter untuk periode terlambat - Struktur baru
           case 'sudah-lapor':
             return report.status === 'berhasil' && report.periodeStatus === 'terlambat';
           case 'belum-lapor-terlambat':
@@ -541,6 +715,18 @@ const ApoloReports = () => {
             return true;
         }
       });
+
+      // Filter tambahan untuk review status jika memilih "Sudah Lapor"
+      if (filters.subFilters.statusDetail === 'sudah-lapor' && filters.subFilters.reviewStatus && filters.subFilters.reviewStatus !== 'all') {
+        filtered = filtered.filter(report => {
+          const reviewMap = {
+            'belum-direview': 'Belum Direview',
+            'sedang-direview': 'Sedang Direview',
+            'sudah-direview': 'Sudah Direview'
+          };
+          return report.statusPengiriman === `Berhasil - ${reviewMap[filters.subFilters.reviewStatus]}`;
+        });
+      }
     }
 
     if (filters.subFilters.jenisLJK !== 'all') {
@@ -587,20 +773,36 @@ const ApoloReports = () => {
     }));
   }, [reportsWithPeriod]);
 
-  // Hitung stats
+  // Hitung stats - DIPERBAHARUI untuk statistik baru
   const stats = useMemo(() => {
     const activeReports = reportsWithPeriod.filter(r => r.periodeStatus === 'aktif');
     const lateReports = reportsWithPeriod.filter(r => r.periodeStatus === 'terlambat');
+    
+    // Hitung status review untuk periode terlambat
+    const sedangReviewTerlambat = lateReports.filter(r => 
+      r.status === 'berhasil' && r.statusPengiriman === 'Berhasil - Sedang Direview'
+    ).length;
+    
+    const sudahReviewTerlambat = lateReports.filter(r => 
+      r.status === 'berhasil' && r.statusPengiriman === 'Berhasil - Sudah Direview'
+    ).length;
+    
+    const belumReviewTerlambat = lateReports.filter(r => 
+      r.status === 'berhasil' && r.statusPengiriman === 'Berhasil - Belum Direview'
+    ).length;
     
     return {
       total: reportsWithPeriod.length,
       aktif: activeReports.length,
       terlambat: lateReports.length,
       berhasilTepatWaktu: activeReports.filter(r => r.status === 'berhasil' && r.statusKetepatanWaktu === 'Tepat Waktu').length,
-      berhasilTerlambat: lateReports.filter(r => r.status === 'berhasil' && r.statusKetepatanWaktu === 'Terlambat').length,
       belumLaporAktif: activeReports.filter(r => r.status === 'belum-lapor').length,
-      belumLaporTerlambat: lateReports.filter(r => r.status === 'belum-lapor').length,
       gagal: activeReports.filter(r => r.status === 'gagal').length,
+      // Statistik untuk periode terlambat
+      berhasilSedangReviewTerlambat: sedangReviewTerlambat,
+      berhasilSudahReviewTerlambat: sudahReviewTerlambat,
+      berhasilBelumReviewTerlambat: belumReviewTerlambat,
+      belumLaporTerlambat: lateReports.filter(r => r.status === 'belum-lapor').length,
     };
   }, [reportsWithPeriod]);
 
@@ -616,62 +818,12 @@ const ApoloReports = () => {
     return summary;
   }, [reportsWithPeriod]);
 
-  // Get date suggestions untuk 1 tahun kebelakang dan bulan realtime saat ini
-  const getDateSuggestions = () => {
-    const currentYear = currentDateTime.getFullYear();
-    const currentMonth = currentDateTime.getMonth() + 1;
-    
-    const suggestions = [];
-    
-    // Tambahkan bulan-bulan dari 1 tahun kebelakang
-    for (let year = currentYear - 1; year <= currentYear; year++) {
-      const startMonth = year === currentYear - 1 ? 1 : 1;
-      const endMonth = year === currentYear - 1 ? 12 : currentMonth;
-      
-      for (let month = startMonth; month <= endMonth; month++) {
-        const monthNames = [
-          'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-        ];
-        
-        const lastDay = new Date(year, month, 0).getDate();
-        
-        suggestions.push({
-          label: `${monthNames[month - 1]} ${year}`,
-          start: `${year}-${String(month).padStart(2, '0')}-01`,
-          end: `${year}-${String(month).padStart(2, '0')}-${lastDay}`
-        });
-      }
-    }
-    
-    return suggestions;
-  };
-
-  // Sub-filter options
-  const getSubFilterOptions = () => {
-    if (filters.periodeStatus === 'aktif') {
-      return [
-        { value: 'all', label: 'Semua Status' },
-        { value: 'berhasil-sesuai-waktu', label: 'Berhasil Sesuai Waktu' },
-        { value: 'belum-lapor', label: 'Belum Lapor' },
-        { value: 'gagal', label: 'Gagal' }
-      ];
-    } else if (filters.periodeStatus === 'terlambat') {
-      return [
-        { value: 'all', label: 'Semua Status' },
-        { value: 'sudah-lapor', label: 'Sudah Lapor' },
-        { value: 'belum-lapor-terlambat', label: 'Belum Lapor' }
-      ];
-    }
-    return [];
-  };
-
   const resetFilters = () => {
     const currentYear = currentDateTime.getFullYear();
     
     setDateRange({
-      startDate: `${currentYear - 2}-01-01`,
-      endDate: `${currentYear + 1}-12-31`
+      startDate: `${currentYear - 1}-01-01`,
+      endDate: `${currentYear}-12-31`
     });
     
     setFilters({
@@ -680,7 +832,8 @@ const ApoloReports = () => {
         statusDetail: 'all',
         jenisLJK: 'all',
         periode: 'all',
-        searchTerm: ''
+        searchTerm: '',
+        reviewStatus: 'all'
       }
     });
     setSearchTerm('');
@@ -695,31 +848,15 @@ const ApoloReports = () => {
         statusDetail: 'all',
         jenisLJK: 'all',
         periode: 'all',
-        searchTerm: ''
+        searchTerm: '',
+        reviewStatus: 'all'
       }
     }));
     
     setShowSubFilters(true);
   };
 
-  const handleSubFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      subFilters: {
-        ...prev.subFilters,
-        [key]: value
-      }
-    }));
-  };
-
-  const handleDateSuggestion = (suggestion) => {
-    setDateRange({
-      startDate: suggestion.start,
-      endDate: suggestion.end
-    });
-  };
-
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, statusPengiriman) => {
     const styles = {
       'berhasil': 'bg-green-100 text-green-800 border-green-200',
       'belum-lapor': 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -727,10 +864,33 @@ const ApoloReports = () => {
     };
 
     const labels = {
-      'berhasil': 'Berhasil',
+      'berhasil': statusPengiriman || 'Berhasil',
       'belum-lapor': 'Belum Lapor',
       'gagal': 'Gagal',
     };
+
+    // Custom styling untuk status Berhasil dengan review pada periode terlambat
+    if (statusPengiriman) {
+      if (statusPengiriman.includes('Sedang Direview')) {
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+            {statusPengiriman}
+          </span>
+        );
+      } else if (statusPengiriman.includes('Sudah Direview')) {
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+            {statusPengiriman}
+          </span>
+        );
+      } else if (statusPengiriman.includes('Belum Direview')) {
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+            {statusPengiriman}
+          </span>
+        );
+      }
+    }
 
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[status] || 'bg-gray-100'}`}>
@@ -742,8 +902,9 @@ const ApoloReports = () => {
   const getKetepatanBadge = (status) => {
     if (status === 'Tepat Waktu') {
       return <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">Tepat Waktu</span>;
-    } else if (status === 'Terlambat') {
-      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">Terlambat</span>;
+    } else if (status.includes('Hari Terlambat')) {
+      const days = status.split(' ')[0];
+      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">{status}</span>;
     } else if (status === 'Gagal Kirim') {
       return <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">Gagal Kirim</span>;
     } else {
@@ -796,7 +957,6 @@ const ApoloReports = () => {
     );
   };
 
-  // MODIFIKASI: Tampilkan sisa waktu untuk laporan aktif yang Gagal dan Belum Lapor dalam HARI
   const getTimeDisplay = (report) => {
     if (report.periodeStatus === 'aktif') {
       const daysRemaining = Math.floor(report.hoursRemaining / 24);
@@ -813,7 +973,6 @@ const ApoloReports = () => {
           </div>
         );
       } else if (report.status === 'gagal') {
-        // TAMBAHKAN SISA WAKTU UNTUK LAPORAN AKTIF YANG Gagal (dalam hari)
         return (
           <div className="space-y-1">
             <div className="text-xs text-red-600">
@@ -851,24 +1010,29 @@ const ApoloReports = () => {
       }
     } else {
       // Terlambat
-      const daysLate = Math.floor(Math.abs(report.hoursLate) / 24);
+      const daysLate = Math.ceil(report.hoursLate / 24);
       
       return (
         <div className="space-y-1">
-          {report.status === 'berhasil' ? (
-            <div className="text-xs text-green-600">
-              <span>Submit: {report.displaySubmit}</span>
-            </div>
-          ) : (
-            <div className="text-xs text-yellow-600">
-              <span>Belum submit</span>
+          <div className="text-xs text-blue-600">
+            {report.status === 'berhasil' && report.displaySubmit !== 'Belum submit' && (
+              <div>
+                <span>Submit: {report.displaySubmit}</span>
+              </div>
+            )}
+            {report.status === 'belum-lapor' && (
+              <div className="text-yellow-600">
+                <span>Belum submit</span>
+              </div>
+            )}
+          </div>
+          {report.lateDays > 0 && (
+            <div className="text-xs text-red-600">
+              Terlambat: {report.lateDays} hari
             </div>
           )}
           <div className="text-xs text-red-600">
             <span>Deadline: {report.displayDeadline}</span>
-          </div>
-          <div className="text-xs text-red-500">
-            Terlambat: {daysLate > 0 ? `${daysLate} hari` : 'Kurang dari 1 hari'}
           </div>
         </div>
       );
@@ -882,20 +1046,13 @@ const ApoloReports = () => {
   const handleExportData = () => {
     const exportData = filteredReports.map(report => ({
       'No': report.id,
-      'Jenis LJK': report.jenisLJK,
       'Nama Laporan': report.namaLaporan,
       'Deadline': report.displayDeadline,
       'Submit': report.displaySubmit,
       'Status Periode': report.periodeStatus === 'aktif' ? 'Periode Aktif' : 'Terlambat',
       'Status Pengiriman': report.statusPengiriman,
       'Status Ketepatan Waktu': report.statusKetepatanWaktu,
-      'Sisa Waktu': report.periodeStatus === 'aktif' ? 
-        (report.hoursRemaining > 0 ? 
-          `${Math.floor(report.hoursRemaining / 24)} hari` : 
-          'Segera!') : 
-        (report.hoursLate > 0 ? 
-          `Terlambat ${Math.floor(report.hoursLate / 24)} hari` : 
-          'Terlambat')
+      'Hari Terlambat': report.lateDays > 0 ? report.lateDays : 0
     }));
 
     const csv = convertToCSV(exportData);
@@ -957,7 +1114,7 @@ const ApoloReports = () => {
           </div>
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-red-900">Sistem APOLO {currentDateTime.getFullYear()}</h1>
-            <p className="text-gray-600 mt-1">Monitoring Laporan APOLO - Total {stats.total} Laporan</p>
+            <p className="text-gray-600 mt-1">Monitoring Laporan APOLO - Total {stats.total} Laporan (Periode 1 Tahun)</p>
             <div className="flex items-center space-x-4 mt-1">
               <p className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-200">
                 <Clock className="w-3 h-3 inline mr-1" />
@@ -998,7 +1155,7 @@ const ApoloReports = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-red-900">Filter Periode Laporan {currentDateTime.getFullYear()}</h3>
-                  <p className="text-sm text-gray-600">Pilih rentang tanggal deadline terlebih dahulu</p>
+                  <p className="text-sm text-gray-600">Pilih rentang tanggal deadline terlebih dahulu (Maksimal 1 Tahun: {currentDateTime.getFullYear() - 1} - {currentDateTime.getFullYear()})</p>
                 </div>
               </div>
               <button
@@ -1014,59 +1171,37 @@ const ApoloReports = () => {
             {/* Level 0: Periode Tanggal Filter */}
             <div className="mb-6">
               <h4 className="text-sm font-medium text-gray-700 mb-4">
-                Level 0: Pilih Rentang Tanggal Deadline ({currentDateTime.getFullYear() - 2} - {currentDateTime.getFullYear() + 1})
+                Level 0: Pilih Rentang Tanggal Deadline ({currentDateTime.getFullYear() - 1} - {currentDateTime.getFullYear()})
               </h4>
-              
-              {/* Quick Date Suggestions - MODIFIKASI: 1 tahun kebelakang dan bulan realtime */}
-              <div className="mb-4">
-                <div className="text-xs text-gray-600 mb-2">
-                  Pilihan Cepat Periode {currentDateTime.getFullYear() - 1} - {currentDateTime.getFullYear()} (Bulanan):
-                </div>
-                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-                  {getDateSuggestions().map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleDateSuggestion(suggestion)}
-                      className={`px-3 py-1.5 text-xs rounded-lg border transition-colors flex-shrink-0 ${
-                        dateRange.startDate === suggestion.start && dateRange.endDate === suggestion.end
-                          ? 'bg-blue-100 text-blue-700 border-blue-300'
-                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                      }`}
-                    >
-                      {suggestion.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Mulai ({currentDateTime.getFullYear() - 2})
+                    Tanggal Mulai ({currentDateTime.getFullYear() - 1})
                   </label>
                   <input
                     type="date"
                     value={dateRange.startDate}
                     onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                    min={`${currentDateTime.getFullYear() - 2}-01-01`}
-                    max={`${currentDateTime.getFullYear() + 1}-12-31`}
+                    min={`${currentDateTime.getFullYear() - 1}-01-01`}
+                    max={`${currentDateTime.getFullYear()}-12-31`}
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Akhir ({currentDateTime.getFullYear() + 1})
+                    Tanggal Akhir ({currentDateTime.getFullYear()})
                   </label>
                   <input
                     type="date"
                     value={dateRange.endDate}
                     onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                    min={`${currentDateTime.getFullYear() - 2}-01-01`}
-                    max={`${currentDateTime.getFullYear() + 1}-12-31`}
+                    min={`${currentDateTime.getFullYear() - 1}-01-01`}
+                    max={`${currentDateTime.getFullYear()}-12-31`}
                   />
                 </div>
                 
@@ -1084,7 +1219,7 @@ const ApoloReports = () => {
                       Aktif: {stats.aktif} • Terlambat: {stats.terlambat}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                      Rentang: {currentDateTime.getFullYear() - 2} - {currentDateTime.getFullYear() + 1}
+                      Rentang: {currentDateTime.getFullYear() - 1} - {currentDateTime.getFullYear()}
                     </div>
                   </div>
                 </div>
@@ -1111,7 +1246,7 @@ const ApoloReports = () => {
                       <div className="font-bold text-gray-900">Periode Aktif</div>
                       <div className="text-sm text-gray-600">{periodeStatusSummary.aktif || 0} laporan</div>
                       <div className="text-xs text-green-600">
-                        Status: Berhasil, Belum Lapor, Gagal
+                        Status: Berhasil Tepat Waktu, Belum Lapor, Gagal
                       </div>
                     </div>
                   </div>
@@ -1134,29 +1269,14 @@ const ApoloReports = () => {
                       <div className="font-bold text-gray-900">Terlambat</div>
                       <div className="text-sm text-gray-600">{periodeStatusSummary.terlambat || 0} laporan</div>
                       <div className="text-xs text-red-600">
-                        Status: Sudah Lapor, Belum Lapor
+                        Status: Sudah Lapor atau Belum Lapor
                       </div>
                     </div>
                   </div>
                   {filters.periodeStatus === 'terlambat' && <ChevronDown className="w-5 h-5 text-red-500" />}
                 </button>
 
-                <div className="p-4 rounded-xl border-2 border-gray-200 bg-gradient-to-r from-blue-50 to-white">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <CalendarDays className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-gray-900">Tanggal Saat Ini</div>
-                      <div className="text-sm text-blue-700 font-medium">
-                        {getCurrentDateDisplay()}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Tahun {currentDateTime.getFullYear()} • Waktu: {getCurrentTimeDisplay()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              
               </div>
             </div>
 
@@ -1194,11 +1314,13 @@ const ApoloReports = () => {
                         <div>
                           <h5 className="font-medium text-blue-900">Detail Status dalam {filters.periodeStatus === 'aktif' ? 'Periode Aktif' : 'Terlambat'}</h5>
                           <p className="text-sm text-blue-700">
-                            Pilih status detail untuk memfilter lebih spesifik
+                            {filters.periodeStatus === 'terlambat' 
+                              ? 'Pilih status laporan yang terlambat' 
+                              : 'Pilih status detail untuk memfilter lebih spesifik'}
                           </p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {getSubFilterOptions().map((option) => (
                           <button
                             key={option.value}
@@ -1209,23 +1331,68 @@ const ApoloReports = () => {
                                 : 'border-gray-200 bg-white hover:border-gray-300'
                             }`}
                           >
-                            <div className="font-medium text-gray-900">{option.label}</div>
+                            <div className="font-medium text-gray-900">
+                              {option.label}
+                            </div>
                             <div className="text-xs text-gray-500 mt-1">
                               {option.value === 'all' 
                                 ? 'Tampilkan semua' 
                                 : option.value === 'berhasil-sesuai-waktu'
-                                ? 'Laporan berhasil sesuai deadline'
+                                ? 'Laporan berhasil submit tepat waktu'
                                 : option.value === 'belum-lapor'
                                 ? 'Belum melakukan pelaporan'
                                 : option.value === 'gagal'
-                                ? 'Gagal dalam pelaporan (tampilkan sisa waktu)'
+                                ? 'Gagal dalam pelaporan'
                                 : option.value === 'sudah-lapor'
-                                ? 'Sudah lapor tapi terlambat'
+                                ? 'Sudah melakukan pelaporan namun terlambat'
                                 : 'Belum lapor dan terlambat'}
                             </div>
                           </button>
                         ))}
                       </div>
+
+                      {/* Level 3: Review Status Filter (hanya muncul jika memilih Sudah Lapor pada periode terlambat) */}
+                      {filters.periodeStatus === 'terlambat' && filters.subFilters.statusDetail === 'sudah-lapor' && (
+                        <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                          <div className="flex items-center mb-3">
+                            <div className="p-2 bg-purple-100 rounded-lg mr-3">
+                              <FileCheck className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                              <h5 className="font-medium text-blue-900">Level 3: Status Review</h5>
+                              <p className="text-sm text-blue-700">
+                                Pilih status review untuk laporan yang sudah submit tapi terlambat
+                              </p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            {getReviewStatusOptions().map((option) => (
+                              <button
+                                key={option.value}
+                                onClick={() => handleSubFilterChange('reviewStatus', option.value)}
+                                className={`p-3 rounded-lg border-2 text-left transition-all duration-200 ${
+                                  filters.subFilters.reviewStatus === option.value
+                                    ? 'border-blue-500 bg-blue-50 shadow-sm'
+                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                }`}
+                              >
+                                <div className="font-medium text-gray-900">
+                                  {option.label}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {option.value === 'all' 
+                                    ? 'Semua status review' 
+                                    : option.value === 'belum-direview'
+                                    ? 'Laporan terlambat belum direview'
+                                    : option.value === 'sedang-direview'
+                                    ? 'Laporan terlambat sedang direview'
+                                    : 'Laporan terlambat sudah direview'}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Additional Filters */}
@@ -1317,15 +1484,40 @@ const ApoloReports = () => {
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
                         Periode: {formatDateDisplay(dateRange.startDate)} - {formatDateDisplay(dateRange.endDate)}
                       </span>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                        filters.periodeStatus === 'aktif' 
+                          ? 'bg-green-100 text-green-800 border-green-200' 
+                          : 'bg-red-100 text-red-800 border-red-200'
+                      }`}>
                         {filters.periodeStatus === 'aktif' ? 'Periode Aktif' : 'Terlambat'}
                       </span>
                       {filters.subFilters.statusDetail !== 'all' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                          filters.subFilters.statusDetail === 'sudah-lapor'
+                            ? 'bg-blue-100 text-blue-800 border-blue-200'
+                            : filters.subFilters.statusDetail === 'berhasil-sesuai-waktu'
+                            ? 'bg-blue-100 text-blue-800 border-blue-200'
+                            : filters.subFilters.statusDetail === 'belum-lapor' || filters.subFilters.statusDetail === 'belum-lapor-terlambat'
+                            ? 'bg-blue-100 text-blue-800 border-blue-200'
+                            : filters.subFilters.statusDetail === 'gagal'
+                            ? 'bg-red-100 text-red-800 border-red-200'
+                            : 'bg-blue-100 text-blue-800 border-blue-200'
+                        }`}>
                           Detail: {getSubFilterOptions().find(opt => opt.value === filters.subFilters.statusDetail)?.label}
                           <button 
                             onClick={() => handleSubFilterChange('statusDetail', 'all')}
-                            className="ml-2 text-purple-600 hover:text-purple-800"
+                            className="ml-2 text-blue-600 hover:text-blue-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      )}
+                      {filters.periodeStatus === 'terlambat' && filters.subFilters.statusDetail === 'sudah-lapor' && filters.subFilters.reviewStatus !== 'all' && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200">
+                          Review: {getReviewStatusOptions().find(opt => opt.value === filters.subFilters.reviewStatus)?.label}
+                          <button 
+                            onClick={() => handleSubFilterChange('reviewStatus', 'all')}
+                            className="ml-2 text-indigo-600 hover:text-indigo-800"
                           >
                             ×
                           </button>
@@ -1369,34 +1561,82 @@ const ApoloReports = () => {
                 </div>
                 <div className="text-sm font-medium text-blue-700">
                   {filteredReports.length} laporan ditemukan
+                  {filters.periodeStatus === 'terlambat' && filters.subFilters.statusDetail === 'sudah-lapor' && filters.subFilters.reviewStatus !== 'all' && (
+                    <span className="ml-2">
+                      • {getReviewStatusOptions().find(opt => opt.value === filters.subFilters.reviewStatus)?.label}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Reports Table */}
-      <div className="px-6 pb-6">
-        <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl shadow-lg border border-red-100 overflow-hidden">
-          <div className="p-6 border-b border-red-100 bg-gradient-to-r from-red-50 to-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-r from-red-100 to-red-200 rounded-lg shadow-sm">
-                  <FileText className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-red-900">Daftar Laporan APOLO {currentDateTime.getFullYear()}</h3>
-                  <p className="text-sm text-gray-600">
-                    Periode: {formatDateDisplay(dateRange.startDate)} - {formatDateDisplay(dateRange.endDate)} • 
-                    Tanggal: {getCurrentDateDisplay()}
+{/* Reports Table Header */}
+<div className="px-6 pb-6">
+  <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl shadow-lg border border-red-100 overflow-hidden">
+    <div className="p-4 md:p-6 border-b border-red-100 bg-gradient-to-r from-red-50 to-white">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start space-x-3">
+            <div className="p-2 bg-gradient-to-r from-red-100 to-red-200 rounded-lg shadow-sm flex-shrink-0">
+              <FileText className="w-5 h-5 text-red-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-bold text-red-900 truncate">
+                Daftar Laporan APOLO {currentDateTime.getFullYear()}
+              </h3>
+              <div className="mt-2 space-y-1">
+                {/* Baris 1: Informasi periode */}
+                <p className="text-sm text-gray-600 truncate">
+                  Periode: <span className="font-medium">{formatDateDisplay(dateRange.startDate)}</span> - <span className="font-medium">{formatDateDisplay(dateRange.endDate)}</span>
+                </p>
+                {/* Baris 2: Informasi tanggal dan tahun data */}
+                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                  <p className="text-xs text-gray-500">
+                    <span className="font-medium">Tanggal:</span> {getCurrentDateDisplay()}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    <span className="font-medium">Data:</span> {currentDateTime.getFullYear() - 1} - {currentDateTime.getFullYear()}
+                  </p>
+                  <p className="text-xs text-gray-500 font-medium">
+                    {filteredReports.length} dari {stats.total} laporan
                   </p>
                 </div>
               </div>
-              <div className="text-sm text-gray-600 font-medium">
-                Menampilkan {filteredReports.length} dari {stats.total} laporan
-              </div>
             </div>
+          </div>
+        </div>
+        
+        {/* Stats Container */}
+        <div className="flex-shrink-0">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-200 min-w-0">
+            <div className="text-sm font-medium text-gray-700 mb-1">
+              Menampilkan: <span className="font-bold">{filteredReports.length}</span> dari <span className="font-bold">{stats.total}</span>
+            </div>
+            {filters.periodeStatus === 'terlambat' && (
+              <div className="text-xs text-blue-700">
+                <div className="font-medium mb-1">Sudah Lapor Review:</div>
+                <div className="flex flex-wrap gap-x-2 gap-y-1">
+                  <span className="inline-flex items-center">
+                    <span className="w-2 h-2 rounded-full bg-purple-500 mr-1"></span>
+                    Belum: {stats.berhasilBelumReviewTerlambat}
+                  </span>
+                  <span className="inline-flex items-center">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 mr-1"></span>
+                    Sedang: {stats.berhasilSedangReviewTerlambat}
+                  </span>
+                  <span className="inline-flex items-center">
+                    <span className="w-2 h-2 rounded-full bg-green-500 mr-1"></span>
+                    Sudah: {stats.berhasilSudahReviewTerlambat}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    
           </div>
 
           <div className="overflow-x-auto">
@@ -1431,7 +1671,7 @@ const ApoloReports = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(report.status)}
+                      {getStatusBadge(report.status, report.statusPengiriman)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getKetepatanBadge(report.statusKetepatanWaktu)}
@@ -1475,22 +1715,66 @@ const ApoloReports = () => {
           )}
 
           {/* Table Footer */}
-          <div className="px-6 py-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                Data diperbarui berdasarkan waktu real-time • 
-                Periode: {formatDateDisplay(dateRange.startDate)} - {formatDateDisplay(dateRange.endDate)}
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">
-                  Halaman 1 dari {Math.ceil(filteredReports.length / 10)}
-                </span>
-              </div>
+        <div className="px-4 md:px-6 py-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Bagian kiri */}
+        <div className="flex-1 min-w-0">
+          <div className="text-xs md:text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="inline-flex items-center">
+                <Clock className="w-3 h-3 mr-1" />
+                Data diperbarui real-time
+              </span>
+              <span className="hidden md:inline">•</span>
+              <span className="font-medium">
+                Periode: {currentDateTime.getFullYear() - 1} - {currentDateTime.getFullYear()}
+              </span>
             </div>
           </div>
         </div>
+        
+        {/* Bagian kanan */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          {/* Pagination Info */}
+          <div className="text-xs md:text-sm text-gray-600">
+            <span className="font-medium">
+              Halaman 1 dari {Math.ceil(filteredReports.length / 10)}
+            </span>
+          </div>
+          
+          {/* Review Stats (hanya untuk periode terlambat) */}
+          {filters.periodeStatus === 'terlambat' && (
+            <div className="hidden sm:block">
+              <div className="h-4 w-px bg-gray-300 mx-2"></div>
+            </div>
+          )}
+          
+          {filters.periodeStatus === 'terlambat' && (
+            <div className="text-xs md:text-sm">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="font-medium text-blue-600">Sudah Lapor:</span>
+                <div className="flex items-center space-x-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mr-1"></span>
+                    Belum {stats.berhasilBelumReviewTerlambat}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1"></span>
+                    Sedang {stats.berhasilSedangReviewTerlambat}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1"></span>
+                    Sudah {stats.berhasilSudahReviewTerlambat}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-
+    </div>
+</div>
+</div>
       {/* Detail Modal */}
       {selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1505,7 +1789,23 @@ const ApoloReports = () => {
                     <h3 className="text-xl font-bold text-blue-900">Detail Laporan APOLO {currentDateTime.getFullYear()}</h3>
                     <div className="flex items-center space-x-2 mt-1">
                       {getPeriodeStatusBadge(selectedReport.periodeStatus)}
+                      {selectedReport.statusPengiriman && selectedReport.statusPengiriman.includes('Direview') && (
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                          selectedReport.statusPengiriman.includes('Sedang') 
+                            ? 'bg-blue-100 text-blue-800 border-blue-200'
+                            : selectedReport.statusPengiriman.includes('Sudah')
+                            ? 'bg-green-100 text-green-800 border-green-200'
+                            : 'bg-purple-100 text-purple-800 border-purple-200'
+                        }`}>
+                          {selectedReport.statusPengiriman}
+                        </span>
+                      )}
                       <span className="text-gray-600">• ID: {selectedReport.id}</span>
+                      {selectedReport.lateDays > 0 && (
+                        <span className="text-red-600 font-medium">
+                          • Terlambat: {selectedReport.lateDays} hari
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1553,15 +1853,33 @@ const ApoloReports = () => {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Waktu Submit</h4>
                   <div className={`p-3 rounded-lg ${
-                    selectedReport.status === 'berhasil' ? 'bg-green-50' : 
-                    selectedReport.status === 'belum-lapor' ? 'bg-yellow-50' : 'bg-red-50'
+                    selectedReport.status === 'berhasil' 
+                      ? selectedReport.statusPengiriman?.includes('Sudah') 
+                        ? 'bg-green-50' 
+                        : selectedReport.statusPengiriman?.includes('Sedang')
+                        ? 'bg-blue-50'
+                        : selectedReport.statusPengiriman?.includes('Belum')
+                        ? 'bg-purple-50'
+                        : 'bg-green-50'
+                      : selectedReport.status === 'belum-lapor' 
+                      ? 'bg-yellow-50' 
+                      : 'bg-red-50'
                   }`}>
                     <p className="text-lg font-medium text-gray-900">
                       {selectedReport.displaySubmit}
                     </p>
                     <div className="mt-2 text-sm text-gray-600">
-                      {selectedReport.status === 'berhasil' ? '✅ Berhasil submit' : 
-                       selectedReport.status === 'belum-lapor' ? '⏳ Belum submit' : '❌ Gagal submit'}
+                      {selectedReport.status === 'berhasil' 
+                        ? selectedReport.statusPengiriman?.includes('Sudah') 
+                          ? '✅ Sudah direview' 
+                          : selectedReport.statusPengiriman?.includes('Sedang')
+                          ? '🔄 Sedang direview'
+                          : selectedReport.statusPengiriman?.includes('Belum')
+                          ? '⏳ Belum direview'
+                          : '✅ Berhasil submit'
+                        : selectedReport.status === 'belum-lapor' 
+                        ? '⏳ Belum submit' 
+                        : '❌ Gagal submit'}
                     </div>
                   </div>
                 </div>
@@ -1572,27 +1890,41 @@ const ApoloReports = () => {
                     {selectedReport.periodeStatus === 'aktif' ? (
                       selectedReport.status === 'berhasil' ? (
                         <div className="text-green-600">
-                          ✅ Submit: {selectedReport.displaySubmit}
+                          Submit: {selectedReport.displaySubmit}
                         </div>
                       ) : (
                         <div className="text-blue-600">
-                          ⏳ Sisa waktu: {selectedReport.hoursRemaining > 0 ? 
+                          Sisa waktu: {selectedReport.hoursRemaining > 0 ? 
                             `${Math.floor(selectedReport.hoursRemaining / 24)} hari` : 
                             'Segera!'}
                         </div>
                       )
                     ) : (
                       <div className="text-red-600">
+                        Terlambat: {selectedReport.lateDays > 0 ? `${selectedReport.lateDays} hari` : '0 hari'}
+                        {selectedReport.statusPengiriman && selectedReport.statusPengiriman.includes('Direview') && (
+                          <div className={`mt-1 ${
+                            selectedReport.statusPengiriman.includes('Sedang') 
+                              ? 'text-blue-600'
+                              : selectedReport.statusPengiriman.includes('Sudah')
+                              ? 'text-green-600'
+                              : 'text-purple-600'
+                          }`}>
+                            {selectedReport.statusPengiriman}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Status Pengiriman</h4>
-                  {getStatusBadge(selectedReport.status)}
+                  {getStatusBadge(selectedReport.status, selectedReport.statusPengiriman)}
                   <p className="text-sm text-gray-600 mt-1">
                     {selectedReport.status === 'berhasil' 
-                      ? 'Laporan berhasil dikirim' 
+                      ? selectedReport.statusPengiriman?.includes('Direview')
+                        ? 'Laporan terlambat dengan status review'
+                        : 'Laporan berhasil dikirim'
                       : selectedReport.status === 'belum-lapor'
                       ? 'Belum melakukan pengiriman'
                       : 'Gagal dalam pengiriman'}

@@ -1,3 +1,4 @@
+// Sidebar.js - Update menu pengaturan
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Home, 
@@ -20,7 +21,15 @@ import {
   LayoutDashboard,
   ChevronLeft,
   Mail,
-  Megaphone
+  Megaphone,
+  Key,
+  Shield,
+  UserCheck,
+  FileSpreadsheet,
+  Eye,
+  History,
+  Database,
+  UserCog // Icon baru untuk pengaturan
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -29,6 +38,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const navigate = useNavigate();
   const [reportsOpen, setReportsOpen] = useState(false);
   const [correspondenceOpen, setCorrespondenceOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false); // State untuk menu Pengaturan
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const sidebarRef = useRef(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -106,19 +116,37 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         { path: '/korespondensi/pengumuman', icon: Megaphone, label: 'Pengumuman' },
       ]
     },
+    
     { 
       id: 'download',
       path: '/download', 
       icon: Download, 
       label: 'Download' 
     },
-    { 
-      id: 'profile',
-      path: '/profile', 
-      icon: User, 
-      label: 'Profil Saya' 
-    },
   ];
+
+  // Menu Pengaturan dengan submenu Profil dan Hak Akses
+  const settingsMenu = {
+    id: 'settings',
+    type: 'dropdown',
+    icon: UserCog, // Menggunakan icon UserCog untuk Pengaturan
+    label: 'Pengaturan',
+    open: settingsOpen,
+    toggle: () => setSettingsOpen(!settingsOpen),
+    subItems: [
+      { 
+        path: '/AccessManagement', 
+        icon: User, 
+        label: 'Profil',
+        exact: true 
+      },
+      { 
+        path: '/profile/hak-akses', 
+        icon: Key, 
+        label: 'Hak Akses' 
+      },
+    ]
+  };
 
   const bottomMenuItems = [
     { 
@@ -292,7 +320,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                       {item.open && (!collapsed || windowWidth < 1024) && (
                         <div className="mt-1 ml-4 space-y-1">
                           {item.subItems.map((subItem) => {
-                            const active = isActive(subItem.path);
+                            const active = isActive(subItem.path, subItem.exact);
                             return (
                               <button
                                 key={subItem.label}
@@ -362,6 +390,82 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
                   </button>
                 );
               })}
+
+              {/* Menu Pengaturan */}
+              {!collapsed || windowWidth < 1024 ? (
+                <div className="mb-1">
+                  <button
+                    onClick={settingsMenu.toggle}
+                    onMouseEnter={() => setHoveredItem(settingsMenu.id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    className={`
+                      w-full flex items-center ${collapsed && windowWidth >= 1024 ? 'justify-center' : 'justify-between'} 
+                      ${collapsed && windowWidth >= 1024 ? 'px-3' : 'px-3'} py-3 rounded-lg
+                      transition-all duration-200
+                      hover:bg-red-50
+                      relative
+                      ${settingsMenu.open 
+                        ? 'bg-red-50 text-red-700' 
+                        : 'text-gray-700 hover:text-red-700'
+                      }
+                    `}
+                  >
+                    <div className={`flex items-center ${collapsed && windowWidth >= 1024 ? '' : 'space-x-3'}`}>
+                      <settingsMenu.icon className={`w-5 h-5 ${settingsMenu.open ? 'text-red-600' : 'text-gray-600 group-hover:text-red-600'}`} />
+                      {(!collapsed || windowWidth < 1024) && (
+                        <span className="font-medium">{settingsMenu.label}</span>
+                      )}
+                    </div>
+                    
+                    {(!collapsed || windowWidth < 1024) && (
+                      settingsMenu.open ? (
+                        <ChevronDown className="w-4 h-4 text-red-600" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
+                      )
+                    )}
+
+                    {/* Tooltip for collapsed mode */}
+                    {collapsed && windowWidth >= 1024 && (
+                      <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+                        {settingsMenu.label}
+                        <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                      </div>
+                    )}
+                  </button>
+                  
+                  {settingsMenu.open && (!collapsed || windowWidth < 1024) && (
+                    <div className="mt-1 ml-4 space-y-1">
+                      {settingsMenu.subItems.map((subItem) => {
+                        const active = isActive(subItem.path, subItem.exact);
+                        return (
+                          <button
+                            key={subItem.label}
+                            onClick={() => handleMenuItemClick(subItem.path)}
+                            onMouseEnter={() => setHoveredItem(subItem.label)}
+                            onMouseLeave={() => setHoveredItem(null)}
+                            className={`
+                              w-full flex items-center space-x-3 
+                              px-3 py-2.5 rounded-lg
+                              transition-all duration-200
+                              hover:bg-red-50
+                              relative
+                              ${active 
+                                ? 'bg-red-50 text-red-700' 
+                                : 'text-gray-600 hover:text-red-700'
+                              }
+                            `}
+                          >
+                            {renderActiveIndicator(active)}
+                            <subItem.icon className={`w-4 h-4 ${active ? 'text-red-600' : 'text-gray-500 group-hover:text-red-600'}`} />
+                            <span className="text-sm">{subItem.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
 
             {/* Bottom Menu */}
