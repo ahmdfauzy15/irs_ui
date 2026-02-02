@@ -250,7 +250,7 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
                       </button>
                       <button 
                         onClick={() => {
-                          navigate('/settings');
+                          navigate('/profile/hak-akses');
                           setShowUserMenu(false);
                         }}
                         className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
