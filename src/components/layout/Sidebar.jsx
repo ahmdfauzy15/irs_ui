@@ -135,7 +135,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     toggle: () => setSettingsOpen(!settingsOpen),
     subItems: [
       { 
-        path: '/AccessManagement', 
+        path: '/accessmanagement', 
         icon: User, 
         label: 'Profil',
         exact: true 
@@ -163,7 +163,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     },
     { 
       id: 'logout',
-      path: '/logout', 
+      path: '/admin/dashboard', 
       icon: LogOut, 
       label: 'Keluar' 
     },
