@@ -228,18 +228,16 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                <User className="w-5 h-5" />
-              </div>
-              <h4 className="font-bold text-lg">Manajemen Akun</h4>
-            </div>
-            <p className="text-red-100 text-sm">
-              <Link to="/AccessManagement" className="underline hover:text-white transition-colors">
-                Akses profil dan kelola role pengguna
-              </Link>
-            </p>
-          </div>
+  <div className="flex items-center space-x-3">
+    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+      <User className="w-5 h-5" />
+    </div>
+    <h4 className="font-bold text-lg">Manajemen Akun</h4>
+  </div>
+  <p className="text-red-100 text-sm">
+    Akses profil dan kelola role pengguna
+  </p>
+</div>
         </div>
       </div>
 

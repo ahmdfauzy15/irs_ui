@@ -43,7 +43,105 @@ import {
   Plus,
   Trash2,
   Edit,
-  Info
+  Info,
+  HelpCircle,
+  BookOpen,
+  Activity,
+  Users2,
+  Settings,
+  ShieldCheck,
+  Zap,
+  Target,
+  Award,
+  Clock3,
+  CalendarDays,
+  CheckCircle2,
+  XOctagon,
+  AlertOctagon,
+  PieChart,
+  TrendingDown,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  Sparkles,
+  Globe,
+  Server,
+  Cpu,
+  HardDrive,
+  Monitor,
+  Smartphone,
+  Tablet,
+  Laptop,
+  Wifi,
+  Cloud,
+  CloudOff,
+  AlertTriangle as AlertTriangleIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  Clock as ClockIcon,
+  Users as UsersIcon,
+  Layers as LayersIcon,
+  Database as DatabaseIcon,
+  FileText as FileTextIcon,
+  BarChart3 as BarChart3Icon,
+  TrendingUp as TrendingUpIcon,
+  Activity as ActivityIcon,
+  Shield as ShieldIcon,
+  Lock as LockIcon,
+  Key as KeyIcon2,
+  Mail as MailIcon,
+  Phone as PhoneIcon,
+  Building as BuildingIcon,
+  Calendar as CalendarIcon,
+  User as UserIcon,
+  Plus as PlusIcon,
+  Trash2 as Trash2Icon,
+  Edit as EditIcon,
+  X as XIcon,
+  Check as CheckIcon,
+  AlertCircle as AlertCircleIcon,
+  RefreshCw as RefreshCwIcon,
+  Download as DownloadIcon,
+  Filter as FilterIcon,
+  Search as SearchIcon,
+  Eye as EyeIcon,
+  MoreVertical as MoreVerticalIcon,
+  ChevronRight as ChevronRightIcon,
+  ChevronDown as ChevronDownIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ExternalLink as ExternalLinkIcon,
+  Send as SendIcon,
+  Bell as BellIcon,
+  UserPlus as UserPlusIcon,
+  UserMinus as UserMinusIcon,
+  FileSpreadsheet as FileSpreadsheetIcon,
+  Award as AwardIcon,
+  Target as TargetIcon,
+  Zap as ZapIcon,
+  Sparkles as SparklesIcon,
+  Globe as GlobeIcon,
+  Server as ServerIcon,
+  Cpu as CpuIcon,
+  HardDrive as HardDriveIcon,
+  Monitor as MonitorIcon,
+  Smartphone as SmartphoneIcon,
+  Tablet as TabletIcon,
+  Laptop as LaptopIcon,
+  Wifi as WifiIcon,
+  Cloud as CloudIcon,
+  CloudOff as CloudOffIcon,
+  PieChart as PieChartIcon,
+  TrendingDown as TrendingDownIcon,
+  ArrowUp as ArrowUpIcon,
+  ArrowDown as ArrowDownIcon,
+  Minus as MinusIcon,
+  Activity as ActivityIcon2,
+  Shield as ShieldIcon2,
+  Settings as SettingsIcon,
+  BookOpen as BookOpenIcon,
+  HelpCircle as HelpCircleIcon,
+  Info as InfoIcon,
+  Users2 as Users2Icon
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -56,7 +154,22 @@ const AdminDashboard = () => {
     rejected: 0,
     processing: 0,
     aroPending: 0,
-    todaySubmissions: 0
+    todaySubmissions: 0,
+    // Tambahan statistik
+    thisWeek: 0,
+    thisMonth: 0,
+    lastMonth: 0,
+    avgResponseTime: '2.5 jam',
+    approvalRate: 0,
+    rejectionRate: 0,
+    uniqueUsers: 0,
+    uniqueInstitutions: 0,
+    sipinaCount: 0,
+    apoloCount: 0,
+    ereportingCount: 0,
+    aroApproved: 0,
+    aroRejected: 0,
+    aroTotal: 0
   });
   const [filters, setFilters] = useState({
     status: 'pending',
@@ -72,7 +185,13 @@ const AdminDashboard = () => {
   const [approvalNote, setApprovalNote] = useState('');
   const [selectedActionId, setSelectedActionId] = useState(null);
   const [actionType, setActionType] = useState('');
-  const [documentLoading, setDocumentLoading] = useState(false);
+  const [selectedARO, setSelectedARO] = useState(null);
+  const [showAROActionModal, setShowAROActionModal] = useState(false);
+  const [aroAction, setAroAction] = useState('');
+  const [viewDocument, setViewDocument] = useState(null);
+  const [documentType, setDocumentType] = useState('');
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [showInfoPanel, setShowInfoPanel] = useState(true); // Panel informasi tambahan
 
   // Load data
   useEffect(() => {
@@ -86,58 +205,96 @@ const AdminDashboard = () => {
     setTimeout(() => {
       try {
         const storedSubs = JSON.parse(localStorage.getItem('hakAksesSubmissions') || '[]');
-        
-        // Auto-approve untuk E-Reporting
-        const processedSubs = storedSubs.map(sub => {
-          if (sub.app === 'ereporting' && sub.status === 'pending') {
-            return {
-              ...sub,
-              status: 'approved',
-              approvedAt: new Date().toISOString(),
-              approvedBy: 'System Auto-Approval',
-              log: [...(sub.log || []), {
-                timestamp: new Date().toISOString(),
-                action: 'Auto-Approved',
-                description: 'Pendaftaran E-Reporting otomatis disetujui oleh sistem',
-                status: 'approved'
-              }]
-            };
-          }
-          return sub;
-        });
-        
-        // Simpan kembali jika ada perubahan
-        if (JSON.stringify(storedSubs) !== JSON.stringify(processedSubs)) {
-          localStorage.setItem('hakAksesSubmissions', JSON.stringify(processedSubs));
-        }
-        
-        const submittedSubs = processedSubs.filter(sub => sub.status !== 'draft');
+        const submittedSubs = storedSubs.filter(sub => 
+          sub.status !== 'draft' && 
+          !(sub.app === 'ereporting' && sub.status === 'approved' && sub.approvedBy === 'System Auto-Approval')
+        );
         
         const today = new Date().toDateString();
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        
         let aroPendingCount = 0;
+        let aroApprovedCount = 0;
+        let aroRejectedCount = 0;
+        let aroTotalCount = 0;
         let todaySubmissionsCount = 0;
+        let thisWeekCount = 0;
+        let thisMonthCount = 0;
+        let lastMonthCount = 0;
+        let sipinaCount = 0;
+        let apoloCount = 0;
+        let ereportingCount = 0;
+        
+        const uniqueUsers = new Set();
+        const uniqueInstitutions = new Set();
         
         submittedSubs.forEach(sub => {
-          const subDate = new Date(sub.submittedAt || sub.timestamp).toDateString();
-          if (subDate === today) todaySubmissionsCount++;
+          const subDate = new Date(sub.submittedAt || sub.timestamp);
+          const subDateString = subDate.toDateString();
           
+          // Hitung berdasarkan periode
+          if (subDateString === today) todaySubmissionsCount++;
+          if (subDate >= weekAgo) thisWeekCount++;
+          if (subDate >= monthAgo) thisMonthCount++;
+          if (subDate >= lastMonthStart && subDate <= lastMonthEnd) lastMonthCount++;
+          
+          // Hitung per aplikasi
+          if (sub.app === 'sipina') sipinaCount++;
+          else if (sub.app === 'apolo') apoloCount++;
+          else if (sub.app === 'ereporting') ereportingCount++;
+          
+          // Data unik
+          if (sub.dataUmum?.email) uniqueUsers.add(sub.dataUmum.email);
+          if (sub.dataUmum?.institusi) uniqueInstitutions.add(sub.dataUmum.institusi);
+          
+          // Hitung ARO
           if (sub.aros) {
             sub.aros.forEach(aro => {
+              aroTotalCount++;
               if (aro.status === 'pending') aroPendingCount++;
+              else if (aro.status === 'approved') aroApprovedCount++;
+              else if (aro.status === 'rejected') aroRejectedCount++;
             });
           }
         });
         
         setSubmissions(submittedSubs);
         
+        const pendingCount = submittedSubs.filter(s => s.status === 'pending').length;
+        const approvedCount = submittedSubs.filter(s => s.status === 'approved').length;
+        const rejectedCount = submittedSubs.filter(s => s.status === 'rejected').length;
+        const totalProcessed = approvedCount + rejectedCount;
+        
+        const approvalRate = totalProcessed > 0 ? Math.round((approvedCount / totalProcessed) * 100) : 0;
+        const rejectionRate = totalProcessed > 0 ? Math.round((rejectedCount / totalProcessed) * 100) : 0;
+        
         const statsData = {
           total: submittedSubs.length,
-          pending: submittedSubs.filter(s => s.status === 'pending').length,
-          approved: submittedSubs.filter(s => s.status === 'approved').length,
-          rejected: submittedSubs.filter(s => s.status === 'rejected').length,
+          pending: pendingCount,
+          approved: approvedCount,
+          rejected: rejectedCount,
           processing: submittedSubs.filter(s => s.status === 'processing').length,
           aroPending: aroPendingCount,
-          todaySubmissions: todaySubmissionsCount
+          todaySubmissions: todaySubmissionsCount,
+          // Statistik tambahan
+          thisWeek: thisWeekCount,
+          thisMonth: thisMonthCount,
+          lastMonth: lastMonthCount,
+          avgResponseTime: calculateAvgResponseTime(submittedSubs),
+          approvalRate: approvalRate,
+          rejectionRate: rejectionRate,
+          uniqueUsers: uniqueUsers.size,
+          uniqueInstitutions: uniqueInstitutions.size,
+          sipinaCount: sipinaCount,
+          apoloCount: apoloCount,
+          ereportingCount: ereportingCount,
+          aroApproved: aroApprovedCount,
+          aroRejected: aroRejectedCount,
+          aroTotal: aroTotalCount
         };
         
         setStats(statsData);
@@ -146,6 +303,37 @@ const AdminDashboard = () => {
       }
       setLoading(false);
     }, 500);
+  };
+
+  // Fungsi untuk menghitung rata-rata waktu respons
+  const calculateAvgResponseTime = (submissions) => {
+    const processedSubs = submissions.filter(s => 
+      (s.status === 'approved' || s.status === 'rejected') && 
+      s.submittedAt && 
+      (s.approvedAt || s.rejectedAt)
+    );
+    
+    if (processedSubs.length === 0) return 'N/A';
+    
+    let totalHours = 0;
+    processedSubs.forEach(sub => {
+      const submitted = new Date(sub.submittedAt || sub.timestamp);
+      const resolved = new Date(sub.approvedAt || sub.rejectedAt);
+      const diffHours = (resolved - submitted) / (1000 * 60 * 60);
+      totalHours += diffHours;
+    });
+    
+    const avgHours = totalHours / processedSubs.length;
+    
+    if (avgHours < 1) {
+      const minutes = Math.round(avgHours * 60);
+      return `${minutes} menit`;
+    } else if (avgHours < 24) {
+      return `${Math.round(avgHours)} jam`;
+    } else {
+      const days = Math.round(avgHours / 24 * 10) / 10;
+      return `${days} hari`;
+    }
   };
 
   // Filter submissions
@@ -242,7 +430,7 @@ const AdminDashboard = () => {
       <span className={`px-3 py-1 text-xs font-bold rounded-full border ${
         app === 'sipina' ? 'bg-red-100 text-red-800 border-red-200' :
         app === 'apolo' ? 'bg-red-100 text-red-800 border-red-200' :
-        'bg-blue-100 text-blue-800 border-blue-200'
+        'bg-red-100 text-red-800 border-red-200'
       }`}>
         {appNames[app] || app.toUpperCase()}
       </span>
@@ -410,95 +598,269 @@ const AdminDashboard = () => {
   const resetModals = () => {
     setApprovalNote('');
     setSelectedActionId(null);
+    setSelectedARO(null);
     setShowApproveModal(false);
     setShowRejectModal(false);
+    setShowAROActionModal(false);
+    setDocumentViewerOpen(false);
+    setViewDocument(null);
   };
 
-  // Handle download dokumen
-  const handleDownloadDocument = (submission) => {
-    setDocumentLoading(true);
+  // Handle update AROs dari admin (tambah/edit/remove) - langsung update ke storage
+  const handleUpdateAROs = (submissionId, updatedAROs) => {
+    const updatedSubmissions = submissions.map(sub => {
+      if (sub.id === submissionId) {
+        return {
+          ...sub,
+          aros: updatedAROs,
+          updatedAt: new Date().toISOString(),
+          log: [...(sub.log || []), {
+            timestamp: new Date().toISOString(),
+            action: 'ARO Diperbarui oleh Admin',
+            description: `Admin memperbarui daftar ARO`,
+            details: 'Daftar ARO disesuaikan oleh administrator',
+            admin: 'Admin IRS'
+          }]
+        };
+      }
+      return sub;
+    });
     
-    try {
-      const formData = submission.data || {};
-      const dataUmum = submission.dataUmum || {};
-      
-      let docContent = '';
-      let fileName = '';
-      
-      docContent = `
-DOKUMEN PENGAJUAN HAK AKSES
-===========================
-
-ID Tracking: ${submission.trackingId}
-Aplikasi: ${submission.app.toUpperCase()}
-Status: ${submission.status}
-Tanggal Pengajuan: ${formatDate(submission.submittedAt || submission.timestamp)}
-
-DATA PEMOHON:
--------------
-Nama Lengkap: ${dataUmum?.nama || 'N/A'}
-Email: ${dataUmum?.email || 'N/A'}
-Telepon: ${dataUmum?.telepon || 'N/A'}
-Instansi: ${dataUmum?.institusi || 'N/A'}
-
-DATA APLIKASI ${submission.app.toUpperCase()}:
----------------------------
-${JSON.stringify(formData, null, 2)}
-
-${submission.aros && submission.aros.length > 0 ? `
-DATA ARO (AREA OF RESPONSIBILITY):
------------------------------------
-${submission.aros.map((aro, idx) => `
-ARO ${idx + 1}:
-  Nama: ${aro.nama}
-  Status: ${aro.status}
-  Keterangan: ${aro.keterangan || '-'}
-  ${aro.modulDipilih ? `Modul Disetujui: ${aro.modulDipilih}` : ''}
-  ${aro.rejectionNote ? `Alasan Ditolak: ${aro.rejectionNote}` : ''}
-`).join('\n')}
-` : ''}
-
-LOG AKTIVITAS:
---------------
-${submission.log && submission.log.length > 0 
-  ? submission.log.map((log, idx) => `
-Log ${idx + 1}:
-  Waktu: ${formatDate(log.timestamp)}
-  Aksi: ${log.action}
-  Deskripsi: ${log.description}
-`).join('\n')
-  : 'Tidak ada log aktivitas'}
-
-Dokumen ini di-generate otomatis oleh sistem IRS.
-Tanggal: ${new Date().toLocaleDateString('id-ID', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit'
-})}
-      `;
-      fileName = `pengajuan_${submission.trackingId}.txt`;
-      
-      const blob = new Blob([docContent], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading document:', error);
-      alert('❌ Gagal mendownload dokumen');
-    } finally {
-      setDocumentLoading(false);
-    }
+    updateLocalStorage(updatedSubmissions);
+    alert('✅ Daftar ARO berhasil diperbarui! Perubahan langsung tersinkronisasi.');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
+          {/* Header Dashboard dengan Informasi */}
+          <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl shadow-lg p-6 mb-8 text-white">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <Shield className="w-6 h-6" />
+                  </div>
+                  <h1 className="text-2xl md:text-3xl font-bold">Dashboard Admin IRS</h1>
+                  <span className="px-3 py-1 bg-white/20 text-sm font-bold rounded-full">
+                    v2.0.0
+                  </span>
+                </div>
+                <p className="text-white/90 flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  Selamat datang, Administrator. Sistem manajemen hak akses terintegrasi.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 rounded-lg px-4 py-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {new Date().toLocaleDateString('id-ID', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowInfoPanel(!showInfoPanel)}
+                  className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                  title={showInfoPanel ? "Sembunyikan info" : "Tampilkan info"}
+                >
+                  <Info className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Quick Stats Row */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6 pt-4 border-t border-white/20">
+              <div>
+                <p className="text-white/70 text-xs mb-1">Total Pengajuan</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
+              </div>
+              <div>
+                <p className="text-white/70 text-xs mb-1">Menunggu</p>
+                <p className="text-2xl font-bold text-yellow-300">{stats.pending}</p>
+              </div>
+              <div>
+                <p className="text-white/70 text-xs mb-1">Disetujui</p>
+                <p className="text-2xl font-bold text-green-300">{stats.approved}</p>
+              </div>
+              <div>
+                <p className="text-white/70 text-xs mb-1">ARO Pending</p>
+                <p className="text-2xl font-bold text-yellow-300">{stats.aroPending}</p>
+              </div>
+              <div>
+                <p className="text-white/70 text-xs mb-1">Approval Rate</p>
+                <p className="text-2xl font-bold text-green-300">{stats.approvalRate}%</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Informasi Panel (Toggle) */}
+          {showInfoPanel && (
+            <div className="bg-white rounded-2xl border border-red-200 shadow-lg p-6 mb-8 animate-fadeIn">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <Info className="w-5 h-5 text-red-600" />
+                  </div>
+                  <h2 className="text-lg font-bold text-gray-900">Informasi Dashboard & Statistik Lengkap</h2>
+                </div>
+                <button
+                  onClick={() => setShowInfoPanel(false)}
+                  className="p-1 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Kolom 1: Informasi Sistem */}
+                <div className="space-y-4">
+                  <h3 className="font-bold text-gray-900 flex items-center gap-2 border-b border-red-100 pb-2">
+                    <Server className="w-4 h-4 text-red-600" />
+                    Informasi Sistem
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Versi Aplikasi</span>
+                      <span className="font-medium text-gray-900">IRS Dashboard v2.0.0</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Terakhir Update</span>
+                      <span className="font-medium text-gray-900">{formatDate(new Date().toISOString())}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Mode Operasi</span>
+                      <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-bold rounded-full">Production</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Total Data Tersimpan</span>
+                      <span className="font-medium text-gray-900">{submissions.length} pengajuan</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Waktu Respons Rata-rata</span>
+                      <span className="font-medium text-gray-900">{stats.avgResponseTime}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Kolom 2: Statistik Pengguna */}
+                <div className="space-y-4">
+                  <h3 className="font-bold text-gray-900 flex items-center gap-2 border-b border-red-100 pb-2">
+                    <Users className="w-4 h-4 text-red-600" />
+                    Statistik Pengguna
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Pengguna Unik</span>
+                      <span className="font-medium text-gray-900">{stats.uniqueUsers} user</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Instansi Unik</span>
+                      <span className="font-medium text-gray-900">{stats.uniqueInstitutions} institusi</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Rata-rata per Institusi</span>
+                      <span className="font-medium text-gray-900">
+                        {stats.uniqueInstitutions > 0 
+                          ? (stats.uniqueUsers / stats.uniqueInstitutions).toFixed(1) 
+                          : 0} user/instansi
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Pengajuan Aktif</span>
+                      <span className="font-medium text-gray-900">{stats.pending + stats.processing}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Tingkat Partisipasi</span>
+                      <span className="font-medium text-gray-900">
+                        {stats.total > 0 ? Math.round((stats.uniqueUsers / stats.total) * 100) : 0}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Kolom 3: Statistik Aplikasi */}
+                <div className="space-y-4">
+                  <h3 className="font-bold text-gray-900 flex items-center gap-2 border-b border-red-100 pb-2">
+                    <Database className="w-4 h-4 text-red-600" />
+                    Statistik Aplikasi
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                        SIPINA
+                      </span>
+                      <span className="font-medium text-gray-900">{stats.sipinaCount} pengajuan</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                        APOLO
+                      </span>
+                      <span className="font-medium text-gray-900">{stats.apoloCount} pengajuan</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                        E-Reporting
+                      </span>
+                      <span className="font-medium text-gray-900">{stats.ereportingCount} pengajuan</span>
+                    </div>
+                    <div className="pt-2 mt-2 border-t border-gray-200">
+                      <div className="flex justify-between text-sm font-medium">
+                        <span className="text-gray-700">Total ARO</span>
+                        <span className="text-gray-900">{stats.aroTotal}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Disetujui: {stats.aroApproved}</span>
+                        <span>Ditolak: {stats.aroRejected}</span>
+                        <span>Pending: {stats.aroPending}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Progress Bar Overview */}
+              <div className="mt-6 pt-4 border-t border-red-100">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">Overview Pengajuan</span>
+                  <span className="text-xs text-gray-500">{stats.total} total</span>
+                </div>
+                <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden flex">
+                  <div 
+                    className="h-full bg-yellow-500" 
+                    style={{ width: `${stats.total > 0 ? (stats.pending / stats.total) * 100 : 0}%` }}
+                  ></div>
+                  <div 
+                    className="h-full bg-green-500" 
+                    style={{ width: `${stats.total > 0 ? (stats.approved / stats.total) * 100 : 0}%` }}
+                  ></div>
+                  <div 
+                    className="h-full bg-red-500" 
+                    style={{ width: `${stats.total > 0 ? (stats.rejected / stats.total) * 100 : 0}%` }}
+                  ></div>
+                  <div 
+                    className="h-full bg-blue-500" 
+                    style={{ width: `${stats.total > 0 ? (stats.processing / stats.total) * 100 : 0}%` }}
+                  ></div>
+                </div>
+                <div className="flex items-center justify-between text-xs mt-2">
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 bg-yellow-500 rounded-full"></span> Menunggu ({stats.pending})</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Disetujui ({stats.approved})</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 bg-red-500 rounded-full"></span> Ditolak ({stats.rejected})</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 bg-blue-500 rounded-full"></span> Diproses ({stats.processing})</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Filter & Search */}
           <div className="bg-white rounded-2xl border border-red-200 shadow-lg p-6 mb-8">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
@@ -553,7 +915,7 @@ Tanggal: ${new Date().toLocaleDateString('id-ID', {
                   <option value="all">Semua Aplikasi</option>
                   <option value="sipina">SIPINA</option>
                   <option value="apolo">APOLO</option>
-                  <option value="ereporting">E-Reporting</option>
+                  {/* <option value="ereporting">E-Reporting</option> */}
                 </select>
               </div>
               
@@ -590,6 +952,16 @@ Tanggal: ${new Date().toLocaleDateString('id-ID', {
                   <option value="month">Bulan Ini</option>
                 </select>
               </div>
+            </div>
+            
+            {/* Info Filter */}
+            <div className="mt-4 pt-4 border-t border-red-100 text-xs text-gray-500 flex items-center gap-2">
+              <Info className="w-3 h-3" />
+              <span>Filter aktif: {filters.type !== 'all' ? `Jenis: ${filters.type === 'app' ? 'Pengajuan Aplikasi' : 'ARO'}` : 'Semua jenis'}</span>
+              {filters.app !== 'all' && <span>• Aplikasi: {filters.app.toUpperCase()}</span>}
+              {filters.status !== 'all' && <span>• Status: {filters.status}</span>}
+              {filters.dateRange !== 'all' && <span>• Periode: {filters.dateRange}</span>}
+              {searchQuery && <span>• Pencarian: "{searchQuery}"</span>}
             </div>
           </div>
 
@@ -844,13 +1216,12 @@ Tanggal: ${new Date().toLocaleDateString('id-ID', {
                                 <Eye className="w-4 h-4" />
                               </button>
                               
-                              {/* Tampilkan tombol approve/reject jika status pending ATAU ada ARO pending (untuk kasus APOLO yang sudah approved tapi ARO baru pending) */}
-                              {(submission.status === 'pending' || pendingAROs.length > 0) && submission.app !== 'ereporting' && (
+                              {submission.status === 'pending' && (
                                 <>
                                   <button
                                     onClick={() => handleApprove(submission.id)}
                                     className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                    title="Setujui"
+                                    title="Setujui Aplikasi"
                                   >
                                     <CheckCircle className="w-4 h-4" />
                                   </button>
@@ -858,7 +1229,7 @@ Tanggal: ${new Date().toLocaleDateString('id-ID', {
                                   <button
                                     onClick={() => handleReject(submission.id)}
                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Tolak"
+                                    title="Tolak Aplikasi"
                                   >
                                     <XCircle className="w-4 h-4" />
                                   </button>
@@ -901,6 +1272,12 @@ Tanggal: ${new Date().toLocaleDateString('id-ID', {
               </div>
             )}
           </div>
+          
+          {/* Footer dengan informasi dashboard */}
+          <div className="mt-6 text-center text-xs text-gray-500">
+            <p>© 2026 Integrated Reporting System (IRS) - Dashboard Admin v2.0.0</p>
+            <p className="mt-1">Total pengajuan: {stats.total} | Disetujui: {stats.approved} | Ditolak: {stats.rejected} | Menunggu: {stats.pending}</p>
+          </div>
         </div>
       </div>
 
@@ -917,7 +1294,7 @@ Tanggal: ${new Date().toLocaleDateString('id-ID', {
             setShowDetailModal(false);
             handleReject(selectedSubmission.id);
           }}
-          onDownloadDocument={handleDownloadDocument}
+          onUpdateAROs={handleUpdateAROs}
           getStatusBadge={getStatusBadge}
           getAppBadge={getAppBadge}
           formatDate={formatDate}
@@ -956,152 +1333,403 @@ Tanggal: ${new Date().toLocaleDateString('id-ID', {
   );
 };
 
-// Komponen Modal Detail dengan tampilan sederhana dan tombol ACC tunggal
-const DetailModal = ({ submission, onClose, onApprove, onReject, onDownloadDocument, getStatusBadge, getAppBadge, formatDate }) => {
-  const [selectedModule, setSelectedModule] = useState('');
+// Komponen Modal Detail dengan kontrol ARO penuh
+const DetailModal = ({ submission, onClose, onApprove, onReject, onUpdateAROs, getStatusBadge, getAppBadge, formatDate }) => {
+  const [editingAROs, setEditingAROs] = useState(false);
+  const [availableAROs, setAvailableAROs] = useState([]);
+  const [selectedAROs, setSelectedAROs] = useState([]);
+  const [showAddAROModal, setShowAddAROModal] = useState(false);
   const [documentLoading, setDocumentLoading] = useState(false);
   
-  // Modul APOLO yang tersedia
-  const availableModules = [
-    { value: 'Strategi Anti Fraud', label: 'Strategi Anti Fraud' },
-    { value: 'AP/KAP', label: 'AP/KAP' },
-    { value: 'TPPU/TPPT/PPSPM', label: 'TPPU/TPPT/PPSPM' },
-    { value: 'Risk Management', label: 'Risk Management' },
-    { value: 'Compliance', label: 'Compliance' }
+  // Semua ARO yang tersedia untuk APOLO
+  const allAvailableAROs = [
+    { id: 'apolo-aro-1', nama: 'APOLO-ARO-MODULE-1', jenis: 'Modul APOLO', deskripsi: 'Hak akses modul Strategi Anti Fraud', module: 'Strategi Anti Fraud' },
+    { id: 'apolo-aro-2', nama: 'APOLO-ARO-MODULE-2', jenis: 'Modul APOLO', deskripsi: 'Hak akses modul AP/KAP', module: 'AP/KAP' },
+    { id: 'apolo-aro-3', nama: 'APOLO-ARO-MODULE-3', jenis: 'Modul APOLO', deskripsi: 'Hak akses modul TPPU/TPPT/PPSPM', module: 'TPPU/TPPT/PPSPM' },
+    { id: 'apolo-aro-4', nama: 'APOLO-ARO-MODULE-4', jenis: 'Modul APOLO', deskripsi: 'Hak akses modul Risk Management', module: 'Risk Management' },
+    { id: 'apolo-aro-5', nama: 'APOLO-ARO-MODULE-5', jenis: 'Modul APOLO', deskripsi: 'Hak akses modul Compliance', module: 'Compliance' }
   ];
+  
+  // Inisialisasi ARO
+  useEffect(() => {
+    // Filter ARO yang belum dipilih
+    const existingAROIds = submission.aros ? submission.aros.map(aro => aro.id) : [];
+    const filteredAROs = allAvailableAROs.filter(aro => !existingAROIds.includes(aro.id));
+    
+    setAvailableAROs(filteredAROs);
+    setSelectedAROs(submission.aros || []);
+  }, [submission]);
+  
+  // Handle download dokumen
+  const handleDownloadDocument = (documentType, documentData) => {
+    setDocumentLoading(true);
+    
+    try {
+      // Simulasi proses download dokumen
+      const formData = submission.data || {};
+      const dataUmum = submission.dataUmum || {};
+      
+      // Generate dokumen berdasarkan jenis
+      let docContent = '';
+      let fileName = '';
+      
+      switch(documentType) {
+        case 'all':
+          docContent = `
+DOKUMEN PENGAJUAN HAK AKSES LENGKAP
+====================================
 
-  // Cek apakah ada ARO pending
-  const hasPendingARO = submission.aros && submission.aros.some(aro => aro.status === 'pending');
+INFORMASI UMUM:
+---------------
+ID Tracking: ${submission.trackingId}
+Aplikasi: ${submission.app.toUpperCase()}
+Status: ${submission.status}
+Tanggal Pengajuan: ${formatDate(submission.submittedAt || submission.timestamp)}
+Tanggal Disetujui: ${submission.approvedAt ? formatDate(submission.approvedAt) : 'Belum disetujui'}
+Disetujui Oleh: ${submission.approvedBy || 'Belum disetujui'}
 
-  // Handle approve aplikasi + ARO dengan pilihan modul
-  const handleApproveWithModule = () => {
-    // Jika ada ARO pending dan belum pilih modul, minta pilih modul
-    if (hasPendingARO && !selectedModule) {
-      alert('Pilih modul yang akan disetujui untuk ARO!');
+DATA PEMOHON:
+-------------
+Nama Lengkap: ${dataUmum?.nama || 'N/A'}
+Email: ${dataUmum?.email || 'N/A'}
+Telepon: ${dataUmum?.telepon || 'N/A'}
+Instansi: ${dataUmum?.institusi || 'N/A'}
+
+DATA APLIKASI ${submission.app.toUpperCase()}:
+---------------------------
+${JSON.stringify(formData, null, 2)}
+
+DATA ARO (AREA OF RESPONSIBILITY):
+-----------------------------------
+${submission.aros && submission.aros.length > 0 
+  ? submission.aros.map((aro, idx) => `
+  ARO ${idx + 1}:
+    Nama: ${aro.nama}
+    Status: ${aro.status}
+    Deskripsi: ${aro.deskripsi || aro.module}
+    Tanggal Diajukan: ${aro.tanggalDiajukan ? formatDate(aro.tanggalDiajukan) : 'N/A'}
+    Disetujui Oleh: ${aro.approvedBy || 'Belum disetujui'}
+  `).join('\n')
+  : 'Tidak ada ARO'}
+
+LOG AKTIVITAS:
+--------------
+${submission.log && submission.log.length > 0 
+  ? submission.log.map((log, idx) => `
+  Log ${idx + 1}:
+    Waktu: ${formatDate(log.timestamp)}
+    Aksi: ${log.action}
+    Deskripsi: ${log.description}
+    Admin: ${log.admin || 'System'}
+  `).join('\n')
+  : 'Tidak ada log aktivitas'}
+
+Dokumen ini di-generate otomatis oleh sistem IRS.
+Tanggal: ${new Date().toLocaleDateString('id-ID', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+})}
+          `;
+          fileName = `laporan_pengajuan_${submission.trackingId}_lengkap.txt`;
+          break;
+          
+        case 'sipina':
+          docContent = `
+SURAT PERMOHONAN AKSES SIPINA
+==============================
+
+ID Tracking: ${submission.trackingId}
+Tanggal: ${formatDate(submission.submittedAt || submission.timestamp)}
+
+DATA PEMOHON:
+Nama: ${dataUmum?.nama || 'N/A'}
+Instansi: ${dataUmum?.institusi || 'N/A'}
+Email: ${dataUmum?.email || 'N/A'}
+
+DATA SIPINA:
+Nama LJK: ${formData.namaLJK || '-'}
+Kode SIPO: ${formData.kodeSIPO || '-'}
+NPWP Perusahaan: ${formData.npwpPerusahaan || '-'}
+Nama RO: ${formData.namaRO || '-'}
+Password Transfer File: ${formData.passwordTransferFile || '-'}
+
+STATUS: ${submission.status.toUpperCase()}
+          `;
+          fileName = `surat_permohonan_sipina_${submission.trackingId}.txt`;
+          break;
+          
+        case 'apolo':
+          docContent = `
+SURAT PERMOHONAN AKSES APOLO
+=============================
+
+ID Tracking: ${submission.trackingId}
+Tanggal: ${formatDate(submission.submittedAt || submission.timestamp)}
+
+DATA PEMOHON:
+Nama: ${dataUmum?.nama || 'N/A'}
+Instansi: ${dataUmum?.institusi || 'N/A'}
+Email: ${dataUmum?.email || 'N/A'}
+
+DATA APOLO:
+Nomor Surat: ${formData.nomorSurat || '-'}
+Perihal: ${formData.perihal || '-'}
+Keterangan: ${formData.keterangan || '-'}
+
+ARO YANG DIAJUKAN:
+${submission.aros && submission.aros.length > 0 
+  ? submission.aros.map((aro, idx) => `  ${idx + 1}. ${aro.nama} - ${aro.status}`).join('\n')
+  : 'Tidak ada ARO'}
+
+STATUS: ${submission.status.toUpperCase()}
+          `;
+          fileName = `surat_permohonan_apolo_${submission.trackingId}.txt`;
+          break;
+          
+        case 'ereporting':
+          docContent = `
+FORMULIR PENDAFTARAN E-REPORTING
+=================================
+
+ID Tracking: ${submission.trackingId}
+Tanggal: ${formatDate(submission.submittedAt || submission.timestamp)}
+
+DATA PEMOHON:
+Nama: ${dataUmum?.nama || 'N/A'}
+Instansi: ${dataUmum?.institusi || 'N/A'}
+Email: ${dataUmum?.email || 'N/A'}
+
+DATA E-REPORTING:
+NPWP/Token: ${formData.npwpToken || '-'}
+Jenis Usaha: ${formData.jenisUsaha || '-'}
+User ID SIPO: ${formData.userIdSIPO || '-'}
+
+STATUS: ${submission.status.toUpperCase()}
+          `;
+          fileName = `formulir_ereporting_${submission.trackingId}.txt`;
+          break;
+      }
+      
+      const blob = new Blob([docContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      alert(`✅ Dokumen berhasil didownload: ${fileName}`);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      alert('❌ Gagal mendownload dokumen');
+    } finally {
+      setDocumentLoading(false);
+    }
+  };
+  
+  // Handle tambah ARO baru
+  const handleAddARO = (aro) => {
+    const newARO = {
+      ...aro,
+      status: 'pending',
+      tanggalDiajukan: new Date().toISOString(),
+      addedByAdmin: true,
+      log: [{
+        timestamp: new Date().toISOString(),
+        action: 'ARO Ditambahkan oleh Admin',
+        description: `ARO ${aro.nama} ditambahkan oleh admin`,
+        status: 'pending',
+        admin: 'Admin IRS'
+      }]
+    };
+    
+    const updatedAROs = [...selectedAROs, newARO];
+    setSelectedAROs(updatedAROs);
+    setAvailableAROs(availableAROs.filter(a => a.id !== aro.id));
+    setShowAddAROModal(false);
+  };
+  
+  // Handle remove ARO
+  const handleRemoveARO = (aroId) => {
+    const aroToRemove = selectedAROs.find(aro => aro.id === aroId);
+    if (!aroToRemove) return;
+    
+    // Konfirmasi jika ARO sudah approved
+    if (aroToRemove.status === 'approved' && !window.confirm(`Yakin ingin menghapus ARO "${aroToRemove.nama}" yang sudah disetujui?`)) {
       return;
     }
     
-    const adminName = 'Admin IRS';
+    const updatedAROs = selectedAROs.filter(aro => aro.id !== aroId);
+    setSelectedAROs(updatedAROs);
     
-    const storedSubs = JSON.parse(localStorage.getItem('hakAksesSubmissions') || '[]');
-    const updatedSubs = storedSubs.map(sub => {
-      if (sub.id === submission.id) {
-        // Approve semua ARO yang pending dengan modul yang dipilih
-        const updatedAROs = (sub.aros || []).map(aro => {
-          if (aro.status === 'pending') {
-            return {
-              ...aro,
-              status: 'approved',
-              approvedAt: new Date().toISOString(),
-              approvedBy: adminName,
-              modulDipilih: selectedModule || aro.modulDipilih || 'Strategi Anti Fraud',
-              log: [...(aro.log || []), {
-                timestamp: new Date().toISOString(),
-                action: 'ARO Disetujui',
-                description: `ARO disetujui dengan modul: ${selectedModule || 'Strategi Anti Fraud'}`,
-                status: 'approved'
-              }]
-            };
-          }
-          return aro;
-        });
-        
-        // Update status aplikasi hanya jika masih pending
-        const newStatus = sub.status === 'pending' ? 'approved' : sub.status;
-        
+    // Jika ARO dari user (bukan admin), kembalikan ke available
+    if (!aroToRemove.addedByAdmin && editingAROs) {
+      setAvailableAROs([...availableAROs, aroToRemove]);
+    }
+  };
+  
+  // Handle save perubahan ARO - langsung update ke database
+  const handleSaveAROs = () => {
+    onUpdateAROs(submission.id, selectedAROs);
+    setEditingAROs(false);
+  };
+  
+  const handleApproveIndividualARO = (aro) => {
+    const adminName = 'Admin IRS';
+    const updatedAROs = selectedAROs.map(a => {
+      if (a.id === aro.id) {
         return {
-          ...sub,
-          status: newStatus,
-          approvedAt: newStatus === 'approved' ? new Date().toISOString() : sub.approvedAt,
-          approvedBy: newStatus === 'approved' ? adminName : sub.approvedBy,
-          aros: updatedAROs,
-          log: [...(sub.log || []), {
+          ...a,
+          status: 'approved',
+          approvedAt: new Date().toISOString(),
+          approvedBy: adminName,
+          approvalNote: 'Disetujui oleh admin',
+          log: [...(a.log || []), {
             timestamp: new Date().toISOString(),
-            action: hasPendingARO ? 'ARO Disetujui' : 'Disetujui oleh Admin',
-            description: hasPendingARO 
-              ? `ARO baru disetujui oleh ${adminName} dengan modul: ${selectedModule}`
-              : `Pengajuan hak akses ${sub.app.toUpperCase()} disetujui oleh ${adminName}`,
-            status: 'approved'
+            action: 'ARO Disetujui oleh Admin',
+            description: `ARO ${a.nama} disetujui oleh ${adminName}`,
+            status: 'approved',
+            details: 'ARO disetujui secara individual oleh administrator'
           }]
         };
       }
-      return sub;
+      return a;
     });
     
-    localStorage.setItem('hakAksesSubmissions', JSON.stringify(updatedSubs));
-    alert(hasPendingARO ? '✅ ARO berhasil disetujui!' : '✅ Pengajuan berhasil disetujui!');
-    window.location.reload();
+    setSelectedAROs(updatedAROs);
+    onUpdateAROs(submission.id, updatedAROs);
+    
+    alert(`✅ ARO "${aro.nama}" berhasil disetujui!`);
   };
 
-  // Handle reject aplikasi + ARO
-  const handleRejectWithNote = () => {
-    const reason = prompt('Masukkan alasan penolakan:');
-    if (!reason) return;
-    
+  const handleRejectIndividualARO = (aro) => {
     const adminName = 'Admin IRS';
+    const rejectionNote = prompt('Masukkan alasan penolakan ARO ini:', 'ARO tidak memenuhi kriteria');
     
-    const storedSubs = JSON.parse(localStorage.getItem('hakAksesSubmissions') || '[]');
-    const updatedSubs = storedSubs.map(sub => {
-      if (sub.id === submission.id) {
-        // Reject semua ARO yang pending
-        const updatedAROs = (sub.aros || []).map(aro => {
-          if (aro.status === 'pending') {
-            return {
-              ...aro,
-              status: 'rejected',
-              rejectedAt: new Date().toISOString(),
-              rejectedBy: adminName,
-              rejectionNote: reason,
-              log: [...(aro.log || []), {
-                timestamp: new Date().toISOString(),
-                action: 'ARO Ditolak',
-                description: `ARO ditolak dengan alasan: ${reason}`,
-                status: 'rejected'
-              }]
-            };
-          }
-          return aro;
-        });
-        
-        // Update status aplikasi hanya jika masih pending
-        const newStatus = sub.status === 'pending' ? 'rejected' : sub.status;
-        
+    if (!rejectionNote) return;
+    
+    const updatedAROs = selectedAROs.map(a => {
+      if (a.id === aro.id) {
         return {
-          ...sub,
-          status: newStatus,
-          rejectedAt: newStatus === 'rejected' ? new Date().toISOString() : sub.rejectedAt,
-          rejectedBy: newStatus === 'rejected' ? adminName : sub.rejectedBy,
-          rejectionNote: newStatus === 'rejected' ? reason : sub.rejectionNote,
-          aros: updatedAROs,
-          log: [...(sub.log || []), {
+          ...a,
+          status: 'rejected',
+          rejectedAt: new Date().toISOString(),
+          rejectedBy: adminName,
+          rejectionNote: rejectionNote,
+          log: [...(a.log || []), {
             timestamp: new Date().toISOString(),
-            action: hasPendingARO ? 'ARO Ditolak' : 'Ditolak oleh Admin',
-            description: hasPendingARO 
-              ? `ARO baru ditolak oleh ${adminName} dengan alasan: ${reason}`
-              : `Pengajuan hak akses ${sub.app.toUpperCase()} ditolak oleh ${adminName}`,
+            action: 'ARO Ditolak oleh Admin',
+            description: `ARO ${a.nama} ditolak oleh ${adminName}`,
             status: 'rejected',
-            details: reason
+            details: rejectionNote
           }]
         };
       }
-      return sub;
+      return a;
     });
     
-    localStorage.setItem('hakAksesSubmissions', JSON.stringify(updatedSubs));
-    alert(hasPendingARO ? '❌ ARO ditolak' : '❌ Pengajuan ditolak');
-    window.location.reload();
+    setSelectedAROs(updatedAROs);
+    onUpdateAROs(submission.id, updatedAROs);
+    
+    alert(`❌ ARO "${aro.nama}" telah ditolak!`);
   };
-
-  const handleDownload = () => {
-    setDocumentLoading(true);
-    onDownloadDocument(submission);
-    setTimeout(() => setDocumentLoading(false), 1000);
+  
+  const renderFormDetails = () => {
+    if (!submission.data && !submission.dataUmum) return null;
+    
+    const formData = submission.data || {};
+    const dataUmum = submission.dataUmum || {};
+    
+    switch(submission.app) {
+      case 'sipina':
+        return (
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-900">Detail Form SIPINA:</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Nama LJK</p>
+                <p className="font-medium">{formData.namaLJK || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Kode SIPO</p>
+                <p className="font-medium">{formData.kodeSIPO || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">NPWP Perusahaan</p>
+                <p className="font-medium">{formData.npwpPerusahaan || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Nama RO</p>
+                <p className="font-medium">{formData.namaRO || '-'}</p>
+              </div>
+              {formData.passwordTransferFile && (
+                <div className="md:col-span-2">
+                  <p className="text-sm text-gray-500">Password Transfer File</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Lock className="w-4 h-4 text-gray-400" />
+                    <code className="bg-gray-100 px-3 py-1 rounded text-sm font-mono">
+                      {formData.passwordTransferFile}
+                    </code>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+        
+      case 'apolo':
+        return (
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-900">Detail Form APOLO:</h4>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-gray-500">Nomor Surat</p>
+                <p className="font-medium">{formData.nomorSurat || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Perihal</p>
+                <p className="font-medium">{formData.perihal || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Keterangan</p>
+                <p className="font-medium">{formData.keterangan || '-'}</p>
+              </div>
+            </div>
+          </div>
+        );
+        
+      case 'ereporting':
+        return (
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-900">Detail Form E-Reporting:</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">NPWP / Token</p>
+                <p className="font-medium">{formData.npwpToken || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Jenis Usaha</p>
+                <p className="font-medium">{formData.jenisUsaha || '-'}</p>
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-sm text-gray-500">User ID SIPO</p>
+                <p className="font-medium">{formData.userIdSIPO || '-'}</p>
+              </div>
+            </div>
+          </div>
+        );
+        
+      default:
+        return null;
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header dengan tombol approve/reject tunggal di pojok kanan atas */}
+      <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
         <div className="p-6 border-b border-red-200 bg-gradient-to-r from-red-50 to-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1109,247 +1737,519 @@ const DetailModal = ({ submission, onClose, onApprove, onReject, onDownloadDocum
                 <Database className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Detail Pengajuan</h3>
+                <h3 className="text-xl font-bold text-gray-900">Detail Pengajuan Lengkap</h3>
                 <p className="text-gray-600">ID: {submission.trackingId} • {submission.app?.toUpperCase()}</p>
-                {hasPendingARO && submission.status === 'approved' && (
-                  <p className="text-xs text-yellow-600 mt-1 flex items-center gap-1">
-                    <Layers className="w-3 h-3" />
-                    Ada {submission.aros.filter(a => a.status === 'pending').length} ARO baru menunggu persetujuan
-                  </p>
-                )}
               </div>
             </div>
-            
-            <div className="flex items-center gap-3">
-              {/* Tombol Download Dokumen */}
-              <button
-                onClick={handleDownload}
-                disabled={documentLoading}
-                className="px-4 py-2 border border-red-300 text-red-600 font-bold rounded-lg hover:bg-red-50 flex items-center gap-2"
-              >
-                {documentLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    Download Dokumen
-                  </>
-                )}
-              </button>
-              
-              {/* Tampilkan tombol approve/reject jika status pending ATAU ada ARO pending (untuk kasus APOLO yang sudah approved tapi ARO baru pending) */}
-              {(submission.status === 'pending' || hasPendingARO) && submission.app !== 'ereporting' && (
-                <>
-                  <button
-                    onClick={handleApproveWithModule}
-                    className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-green-700 flex items-center gap-2"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    {hasPendingARO ? 'Setujui ARO' : 'Setujui'}
-                  </button>
-                  <button
-                    onClick={handleRejectWithNote}
-                    className="px-4 py-2 border border-red-300 text-red-600 font-bold rounded-lg hover:bg-red-50 flex items-center gap-2"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    {hasPendingARO ? 'Tolak ARO' : 'Tolak'}
-                  </button>
-                </>
-              )}
-              <button
-                onClick={onClose}
-                className="p-2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
         
         <div className="p-6 overflow-y-auto max-h-[70vh]">
-          {/* Informasi Sederhana - Data Pemohon */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <User className="w-4 h-4 text-red-600" />
-              Data Pemohon
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-gray-500">Nama:</span>
-                <span className="ml-2 font-medium text-gray-900">{submission.dataUmum?.nama || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Email:</span>
-                <span className="ml-2 font-medium text-gray-900">{submission.dataUmum?.email || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Instansi:</span>
-                <span className="ml-2 font-medium text-gray-900">{submission.dataUmum?.institusi || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Telepon:</span>
-                <span className="ml-2 font-medium text-gray-900">{submission.dataUmum?.telepon || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Informasi Aplikasi */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <Database className="w-4 h-4 text-red-600" />
-              Informasi Aplikasi
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-gray-500">Aplikasi:</span>
-                <span className="ml-2">{getAppBadge(submission.app)}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Status:</span>
-                <span className="ml-2">{getStatusBadge(submission.status)}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Tanggal Pengajuan:</span>
-                <span className="ml-2 font-medium text-gray-900">{formatDate(submission.submittedAt || submission.timestamp)}</span>
-              </div>
-              {submission.approvedAt && (
-                <div>
-                  <span className="text-gray-500">Tanggal Persetujuan:</span>
-                  <span className="ml-2 font-medium text-green-600">{formatDate(submission.approvedAt)}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Kolom 1: Data Pemohon & Form */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Data Pemohon */}
+              <div className="border border-red-200 rounded-xl p-6">
+                <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-red-600" />
+                  Data Pemohon
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Nama Lengkap</p>
+                    <p className="font-bold text-gray-900">{submission.dataUmum?.nama || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Email</p>
+                    <p className="font-bold text-gray-900">{submission.dataUmum?.email || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Telepon</p>
+                    <p className="font-bold text-gray-900">{submission.dataUmum?.telepon || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Instansi</p>
+                    <p className="font-bold text-gray-900">{submission.dataUmum?.institusi || 'N/A'}</p>
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* E-Reporting - Auto Approved, hanya tampilkan record */}
-          {submission.app === 'ereporting' && (
-            <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-              <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <Info className="w-4 h-4 text-blue-600" />
-                Informasi Pendaftaran E-Reporting (Auto-Approved)
-              </h4>
-              <div className="grid grid-cols-1 gap-2 text-sm bg-white p-3 rounded-lg">
-                <div><span className="text-gray-500">Email Pendaftaran:</span> <span className="font-medium">{submission.data?.email || submission.dataUmum?.email}</span></div>
-                <div><span className="text-gray-500">Metode:</span> <span className="font-medium">{submission.data?.metode === 'sipo' ? 'Menggunakan SIPO' : 'Non-SIPO'}</span></div>
-                {submission.data?.npwp && <div><span className="text-gray-500">NPWP:</span> <span className="font-medium">{submission.data.npwp}</span></div>}
-                {submission.data?.namaPerusahaan && <div><span className="text-gray-500">Nama Perusahaan:</span> <span className="font-medium">{submission.data.namaPerusahaan}</span></div>}
               </div>
-              <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-xs text-green-700 flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" />
-                  Pendaftaran E-Reporting otomatis disetujui oleh sistem
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ARO untuk APOLO dengan dropdown multiple choice - hanya 1 dropdown untuk semua ARO */}
-          {submission.app === 'apolo' && submission.aros && submission.aros.length > 0 && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-red-600" />
-                Daftar ARO
-              </h4>
               
-              {/* Dropdown untuk memilih modul (hanya muncul jika ada ARO pending) */}
-              {hasPendingARO && (
-                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pilih Modul untuk ARO Baru:
-                  </label>
-                  <select
-                    value={selectedModule}
-                    onChange={(e) => setSelectedModule(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500"
-                  >
-                    <option value="">-- Pilih Modul --</option>
-                    {availableModules.map(module => (
-                      <option key={module.value} value={module.value}>
-                        {module.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Modul yang dipilih akan diterapkan ke semua ARO baru yang disetujui
-                  </p>
-                </div>
-              )}
-              
-              <div className="space-y-3">
-                {submission.aros.map((aro, idx) => (
-                  <div key={idx} className={`p-3 rounded-lg border ${
-                    aro.status === 'approved' ? 'bg-green-50 border-green-200' :
-                    aro.status === 'pending' ? 'bg-yellow-50 border-yellow-200' :
-                    'bg-red-50 border-red-200'
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-gray-900">ARO #{idx + 1}</span>
-                          <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
-                            aro.status === 'approved' ? 'bg-green-100 text-green-800' :
-                            aro.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {aro.status === 'approved' ? '✓ Disetujui' : 
-                             aro.status === 'pending' ? '⏳ Menunggu' : 
-                             '✗ Ditolak'}
-                          </span>
-                          {aro.tanggalDiajukan && aro.status === 'pending' && (
-                            <span className="text-xs text-gray-500">
-                              (Diajukan: {new Date(aro.tanggalDiajukan).toLocaleDateString('id-ID')})
-                            </span>
-                          )}
-                        </div>
-                        
-                        {aro.keterangan && (
-                          <p className="text-xs text-gray-600 mb-1">
-                            <span className="text-gray-500">Keterangan:</span> "{aro.keterangan}"
-                          </p>
-                        )}
-                        
-                        {aro.modulDipilih && (
-                          <p className="text-xs text-green-600">
-                            Modul: {aro.modulDipilih}
-                          </p>
-                        )}
-                        
-                        {aro.rejectionNote && (
-                          <p className="text-xs text-red-600">
-                            Alasan: {aro.rejectionNote}
-                          </p>
-                        )}
+              {/* Data Aplikasi */}
+              <div className="border border-red-200 rounded-xl p-6">
+                <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Database className="w-5 h-5 text-red-600" />
+                  Data Aplikasi
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Aplikasi</p>
+                      <div className="font-bold">
+                        {getAppBadge(submission.app)}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Status</p>
+                      <div className="font-bold">
+                        {getStatusBadge(submission.status)}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Log Aktivitas (opsional, bisa dihilangkan jika ingin lebih sederhana) */}
-          {submission.log && submission.log.length > 0 && (
-            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-sm">
-                <Bell className="w-4 h-4 text-red-600" />
-                Log Aktivitas
-              </h4>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {submission.log.slice(0, 3).map((log, idx) => (
-                  <div key={idx} className="text-xs border-l-2 border-red-200 pl-2 py-1">
-                    <p className="font-medium text-gray-900">{log.action}</p>
-                    <p className="text-gray-600">{log.description}</p>
-                    <p className="text-gray-400 mt-0.5">{formatDate(log.timestamp)}</p>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Tanggal Pengajuan</p>
+                      <p className="font-bold text-gray-900">
+                        {formatDate(submission.submittedAt || submission.timestamp)}
+                      </p>
+                    </div>
+                    {submission.approvedAt && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Tanggal Persetujuan</p>
+                        <p className="font-bold text-green-600">
+                          {formatDate(submission.approvedAt)}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
+                
+                {/* Detail form spesifik */}
+                {renderFormDetails()}
+              </div>
+              
+              {/* ARO untuk APOLO */}
+              {submission.app === 'apolo' && (
+                <div className="border border-red-200 rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-red-600" />
+                      ARO untuk APOLO
+                    </h4>
+                    
+                    {/* TOMBOL EDIT ARO */}
+                    {submission.aros && submission.aros.length > 0 && (
+                      <div className="flex gap-2">
+                        {editingAROs ? (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingAROs(false);
+                                setSelectedAROs(submission.aros || []);
+                              }}
+                              className="px-3 py-1 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={handleSaveAROs}
+                              className="px-3 py-1 text-sm bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700"
+                            >
+                              Simpan Perubahan
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => setEditingAROs(true)}
+                            className="px-3 py-1 text-sm bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 flex items-center gap-2"
+                          >
+                            <Edit className="w-3 h-3" />
+                            Edit ARO
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Notifikasi ARO pending */}
+                  {submission.aros && submission.aros.length > 0 ? (
+                    <>
+                      {selectedAROs.some(aro => aro.status === 'pending') && (
+                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertCircle className="w-4 h-4 text-yellow-600" />
+                            <p className="text-sm font-medium text-yellow-700">
+                              Ada {selectedAROs.filter(aro => aro.status === 'pending').length} ARO baru yang menunggu approval!
+                            </p>
+                          </div>
+                          <p className="text-xs text-yellow-600">
+                            Klik tombol "Edit ARO" untuk mengelola daftar, atau approve/reject langsung dari tombol di bawah.
+                          </p>
+                        </div>
+                      )}
+                      
+                      {editingAROs ? (
+                        // TAMPILAN EDITING ARO
+                        <div className="space-y-4">
+                          <div className="space-y-3">
+                            {selectedAROs.map((aro, idx) => (
+                              <div key={idx} className={`border rounded-lg p-4 ${
+                                aro.status === 'pending' ? 'border-yellow-300 bg-yellow-25' : ''
+                              }`}>
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="font-bold text-gray-900">{aro.nama}</span>
+                                      <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                                        aro.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                        aro.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                        'bg-gray-100 text-gray-800'
+                                      }`}>
+                                        {aro.status === 'approved' ? '✓ Disetujui' : 
+                                         aro.status === 'pending' ? '⏳ Menunggu' : 
+                                         '🚫Ditolak'}
+                                      </span>
+                                      {aro.addedByAdmin && (
+                                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">
+                                          Ditambahkan Admin
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-gray-600">{aro.deskripsi || aro.module}</p>
+                                    {aro.tanggalDiajukan && (
+                                      <p className="text-xs text-gray-500 mt-2">
+                                        Diajukan: {formatDate(aro.tanggalDiajukan)}
+                                      </p>
+                                    )}
+                                    
+                                    {/* AKSI APPROVE/REJECT untuk ARO PENDING */}
+                                    {aro.status === 'pending' && (
+                                      <div className="mt-3 flex gap-2">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleApproveIndividualARO(aro);
+                                          }}
+                                          className="px-3 py-1 text-xs bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center gap-1"
+                                        >
+                                          <CheckCircle className="w-3 h-3" />
+                                          Approve
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRejectIndividualARO(aro);
+                                          }}
+                                          className="px-3 py-1 text-xs border border-red-300 text-red-600 rounded-lg hover:bg-red-50 flex items-center gap-1"
+                                        >
+                                          <XCircle className="w-3 h-3" />
+                                          Reject
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {/* TOMBOL HAPUS ARO */}
+                                  <button
+                                    onClick={() => handleRemoveARO(aro.id)}
+                                    className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded ml-2"
+                                    title="Hapus ARO"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Tombol Tambah ARO */}
+                          <button
+                            onClick={() => setShowAddAROModal(true)}
+                            className="w-full p-4 border-2 border-dashed border-red-300 rounded-lg text-red-600 hover:bg-red-50 flex items-center justify-center gap-2"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Tambah ARO Baru
+                          </button>
+                          
+                          {/* Statistik ARO */}
+                          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-xs text-gray-500">Total ARO</p>
+                                <p className="font-bold text-gray-900">{selectedAROs.length}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Approved</p>
+                                <p className="font-bold text-green-600">
+                                  {selectedAROs.filter(a => a.status === 'approved').length}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Pending</p>
+                                <p className="font-bold text-yellow-600">
+                                  {selectedAROs.filter(a => a.status === 'pending').length}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Ditambah Admin</p>
+                                <p className="font-bold text-blue-600">
+                                  {selectedAROs.filter(a => a.addedByAdmin).length}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        // TAMPILAN VIEW ARO
+                        <div className="space-y-3">
+                          {selectedAROs.map((aro, idx) => (
+                            <div key={idx} className={`border rounded-lg p-4 ${
+                              aro.status === 'pending' ? 'border-yellow-300 bg-yellow-25' : ''
+                            }`}>
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="font-bold text-gray-900">{aro.nama}</span>
+                                    <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                                      aro.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                      aro.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {aro.status === 'approved' ? '✓ Disetujui' : 
+                                       aro.status === 'pending' ? '⏳ Menunggu' : 
+                                       '🚫 Ditolak'}
+                                    </span>
+                                    {aro.addedByAdmin && (
+                                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">
+                                        Ditambahkan Admin
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-600">{aro.deskripsi || aro.module}</p>
+                                  {aro.tanggalDiajukan && (
+                                    <p className="text-xs text-gray-500 mt-2">
+                                      Diajukan: {formatDate(aro.tanggalDiajukan)}
+                                    </p>
+                                  )}
+                                  {aro.approvedBy && aro.status === 'approved' && (
+                                    <p className="text-xs text-green-600 mt-1">
+                                      Disetujui oleh: {aro.approvedBy} ({formatDate(aro.approvedAt)})
+                                    </p>
+                                  )}
+                                  
+                                  {/* AKSI APPROVE/REJECT untuk ARO PENDING */}
+                                  {aro.status === 'pending' && (
+                                    <div className="mt-3 flex gap-2">
+                                      <button
+                                        onClick={() => handleApproveIndividualARO(aro)}
+                                        className="px-3 py-1 text-xs bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center gap-1"
+                                      >
+                                        <CheckCircle className="w-3 h-3" />
+                                        Approve ARO ini
+                                      </button>
+                                      <button
+                                        onClick={() => handleRejectIndividualARO(aro)}
+                                        className="px-3 py-1 text-xs border border-red-300 text-red-600 rounded-lg hover:bg-red-50 flex items-center gap-1"
+                                      >
+                                        <XCircle className="w-3 h-3" />
+                                        Reject ARO ini
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                      <Layers className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600">User belum memiliki ARO</p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Setelah pengajuan disetujui, user dapat mengajukan ARO baru melalui dashboard mereka.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Kolom 2: Log & Aksi */}
+            <div className="space-y-6">
+              {/* Log Aktivitas */}
+              {submission.log && submission.log.length > 0 && (
+                <div className="border border-red-200 rounded-xl p-6">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-red-600" />
+                    Log Aktivitas
+                  </h4>
+                  <div className="space-y-4">
+                    {submission.log.slice(0, 5).map((log, idx) => (
+                      <div key={idx} className="border-l-4 border-red-500 pl-4 py-2">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-gray-900 text-sm">{log.action}</p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(log.timestamp).toLocaleDateString('id-ID', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">{log.description}</p>
+                        {log.details && (
+                          <p className="text-xs text-gray-500 mt-1">{log.details}</p>
+                        )}
+                        {log.admin && (
+                          <p className="text-xs text-blue-600 mt-1">Oleh: {log.admin}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Aksi Admin */}
+              <div className="border border-red-200 rounded-xl p-6 bg-red-50">
+                <h4 className="text-lg font-bold text-gray-900 mb-4">Aksi Admin</h4>
+                
+                {/* TOMBOL DOWNLOAD DOKUMEN */}
+                <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg">
+                  <h5 className="font-bold text-gray-900 mb-2">Surat Permohonan</h5>
+                  <button
+                    onClick={() => handleDownloadDocument('report', submission)}
+                    disabled={documentLoading}
+                    className="w-full py-2.5 border border-red-300 text-red-600 font-bold rounded-lg hover:bg-red-50 flex items-center justify-center gap-2"
+                  >
+                    {documentLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                        Memproses...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        Download Surat Permohonan
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  {submission.status === 'pending' ? (
+                    <>
+                      <button
+                        onClick={onApprove}
+                        className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-green-700 flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Setujui Pengajuan
+                      </button>
+                      <p className="text-xs text-center text-gray-600">
+                        Semua ARO akan otomatis disetujui bersama aplikasi
+                      </p>
+                      
+                      <button
+                        onClick={onReject}
+                        className="w-full py-3 border border-red-300 text-red-600 font-bold rounded-lg hover:bg-red-50 flex items-center justify-center gap-2"
+                      >
+                        <XCircle className="w-5 h-5" />
+                        Tolak Pengajuan
+                      </button>
+                      <p className="text-xs text-center text-gray-600">
+                        Semua ARO akan otomatis ditolak bersama aplikasi
+                      </p>
+                    </>
+                  ) : (
+                    <div className="text-center p-4 bg-white rounded-lg border">
+                      <p className="text-gray-700">
+                        Pengajuan sudah {submission.status === 'approved' ? 'disetujui' : 'ditolak'}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Oleh: {submission.approvedBy || submission.rejectedBy || 'System'}
+                      </p>
+                      {submission.approvalNote && (
+                        <p className="text-xs text-gray-500 mt-2">Catatan: {submission.approvalNote}</p>
+                      )}
+                      {submission.rejectionNote && (
+                        <p className="text-xs text-red-500 mt-2">Alasan: {submission.rejectionNote}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          )}
+          </div>
+        </div>
+        
+        <div className="p-6 border-t border-red-200 bg-gray-50">
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50"
+            >
+              Tutup
+            </button>
+          </div>
         </div>
       </div>
+      
+      {/* Modal Tambah ARO */}
+      {showAddAROModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="p-6 border-b border-red-200 bg-gradient-to-r from-red-50 to-white">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">Pilih ARO untuk Ditambahkan</h3>
+                <button
+                  onClick={() => setShowAddAROModal(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              {availableAROs.length === 0 ? (
+                <div className="text-center py-8">
+                  <Layers className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600">Semua ARO sudah dipilih</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {availableAROs.map((aro) => (
+                    <div
+                      key={aro.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:border-red-300 hover:bg-red-25 transition-colors cursor-pointer"
+                      onClick={() => handleAddARO(aro)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                          <Layers className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{aro.nama}</h4>
+                          <p className="text-sm text-gray-600 mt-1">{aro.deskripsi}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-xs text-gray-500">Modul: {aro.module}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowAddAROModal(false)}
+                  className="px-6 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1391,7 +2291,7 @@ const ActionModal = ({ type, title, icon: Icon, note, setNote, onConfirm, onCanc
           <div className={`p-4 rounded-lg mb-6 ${isApprove ? 'bg-yellow-50 border border-yellow-200' : 'bg-red-50 border border-red-200'}`}>
             <p className={`text-sm ${isApprove ? 'text-yellow-700' : 'text-red-700'}`}>
               <span className="font-medium">Perhatian:</span> {isApprove 
-                ? 'Semua ARO yang ada akan otomatis disetujui bersama aplikasi.'
+                ? 'Semua ARO yang ada akan otomatis disetujui bersama aplikasi. Perubahan ARO oleh admin sudah tersinkronisasi.'
                 : 'Semua ARO yang ada akan otomatis ditolak bersama aplikasi.'}
             </p>
           </div>
