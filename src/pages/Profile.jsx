@@ -1442,7 +1442,6 @@ const ApoloFormWithAro = ({ dataUmum, initialData, onSave, onCancel, aroData, se
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Form Pengajuan APOLO </h2>
-          <p className="text-gray-600">Isi data APOLO dan ARO dalam satu alur</p>
         </div>
         <button onClick={onCancel} className="p-2 text-gray-400 hover:text-gray-600">
           <X className="w-5 h-5" />
@@ -1508,17 +1507,11 @@ const ApoloFormWithAro = ({ dataUmum, initialData, onSave, onCancel, aroData, se
         <div className="border border-red-200 rounded-xl p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-red-100 flex items-center gap-2">
             <span className="bg-red-100 text-red-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
-            Data ARO 
+            Informasi Moudul Laporan (ARO) 
           </h3>
           
           <div className="space-y-6">
-            {/* Informasi ARO */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-xs text-yellow-700 flex items-start gap-2">
-                <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>ARO akan diajukan bersamaan dengan APOLO dan menunggu persetujuan admin.</span>
-              </p>
-            </div>
+            
 
             {/* Keterangan ARO */}
             <div>
