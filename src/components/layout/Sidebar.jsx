@@ -108,7 +108,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       id: 'correspondence',
       type: 'dropdown',
       icon: Mail,
-      label: 'Korespondensi',
+      label: 'Pemberitahuaan',
       open: correspondenceOpen,
       toggle: () => setCorrespondenceOpen(!correspondenceOpen),
       subItems: [
