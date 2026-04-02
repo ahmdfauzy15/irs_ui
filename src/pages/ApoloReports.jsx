@@ -572,7 +572,7 @@ const ApoloReports = () => {
       return (
         <div className="text-sm">
           <div className="text-green-600 font-medium">
-            Tepat Waktu
+            0 Hari Terlambat
           </div>
         </div>
       );
@@ -662,7 +662,7 @@ const ApoloReports = () => {
       return (
         <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
           <AlertCircle className="w-3 h-3 mr-1" />
-          Tidak Bisa Sanggah
+          Negative Confirmation
         </span>
       );
     }
