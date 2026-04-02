@@ -121,7 +121,7 @@ function App() {
           }
         >
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="apolo" element={<ApoloReports />} />
+          <Route path="/absensi" element={<ApoloReports />} />
           <Route path="ereporting" element={<EReporting />} />
           <Route path="sipina" element={<SIPINA />} />
           <Route path="notifications" element={<Notifications />} />
