@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 
 const Ereporting = () => {
-  // Fungsi untuk mendapatkan waktu saat ini di WIB (menggunakan local time Indonesia)
   const getCurrentWIBTime = () => {
     const now = new Date();
     return now;

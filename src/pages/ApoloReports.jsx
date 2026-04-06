@@ -1,4 +1,3 @@
-//APOLO LJK - Fixed Version
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Filter, 
@@ -41,13 +40,11 @@ import {
 } from 'lucide-react';
 
 const ApoloReports = () => {
-  // Fungsi untuk mendapatkan waktu saat ini di WIB
   const getCurrentWIBTime = () => {
     const now = new Date();
     return now;
   };
 
-  // State untuk waktu real-time
   const [currentDateTime, setCurrentDateTime] = useState(getCurrentWIBTime());
   const [disputeData, setDisputeData] = useState({});
   const [showDisputeModal, setShowDisputeModal] = useState(false);
@@ -62,7 +59,6 @@ const ApoloReports = () => {
     filePendukung: null
   });
   
-  // State untuk periode tanggal - default dari 1 April 2025 sampai 1 April 2026
   const [dateRange, setDateRange] = useState(() => {
     return {
       startDate: '2025-04-01',
@@ -70,7 +66,6 @@ const ApoloReports = () => {
     };
   });
   
-  // State untuk filter
   const [filters, setFilters] = useState({
     aplikasi: 'all',
     statusKeterlambatan: 'all'
@@ -93,7 +88,6 @@ const ApoloReports = () => {
     localStorage.setItem('apolo_disputes_v3', JSON.stringify(disputes));
   };
 
-  // Update waktu real-time WIB setiap detik
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentDateTime(getCurrentWIBTime());

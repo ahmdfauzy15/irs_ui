@@ -1,4 +1,3 @@
-// src/data/reportDataDash.js
 import laporann from '../data/laporann.json';
 
 // Fungsi untuk mengambil dan memproses data dari JSON

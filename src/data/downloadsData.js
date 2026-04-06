@@ -186,10 +186,8 @@ export const additionalDownloadsData = [
   }
 ];
 
-// Combine both datasets
 export const allDownloadsData = [...downloadsData, ...additionalDownloadsData];
 
-// Format untuk tampilan: mendapatkan label tipe file yang user-friendly
 export const getFileTypeLabel = (type) => {
   const labels = {
     pdf: 'PDF Document',
@@ -200,7 +198,6 @@ export const getFileTypeLabel = (type) => {
   return labels[type] || 'File';
 };
 
-// Format untuk tampilan: mendapatkan icon berdasarkan tipe file
 export const getFileTypeIcon = (type) => {
   const icons = {
     pdf: '📄',

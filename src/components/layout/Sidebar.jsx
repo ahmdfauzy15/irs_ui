@@ -29,7 +29,7 @@ import {
   Eye,
   History,
   Database,
-  UserCog // Icon baru untuk pengaturan
+  UserCog
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -136,7 +136,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const settingsMenu = {
     id: 'settings',
     type: 'dropdown',
-    icon: UserCog, // Menggunakan icon UserCog untuk Pengaturan
+    icon: UserCog, 
     label: 'Pengaturan',
     open: settingsOpen,
     toggle: () => setSettingsOpen(!settingsOpen),

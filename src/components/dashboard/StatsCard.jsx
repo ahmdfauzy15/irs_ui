@@ -1,4 +1,3 @@
-// src/components/dashboard/StatsCard.jsx
 import React from 'react';
 import { 
   FileText, 

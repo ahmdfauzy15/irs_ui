@@ -1,4 +1,3 @@
-// Profile.jsx - Page Profile Sederhana dengan Hak Akses (MODIFIKASI APOLO)
 import React, { useState, useEffect } from 'react';
 import { 
   User, 
@@ -99,7 +98,7 @@ const Profile = () => {
     loadData();
   }, []);
 
-  // FUNGSI TANDAI PESAN SUDAH DIBACA
+ 
   useEffect(() => {
     if (activeTab === 'status') {
       const markMessagesAsRead = () => {
@@ -2730,7 +2729,6 @@ const SipinaForm = ({ dataUmum, initialData, onSave, onCancel, hideCancel }) => 
 };
 
 // ==================== FORM E-REPORTING DENGAN ACCORDION ====================
-// ==================== FORM E-REPORTING DENGAN ACCORDION (URUTAN BENAR) ====================
 const EReportingFormAccordion = ({ dataUmum, initialData, onSave, onCancel, hideCancel }) => {
   const [metodePendaftaran, setMetodePendaftaran] = useState(null);
   const [formData, setFormData] = useState({
@@ -3699,7 +3697,6 @@ const StatusMonitoringTab = ({ submissions, getStatusBadge, getAppBadge, formatD
     return submission.forum.filter(m => m.sender === 'admin' && !m.read).length;
   };
 
-  // Cek apakah submission APOLO memiliki ARO (pengajuan pertama)
   const hasAro = (submission) => {
     return submission.app === 'apolo' && submission.aroData && !submission.isARO;
   };

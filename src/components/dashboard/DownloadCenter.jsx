@@ -52,16 +52,13 @@ const DownloadCenter = () => {
   const [expandedRows, setExpandedRows] = useState([]);
   const aplikasiDropdownRef = useRef(null);
   
-  // Filter states - DISEDERHANAKAN: hanya jenis aplikasi
   const [selectedAplikasi, setSelectedAplikasi] = useState(['APOLO', 'EREPORTING', 'SIPINA']);
   
-  // Sorting state
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: 'ascending'
   });
 
-  // Data aplikasi pendukung dengan tema merah
   const aplikasiPendukung = [
    
     {
@@ -79,10 +76,8 @@ const DownloadCenter = () => {
     }
   ];
 
-  // Get unique values for filters - DISEDERHANAKAN: hanya aplikasi
   const aplikasiOptions = ['APOLO', 'EREPORTING', 'SIPINA'];
 
-  // File types configuration dengan tema merah
   const fileTypes = {
     pdf: { icon: File, color: 'text-red-500', bg: 'bg-red-50', label: 'PDF' },
     excel: { icon: FileSpreadsheet, color: 'text-red-500', bg: 'bg-red-50', label: 'Excel' },
@@ -90,7 +85,6 @@ const DownloadCenter = () => {
     csv: { icon: Database, color: 'text-red-500', bg: 'bg-red-50', label: 'CSV' }
   };
 
-  // App category colors dengan tema merah
   const appCategoryColors = {
     desktop: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' },
     mobile: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' },
@@ -329,7 +323,6 @@ const DownloadCenter = () => {
     );
   };
 
-  // Get application color dengan tema merah
   const getAppColor = (app) => {
     switch(app) {
       case 'APOLO': return { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };

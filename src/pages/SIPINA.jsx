@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 
 const SIPINA = () => {
-  // Fungsi untuk mendapatkan waktu saat ini di WIB (menggunakan local time Indonesia)
   const getCurrentWIBTime = () => {
     const now = new Date();
     return now;
@@ -651,7 +650,6 @@ const SIPINA = () => {
       });
     }
 
-    // Apply search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(report => 
