@@ -90,7 +90,7 @@ const ActivityList = ({ activities }) => {
           <div>
             <p className="text-sm font-medium text-gray-900">Informasi Aktivitas</p>
             <p className="text-xs text-gray-600 mt-1">
-              Aktivitas menampilkan update terbaru dari sistem pelaporan. Refresh halaman untuk update real-time.
+              Aktivitas menampilkan update terbaru dari sistem pelaporan..
             </p>
           </div>
         </div>

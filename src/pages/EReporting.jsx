@@ -1117,7 +1117,7 @@ const Ereporting = () => {
             <div className="flex items-center space-x-4 mt-1">
               <p className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-200">
                 <Clock className="w-3 h-3 inline mr-1" />
-                Waktu Real-time: {getCurrentTimeDisplay()}
+                Waktu : {getCurrentTimeDisplay()}
               </p>
               <p className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-200">
                 <Calendar className="w-3 h-3 inline mr-1" />
@@ -1722,7 +1722,7 @@ const Ereporting = () => {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="inline-flex items-center">
                 <Clock className="w-3 h-3 mr-1" />
-                Data diperbarui real-time
+                Data diperbarui 
               </span>
               <span className="hidden md:inline">•</span>
               <span className="font-medium">
