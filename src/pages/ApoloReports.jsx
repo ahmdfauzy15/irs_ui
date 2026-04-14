@@ -1603,8 +1603,8 @@ const initialReports = useMemo(() => {
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tgl Upload/Penyampaian</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tgl Batas Akhir</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jml Hari Terlambat</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Konfirmasi</th>
+                  {/* <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jml Hari Terlambat</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Konfirmasi</th> */}
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
@@ -1644,12 +1644,12 @@ const initialReports = useMemo(() => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(report.statusBadge)}
                         </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         {getLateDaysDisplay(report)}
-                        </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                        </td> */}
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         {getConfirmationButton(report)}
-                        </td>
+                        </td> */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={() => handleViewDetails(report)}
@@ -2096,10 +2096,10 @@ const initialReports = useMemo(() => {
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Status Pengiriman</h4>
                   {getStatusBadge(selectedReport.statusBadge)}
                 </div>
-                <div>
+                {/* <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Jumlah Hari Keterlambatan</h4>
                   {getLateDaysDisplay(selectedReport)}
-                </div>
+                </div> */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Jumlah Form</h4>
                   <p className="text-gray-900">{selectedReport.detailForms.length}</p>
@@ -2129,7 +2129,7 @@ const initialReports = useMemo(() => {
               </div>
 
               {/* History Sanggahan */}
-              {(() => {
+              {/* {(() => {
                 const dispute = disputeData[selectedReport.id];
                 if (dispute) {
                   const isUnderReview = dispute.status === 'review';
@@ -2234,7 +2234,7 @@ const initialReports = useMemo(() => {
                   );
                 }
                 return null;
-              })()}
+              })()} */}
               
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 <button

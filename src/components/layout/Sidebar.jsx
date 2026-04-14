@@ -111,18 +111,25 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     //     { path: '/sipina', icon: Gavel, label: 'SIPINA' },
     //   ]
     // },
-    {
+    { 
       id: 'correspondence',
-      type: 'dropdown',
-      icon: Mail,
-      label: 'Pemberitahuaan',
-      open: correspondenceOpen,
-      toggle: () => setCorrespondenceOpen(!correspondenceOpen),
-      subItems: [
-        { path: '/korespondensi/notifikasi', icon: Bell, label: 'Notifikasi' },
-        { path: '/korespondensi/pengumuman', icon: Megaphone, label: 'Pengumuman' },
-      ]
+      path: '/korespondensi/pengumuman', 
+      icon: Megaphone, 
+      label: 'Pengumuman',
+      exact: true 
     },
+    // {
+    //   id: 'correspondence',
+    //   type: 'dropdown',
+    //   icon: Megaphone,
+    //   label: 'Pemberitahuaan',
+    //   open: correspondenceOpen,
+    //   toggle: () => setCorrespondenceOpen(!correspondenceOpen),
+    //   subItems: [
+    //     { path: '/korespondensi/notifikasi', icon: Bell, label: 'Notifikasi' },
+    //     { path: '/korespondensi/pengumuman', icon: Megaphone, label: 'Pengumuman' },
+    //   ]
+    // },
     
     { 
       id: 'download',
