@@ -323,8 +323,8 @@ const Pemberitahuan = () => {
                 <Mail className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-red-900">Pemberitahuan</h1>
-                <p className="text-red-600 text-sm">Notifikasi, pengumuman, dan aktivitas sistem</p>
+                <h1 className="text-2xl font-bold text-red-900">Pengumuman</h1>
+                <p className="text-red-600 text-sm">Informasi pengumuman penting</p>
               </div>
             </div>
           </div>
