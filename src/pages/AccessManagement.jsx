@@ -1,18 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Building } from 'lucide-react';
+import { User, Mail, Phone, CheckCircle, Eye, FileText, Database, Package, Layers, Shield } from 'lucide-react';
 
 const SimpleProfile = () => {
   const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
+    // Data profil dari sistem
     const profileData = {
       nama: 'John Doe',
       email: 'john.doe@contohljk.co.id',
-      telepon: '+62 812-3456-7890',
-      institusi: 'PT. Contoh Lembaga Jasa Keuangan'
+      telepon: '+62 812-3456-7890'
     };
     setUserProfile(profileData);
   }, []);
+
+  // DATA HAK AKSES MANUAL - APOLO dan ARO digabung jadi satu
+  const hakAksesData = [
+    {
+      id: 1,
+      aplikasi: 'APOLO',
+      appKey: 'apolo',
+      status: 'approved',
+      trackingId: 'IRS-APOLO-2024001',
+      tanggalApproval: '15 Januari 2024',
+      modul: 'APOLO',
+      aroList: ['AP/KAP', 'Strategi Anti Fraud'],
+      isARO: true
+    },
+    {
+      id: 2,
+      aplikasi: 'Ereporting',
+      appKey: 'ereporting',
+      status: 'approved',
+      trackingId: 'IRS-EREP-2024002',
+      tanggalApproval: '10 Maret 2024',
+      modul: '-',
+      isARO: false
+    },
+    {
+      id: 3,
+      aplikasi: 'SIPINA',
+      appKey: 'sipina',
+      status: 'approved',
+      trackingId: 'IRS-SIP-2024003',
+      tanggalApproval: '5 April 2024',
+      modul: 'CRS',
+      isARO: false
+    }
+  ];
 
   if (!userProfile) return null;
 
@@ -34,18 +69,44 @@ const SimpleProfile = () => {
       label: 'Nomor Telepon',
       value: userProfile.telepon,
       description: 'Nomor kontak terdaftar'
-    },
-    {
-      icon: Building,
-      label: 'Nama LJK / Institusi',
-      value: userProfile.institusi,
-      description: 'Lembaga terafiliasi'
     }
   ];
 
+  const getStatusBadge = (status) => {
+    if (status === 'approved') {
+      return <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"><CheckCircle className="w-3 h-3" /> Disetujui</span>;
+    } else if (status === 'pending') {
+      return <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full"><Clock className="w-3 h-3" /> Menunggu</span>;
+    } else if (status === 'rejected') {
+      return <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full"><XCircle className="w-3 h-3" /> Ditolak</span>;
+    }
+    return <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">-</span>;
+  };
+
+  const getAplikasiBadge = (aplikasi) => {
+    const colorMap = {
+      'APOLO': 'bg-red-100 text-red-800 border-red-200',
+      'Ereporting': 'bg-blue-100 text-blue-800 border-blue-200',
+      'SIPINA': 'bg-green-100 text-green-800 border-green-200',
+    };
+    
+    const iconMap = {
+      'APOLO': <Package className="w-3 h-3" />,
+      'Ereporting': <Database className="w-3 h-3" />,
+      'SIPINA': <FileText className="w-3 h-3" />,
+    };
+
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full border ${colorMap[aplikasi]}`}>
+        {iconMap[aplikasi]}
+        {aplikasi}
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Profil IRS</h1>
@@ -69,7 +130,7 @@ const SimpleProfile = () => {
 
           {/* Profile Information Grid */}
           <div className="p-6 md:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {profileItems.map((item, index) => {
                 const Icon = item.icon;
                 return (
@@ -98,6 +159,91 @@ const SimpleProfile = () => {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Validasi Data dari Pengajuan Hak Akses */}
+            <div className="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-800">Validasi Data</p>
+                  <p className="text-sm text-blue-700">
+                    Profil ini telah divalidasi berdasarkan Data Pengajuan Hak Akses yang diajukan melalui sistem Management Account IRS.
+                  </p>
+                  <p className="text-xs text-blue-600 mt-2">
+                    *Data profil terintegrasi dengan sistem pengajuan hak akses aplikasi
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Hak Akses Aplikasi Table */}
+            <div className="mt-8">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <Eye className="w-5 h-5 text-red-600" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">Hak Akses Aplikasi</h3>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-xl">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">No</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Aplikasi</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Modul / ARO</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Tanggal Aktivasi</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">ID Tracking</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {hakAksesData.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-red-50/30 transition-colors">
+                        <td className="px-4 py-3 text-sm text-gray-600">{index + 1}</td>
+                        <td className="px-4 py-3">
+                          {getAplikasiBadge(item.aplikasi)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {item.isARO && item.aroList ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full w-fit">
+                                <Package className="w-3 h-3" />
+                                {item.modul}
+                              </span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {item.aroList.map((aro, idx) => (
+                                  <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full border border-purple-200">
+                                    <Layers className="w-3 h-3" />
+                                    {aro}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ) : item.modul !== '-' ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                              <FileText className="w-3 h-3" />
+                              {item.modul}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">{getStatusBadge(item.status)}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{item.tanggalApproval}</td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            {item.trackingId}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Footer */}

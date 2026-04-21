@@ -13,6 +13,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import Profile from '../../pages/Profile';
 
 const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const location = useLocation();
@@ -50,6 +51,12 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
       label: 'Dashboard Admin',
       exact: true 
     },
+    { 
+  id: 'faq',
+  path: '/admin/faq', 
+  icon: HelpCircle, 
+  label: 'Manajemen FAQ' 
+},
     // { 
     //   id: 'approval',
     //   path: '/admin/approval', 
@@ -66,12 +73,12 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
       icon: Info, 
       label: 'Tentang Kami' 
     },
-    { 
-      id: 'faq',
-      path: '/admin/faq', 
-      icon: HelpCircle, 
-      label: 'FAQ' 
-    },
+    // { 
+    //   id: 'profile',
+    //   path: 'admin/profileadm', 
+    //   icon: Profile, 
+    //   label: 'Profile' 
+    // },
     { 
       id: 'logout',
       path: '/logout', 

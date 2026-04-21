@@ -71,13 +71,13 @@ const AdminHeader = ({ toggleSidebar, sidebarOpen }) => {
             <div className="min-w-0 flex-1">
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <h1 className="text-lg sm:text-xl font-bold text-white truncate">
-                  Admin Dashboard - Hak Akses IRS
+                  Dashboard 
                 </h1>
                 {!isMobile && (
                   <div className="hidden md:flex items-center space-x-1 text-sm text-red-100">
                     <span className='font-bold text-white'>Admin</span>
                     <ChevronDown className="w-3 h-3 rotate-[-90deg] mx-1 text-red-200" />
-                    <span className='font-bold text-white'>Approval Pengajuan</span>
+                    <span className='font-bold text-white'></span>
                   </div>
                 )}
               </div>
@@ -133,7 +133,7 @@ const AdminHeader = ({ toggleSidebar, sidebarOpen }) => {
             )}
 
             {/* Notifications */}
-            {(!isMobile || (isMobile && !sidebarOpen)) && (
+            {/* {(!isMobile || (isMobile && !sidebarOpen)) && (
               <button 
                 onClick={() => alert('Notifikasi Admin')}
                 className="relative p-2 rounded-lg hover:bg-red-700 transition-colors"
@@ -144,7 +144,7 @@ const AdminHeader = ({ toggleSidebar, sidebarOpen }) => {
                   3
                 </span>
               </button>
-            )}
+            )} */}
 
             {/* User Profile */}
             {(!isMobile || (isMobile && !sidebarOpen)) && (
@@ -179,26 +179,8 @@ const AdminHeader = ({ toggleSidebar, sidebarOpen }) => {
                         <p className="text-sm font-bold text-red-800">Admin IRS</p>
                         <p className="text-xs text-red-600 truncate">admin@irs-ojk.go.id</p>
                       </div>
-                      <button 
-                        onClick={() => {
-                          alert('Profil Admin');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
-                      >
-                        <User className="w-4 h-4 mr-3 text-red-600" />
-                        <span>Profil Admin</span>
-                      </button>
-                      <button 
-                        onClick={() => {
-                          alert('Pengaturan Admin');
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
-                      >
-                        <Settings className="w-4 h-4 mr-3 text-red-600" />
-                        <span>Pengaturan</span>
-                      </button>
+                     
+                     
                       <div className="border-t border-red-100">
                         <button 
                           onClick={() => {

@@ -1,3 +1,5 @@
+// src/App.js
+
 import React, { useState, useEffect } from 'react';
 import {
   BrowserRouter as Router,
@@ -32,6 +34,8 @@ import AdminHeader from './components/layout/AdminHeader';
 import AdminSidebar from './components/layout/AdminSidebar';
 import AboutAdmin from './pages/admin/AboutAdmin';
 import FAQAdmin from './pages/admin/FAQAdmin';
+import FAQManagement from './pages/admin/FAQManagement'; 
+import ProfilrAdm from './pages/admin/Profile'; 
 
 // ================= LAYOUTS =================
 
@@ -157,7 +161,8 @@ function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="about" element={<AboutAdmin />} />
-          <Route path="faq" element={<FAQAdmin />} />
+          <Route path="faq" element={<FAQManagement />} />
+          <Route path="profileadm" element={<ProfilrAdm />} />
         </Route>
 
         {/* ================= FALLBACK ROUTE ================= */}

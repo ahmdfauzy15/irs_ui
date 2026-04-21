@@ -1,67 +1,64 @@
-import React, { useState } from 'react';
+// src/pages/FAQ.js
+
+import React, { useState, useEffect } from 'react';
 import { Search, HelpCircle, ChevronDown, ChevronUp, Mail, Filter } from 'lucide-react';
 
-const FAQDocs = () => {
-  const [activeTab, setActiveTab] = useState('faq');
+const FAQ = () => {
+  const [categories, setCategories] = useState([]);
+  const [faqs, setFaqs] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [openItems, setOpenItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const categories = [
-    { id: 'all', label: 'Semua' },
-    { id: 'general', label: 'Umum' },
-    { id: 'apolo', label: 'APOLO' },
-    { id: 'ereporting', label: 'E-Reporting' },
-    { id: 'sipina', label: 'SIPINA' },
-    { id: 'technical', label: 'Teknis' },
-  ];
+  useEffect(() => {
+    loadCategories();
+    loadFaqs();
+  }, []);
 
-  const faqData = [
-    {
-      id: 1,
-      category: 'general',
-      question: 'Apa itu Sistem Pelaporan Terpusat IRS?',
-      answer: 'Sistem Pelaporan Terpusat IRS adalah platform terintegrasi untuk mengelola berbagai laporan keuangan dan operasional dalam satu sistem. Termasuk modul APOLO, E-Reporting, dan SIPINA.'
-    },
-    {
-      id: 2,
-      category: 'apolo',
-      question: 'Bagaimana cara mengirim laporan APOLO?',
-      answer: '1. Masuk ke halaman Laporan APOLO\n2. Klik tombol "Tambah Laporan"\n3. Isi formulir dengan data yang diperlukan\n4. Unggah dokumen pendukung\n5. Klik "Kirim" untuk mengajukan laporan'
-    },
-    {
-      id: 3,
-      category: 'ereporting',
-      question: 'Kapan deadline pelaporan E-Reporting?',
-      answer: 'Deadline pelaporan E-Reporting adalah setiap tanggal 10 bulan berikutnya. Pastikan laporan disampaikan tepat waktu untuk menghindari sanksi.'
-    },
-    {
-      id: 4,
-      category: 'sipina',
-      question: 'Apa yang harus dilakukan jika laporan SIPINA ditolak?',
-      answer: 'Periksa notifikasi penolakan, perbaiki data sesuai arahan, dan kirim ulang laporan. Sistem akan memberikan petunjuk revisi yang diperlukan.'
-    },
-    {
-      id: 5,
-      category: 'technical',
-      question: 'Bagaimana cara reset password?',
-      answer: 'Klik "Lupa Password" di halaman login, masukkan email terdaftar, dan ikuti instruksi yang dikirim ke email Anda.'
-    },
-    {
-      id: 6,
-      category: 'general',
-      question: 'Apakah sistem IRS tersedia 24/7?',
-      answer: 'Ya, sistem IRS dapat diakses 24/7 untuk pelaporan. Dukungan teknis tersedia pada jam kerja Senin-Jumat 08:00-17:00.'
-    },
-  ];
+  const loadCategories = () => {
+    const savedCategories = localStorage.getItem('faq_categories');
+    if (savedCategories) {
+      setCategories(JSON.parse(savedCategories));
+    } else {
+      const defaultCategories = [
+        { id: 'gen001', name: 'Umum', description: 'Pertanyaan umum tentang sistem IRS' },
+        { id: 'apo001', name: 'APOLO', description: 'Pertanyaan terkait modul APOLO' },
+        { id: 'ere001', name: 'E-Reporting', description: 'Pertanyaan terkait E-Reporting' },
+        { id: 'sip001', name: 'SIPINA', description: 'Pertanyaan terkait SIPINA' },
+        { id: 'tec001', name: 'Teknis', description: 'Pertanyaan teknis dan troubleshooting' }
+      ];
+      setCategories(defaultCategories);
+    }
+  };
 
-  const filteredFaqs = faqData.filter(faq => {
-    const matchesCategory = activeCategory === 'all' || faq.category === activeCategory;
+  const loadFaqs = () => {
+    const savedFaqs = localStorage.getItem('faq_items');
+    if (savedFaqs) {
+      const allFaqs = JSON.parse(savedFaqs);
+      const activeFaqs = allFaqs.filter(faq => faq.isActive === true);
+      setFaqs(activeFaqs);
+    }
+  };
+
+  // Function to render HTML content safely with media support
+  const renderHTML = (htmlString) => {
+    return { __html: htmlString || '' };
+  };
+
+  const getCategoryName = (categoryId) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || 'Umum';
+  };
+
+  const filteredFaqs = faqs.filter(faq => {
+    const categoryName = getCategoryName(faq.categoryId);
+    const matchesCategory = activeCategory === 'all' || faq.categoryId === activeCategory;
     const matchesSearch = searchTerm === '' || 
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
+      faq.answer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      categoryName.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
-  });
+  }).sort((a, b) => a.order - b.order);
 
   const toggleItem = (id) => {
     setOpenItems(prev => 
@@ -111,6 +108,16 @@ const FAQDocs = () => {
               <h3 className="text-sm sm:text-base lg:text-lg font-bold text-red-900">Filter Kategori</h3>
             </div>
             <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setActiveCategory('all')}
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-all duration-200 text-xs sm:text-sm lg:text-base ${
+                  activeCategory === 'all'
+                    ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md'
+                    : 'bg-gradient-to-r from-red-50 to-white text-red-700 border border-red-200 hover:border-red-300'
+                }`}
+              >
+                Semua
+              </button>
               {categories.map((category) => (
                 <button
                   key={category.id}
@@ -121,14 +128,14 @@ const FAQDocs = () => {
                       : 'bg-gradient-to-r from-red-50 to-white text-red-700 border border-red-200 hover:border-red-300'
                   }`}
                 >
-                  {category.label}
+                  {category.name}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* FAQ Content */}
+        {/* FAQ Content with Media Support */}
         <div className="space-y-3 sm:space-y-4 mb-8">
           {filteredFaqs.length > 0 ? (
             filteredFaqs.map((faq) => (
@@ -142,9 +149,11 @@ const FAQDocs = () => {
                 >
                   <div className="flex-1 pr-3 sm:pr-4">
                     <div className="flex flex-col gap-2 mb-2">
-                      <h3 className="text-sm sm:text-base lg:text-lg font-bold text-red-900 leading-snug">{faq.question}</h3>
+                      <h3 className="text-sm sm:text-base lg:text-lg font-bold text-red-900 leading-snug">
+                        {faq.question}
+                      </h3>
                       <span className="text-xs px-2 py-1 bg-gradient-to-r from-red-100 to-white text-red-700 rounded-full border border-red-200 w-fit">
-                        {categories.find(c => c.id === faq.category)?.label}
+                        {getCategoryName(faq.categoryId)}
                       </span>
                     </div>
                   </div>
@@ -160,7 +169,10 @@ const FAQDocs = () => {
                 {openItems.includes(faq.id) && (
                   <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-2 border-t border-red-100">
                     <div className="p-3 sm:p-4 bg-gradient-to-r from-red-50 to-white rounded-lg border border-red-200">
-                      <p className="text-xs sm:text-sm lg:text-base text-red-700 whitespace-pre-line leading-relaxed">{faq.answer}</p>
+                      <div 
+                        className="text-xs sm:text-sm lg:text-base text-red-700 leading-relaxed prose prose-sm max-w-none faq-content"
+                        dangerouslySetInnerHTML={renderHTML(faq.answer)}
+                      />
                     </div>
                   </div>
                 )}
@@ -195,8 +207,55 @@ const FAQDocs = () => {
           </div>
         </div>
       </div>
+
+      {/* Add custom styles for media content */}
+      <style jsx>{`
+        .faq-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 0.5rem;
+          margin: 1rem 0;
+          box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+        .faq-content .video-wrapper {
+          position: relative;
+          padding-bottom: 56.25%;
+          height: 0;
+          overflow: hidden;
+          border-radius: 0.5rem;
+          margin: 1rem 0;
+        }
+        .faq-content .video-wrapper iframe {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+        .faq-content ul, .faq-content ol {
+          margin: 0.5rem 0;
+          padding-left: 1.5rem;
+        }
+        .faq-content li {
+          margin: 0.25rem 0;
+        }
+        .faq-content strong {
+          font-weight: 700;
+          color: #dc2626;
+        }
+        .faq-content em {
+          font-style: italic;
+        }
+        .faq-content a {
+          color: #dc2626;
+          text-decoration: underline;
+        }
+        .faq-content a:hover {
+          color: #b91c1c;
+        }
+      `}</style>
     </div>
   );
 };
 
-export default FAQDocs;
+export default FAQ;
