@@ -36,6 +36,7 @@ import AboutAdmin from './pages/admin/AboutAdmin';
 import FAQAdmin from './pages/admin/FAQAdmin';
 import FAQManagement from './pages/admin/FAQManagement'; 
 import ProfilrAdm from './pages/admin/Profile'; 
+import Adminset from './pages/admin/AdminSettings';
 
 // ================= LAYOUTS =================
 
@@ -163,6 +164,8 @@ function App() {
           <Route path="about" element={<AboutAdmin />} />
           <Route path="faq" element={<FAQManagement />} />
           <Route path="profileadm" element={<ProfilrAdm />} />
+          <Route path="settings" element={<Adminset />} />
+
         </Route>
 
         {/* ================= FALLBACK ROUTE ================= */}

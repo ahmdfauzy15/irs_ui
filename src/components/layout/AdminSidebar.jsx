@@ -52,11 +52,13 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
       exact: true 
     },
     { 
-  id: 'faq',
-  path: '/admin/faq', 
-  icon: HelpCircle, 
-  label: 'Manajemen FAQ' 
-},
+      id: 'settings',
+      path: '/admin/settings', 
+      icon: LayoutDashboard, 
+      label: 'Konfigurasi Admin',
+      exact: true 
+    },
+    
     // { 
     //   id: 'approval',
     //   path: '/admin/approval', 
@@ -73,6 +75,12 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }) => {
       icon: Info, 
       label: 'Tentang Kami' 
     },
+    { 
+  id: 'faq',
+  path: '/admin/faq', 
+  icon: HelpCircle, 
+  label: 'Manajemen FAQ' 
+},
     // { 
     //   id: 'profile',
     //   path: 'admin/profileadm', 
