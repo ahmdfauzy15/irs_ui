@@ -980,7 +980,7 @@ const ApoloReports = () => {
     if (report.disputeStatus === 'rejected') {
       return (
         <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-          Menagkui Sanggahan
+          Mengakui Sanggahan
         </span>
       );
     }
