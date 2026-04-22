@@ -195,9 +195,7 @@ const SimpleProfile = () => {
                       <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">No</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Aplikasi</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Modul / ARO</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Tanggal Aktivasi</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">ID Tracking</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
@@ -232,13 +230,8 @@ const SimpleProfile = () => {
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-                        <td className="px-4 py-3">{getStatusBadge(item.status)}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{item.tanggalApproval}</td>
-                        <td className="px-4 py-3">
-                          <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {item.trackingId}
-                          </span>
-                        </td>
+                       
                       </tr>
                     ))}
                   </tbody>
