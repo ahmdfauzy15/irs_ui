@@ -98,29 +98,29 @@ export const homeReportsData = () => {
 
 export const welcomeStats = [
   {
-    number: processReportData().totalReports,
-    label: 'Total Laporan',
+    number: 30,
+    label: 'Total Laporan 2026',
     icon: 'FileText',
     color: 'bg-gradient-to-br from-red-600 to-red-700',
     trend: 'up'
   },
   {
-    number: processReportData().successfulReports,
-    label: 'Berhasil Dikirim',
+    number: 20,
+    label: 'Lapor 2026',
     icon: 'CheckCircle',
     color: 'bg-gradient-to-br from-green-600 to-green-700',
     trend: 'up'
   },
   {
-    number: processReportData().onTimeReports,
-    label: 'Tepat Waktu',
+    number: 5,
+    label: 'Belum Lapor 2026',
     icon: 'Clock',
     color: 'bg-gradient-to-br from-blue-600 to-blue-700',
     trend: 'up'
   },
   {
-    number: processReportData().failedReports,
-    label: 'Gagal Dikirim',
+    number: 5,
+    label: 'Tidak Lapor 2026',
     icon: 'XCircle',
     color: 'bg-gradient-to-br from-yellow-600 to-yellow-700',
     trend: 'down'

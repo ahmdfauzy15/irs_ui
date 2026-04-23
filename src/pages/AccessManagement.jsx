@@ -23,8 +23,7 @@ const SimpleProfile = () => {
       status: 'approved',
       trackingId: 'IRS-APOLO-2024001',
       tanggalApproval: '15 Januari 2024',
-      modul: 'APOLO',
-      aroList: ['AP/KAP', 'Strategi Anti Fraud'],
+      aroList: ['ARO Manajer Investasi ', 'RO APU PPT'],
       isARO: true
     },
     {
@@ -34,7 +33,7 @@ const SimpleProfile = () => {
       status: 'approved',
       trackingId: 'IRS-EREP-2024002',
       tanggalApproval: '10 Maret 2024',
-      modul: '-',
+      modul: 'Kegiatan Usaha Bullion, Dana Pensiun Lembaga Keuangan',
       isARO: false
     },
     {
@@ -44,7 +43,7 @@ const SimpleProfile = () => {
       status: 'approved',
       trackingId: 'IRS-SIP-2024003',
       tanggalApproval: '5 April 2024',
-      modul: 'CRS',
+      modul: 'Perbankan, Asuransi',
       isARO: false
     }
   ];
@@ -109,8 +108,8 @@ const SimpleProfile = () => {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Profil IRS</h1>
-          <p className="text-red-600 font-medium">Informasi Profil Terdaftar</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Informasi Pengguna</h1>
+          {/* <p className="text-red-600 font-medium">Informasi Profil Terdaftar</p> */}
         </div>
 
         {/* Profile Card */}
@@ -185,7 +184,7 @@ const SimpleProfile = () => {
                 <div className="p-2 bg-red-100 rounded-lg">
                   <Eye className="w-5 h-5 text-red-600" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">Hak Akses Aplikasi</h3>
+                <h3 className="text-lg font-bold text-gray-900">Peran Pengguna</h3>
               </div>
               
               <div className="overflow-x-auto">
@@ -194,8 +193,7 @@ const SimpleProfile = () => {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">No</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Aplikasi</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Modul / ARO</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Tanggal Aktivasi</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Nama Peran</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
@@ -230,7 +228,6 @@ const SimpleProfile = () => {
                             <span className="text-gray-400">-</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{item.tanggalApproval}</td>
                        
                       </tr>
                     ))}

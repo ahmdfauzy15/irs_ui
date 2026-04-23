@@ -722,7 +722,7 @@ const ApoloReports = () => {
     setShowConfirmModal(false);
     setSelectedConfirmReport(null);
     
-    alert(`Anda mengakui keterlambatan ${report.originalLateDays} hari. Status tetap Terlambat.`);
+    alert(`Anda mengakui keterlambatan ${report.originalLateDays} hari.`);
   };
 
   // Handle mulai proses sanggahan
@@ -828,12 +828,12 @@ const ApoloReports = () => {
     let message = '';
     if (isAccepted) {
       if (acceptedStatus === 'tepat_waktu') {
-        message = 'Penyampaiaan sanggahan diterima, silahkan menunggu konfirmasi selanjutnya dari pengawas';
+        message = 'Sanggahan dalam proses review pengawas';
       } else {
-        message = `Penyampaiaan sanggahan diterima, silahkan menunggu konfirmasi selanjutnya dari pengawas`;
+        message = `Sanggahan dalam proses review pengawas.`;
       }
     } else {
-      message = 'Penyampaiaan sanggahan diterima, silahkan menunggu konfirmasi selanjutnya dari pengawas';
+      message = 'Sanggahan sedang dalam proses review pengawas';
     }
     alert(message);
   };
@@ -980,6 +980,7 @@ const ApoloReports = () => {
     if (report.disputeStatus === 'rejected') {
       return (
         <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+          <XCircle className="w-3 h-3 mr-1" />
           Mengakui Sanggahan
         </span>
       );

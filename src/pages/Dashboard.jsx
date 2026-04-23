@@ -54,7 +54,7 @@ const Dashboard = () => {
       <DashboardCarousel />
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {welcomeStats.map((stat, index) => (
           <StatsCard
             key={index}
@@ -65,7 +65,7 @@ const Dashboard = () => {
             trend="up"
           />
         ))}
-      </div>
+      </div> */}
 
       {/* Quick Access Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -105,15 +105,15 @@ const Dashboard = () => {
                   <span className="text-gray-600">Akses Aktif</span>
                   <span className="font-bold text-red-700">3</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                {/* <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Status Akun</span>
                   <span className="font-medium text-green-600">Aktif</span>
-                </div>
+                </div> */}
               </div>
               
               <div className="mt-6 flex items-center justify-between">
                 <span className="text-sm font-medium text-red-600 group-hover:text-red-700 transition-colors">
-                  Akses Profil & Role
+                  Profile Pengguna
                 </span>
                 <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white group-hover:translate-x-1 transition-transform duration-300">
                   <ArrowRight className="w-4 h-4" />
@@ -126,69 +126,14 @@ const Dashboard = () => {
 
       {/* Recent Activity and Reports */}
       <div className="space-y-6">
-        {/* Recent Activity */}
-        <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl shadow-lg border border-red-100 overflow-hidden hover:shadow-red transition-shadow duration-300">
-          <div className="p-6 border-b border-red-100 bg-gradient-to-r from-red-50 to-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-br from-red-100 to-white rounded-lg border border-red-200">
-                  <History className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-red-900">Aktivitas Terbaru</h3>
-                  <p className="text-sm text-red-600/80">Update sistem terakhir</p>
-                </div>
-              </div>
-              <button className="group flex items-center space-x-1 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg active:scale-95">
-                <span>Lihat Semua</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
-          </div>
-          <div className="p-6 bg-white">
-            <ActivityList activities={activityData} />
-          </div>
-        </div>
+       
 
         {/* Recent Reports - Chart Version */}
-        <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl shadow-lg border border-red-100 overflow-hidden hover:shadow-red transition-shadow duration-300">
-          <div className="p-6 border-b border-red-100 bg-gradient-to-r from-red-50 to-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-br from-red-100 to-white rounded-lg border border-red-200">
-                  <FileText className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-red-900">Analisis Laporan IRS</h3>
-                  <p className="text-sm text-red-600/80">Visualisasi data laporan</p>
-                </div>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-red-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Cari laporan..."
-                  className="pl-10 pr-4 py-2.5 border border-red-200 bg-white/80 focus:bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-red-900 placeholder-red-400 transition-all duration-200 w-48"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="p-6 bg-white">
-            <RecentReports 
-              reports={homeReportsData()} 
-              searchTerm={searchTerm}
-              allReports={processedData.allReports}
-            />
-          </div>
-        </div>
+      
       </div>
 
       {/* Additional Dashboard Info */}
-      <div className="mt-8 p-6 bg-gradient-to-r from-red-600 to-red-700 rounded-xl shadow-lg">
+      {/* <div className="mt-8 p-6 bg-gradient-to-r from-red-600 to-red-700 rounded-xl shadow-lg">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-white">
           <div className="space-y-2">
             <div className="flex items-center space-x-3">
@@ -210,7 +155,7 @@ const Dashboard = () => {
               <h4 className="font-bold text-lg">Monitoring</h4>
             </div>
             <p className="text-red-100 text-sm">
-              Pantau status {processedData.activeReports} laporan aktif dalam sistem IRS OJK 24/7.
+              Pantau status {processedData.activeReports} laporan aktif dalam sistem IRS.
             </p>
           </div>
           
@@ -238,10 +183,10 @@ const Dashboard = () => {
   </p>
 </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Sistem Info */}
-      <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-white rounded-xl border border-blue-100">
+      {/* <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-white rounded-xl border border-blue-100">
         <h3 className="text-lg font-bold text-blue-900 mb-4">Informasi Sistem</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-2">
@@ -283,7 +228,7 @@ const Dashboard = () => {
             </p>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
