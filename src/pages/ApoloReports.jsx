@@ -1,4 +1,3 @@
-//APOLO LJK - Fixed Version
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Filter, 
@@ -306,11 +305,11 @@ const ApoloReports = () => {
       }
     ];
 
-    // Data eReporting (TIDAK BISA MENYANGGAH)
-    const eReportingData = [
+    // Data EReporting (TIDAK BISA MENYANGGAH)
+    const EReportingData = [
       {
         id: "ERP003",
-        aplikasi: "eReporting",
+        aplikasi: "EReporting",
         jenisLJK: "Bank Umum Konvensional",
         bidangLJK: "Bank Umum Konvensional",
         namaLaporan: "Laporan GWM Bulanan",
@@ -325,7 +324,7 @@ const ApoloReports = () => {
       },
       {
         id: "ERP005",
-        aplikasi: "eReporting",
+        aplikasi: "EReporting",
         jenisLJK: "Bank Umum Konvensional",
         bidangLJK: "Bank Umum Konvensional",
         namaLaporan: "Laporan Kredit Bulanan",
@@ -340,7 +339,7 @@ const ApoloReports = () => {
       }
     ];
 
-    return [...reports, ...eReportingData];
+    return [...reports, ...EReportingData];
   }, []);
 
   // Fungsi untuk menghitung status berdasarkan aturan
@@ -1022,7 +1021,7 @@ const ApoloReports = () => {
       );
     }
     
-    // Terlambat tapi tidak bisa sanggah (karena eReporting atau sudah pernah sanggah)
+    // Terlambat tapi tidak bisa sanggah (karena EReporting atau sudah pernah sanggah)
     if (report.finalStatus === 'terlambat') {
       return (
         <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 border border-red-200">
@@ -1048,7 +1047,7 @@ const ApoloReports = () => {
   const getAplikasiBadge = (aplikasi) => {
     const colorMap = {
       'APOLO': 'bg-blue-100 text-blue-800 border-blue-200',
-      'eReporting': 'bg-green-100 text-green-800 border-green-200',
+      'EReporting': 'bg-green-100 text-green-800 border-green-200',
     };
 
     return (
@@ -1137,7 +1136,7 @@ const ApoloReports = () => {
           </div>
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-red-900">Monitoring Absensi IRS</h1>
-            <p className="text-gray-600 mt-1">Monitoring Laporan - Total {stats.total} Laporan</p>
+            <p className="text-gray-600 mt-1">Monitoring Laporan Rutin - Total {stats.total} Laporan</p>
             <div className="flex items-center space-x-4 mt-1">
               <p className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-200">
                 <Clock className="w-3 h-3 inline mr-1" />
@@ -1167,56 +1166,7 @@ const ApoloReports = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="px-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 shadow-sm border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-600 font-medium">Total Laporan</p>
-                <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
-              </div>
-              <FileText className="w-8 h-8 text-blue-500 opacity-50" />
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 shadow-sm border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-600 font-medium">Lapor</p>
-                <p className="text-2xl font-bold text-green-900">{stats.tepatWaktu}</p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-500 opacity-50" />
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 shadow-sm border border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-red-600 font-medium">Terlambat</p>
-                <p className="text-2xl font-bold text-red-900">{stats.terlambat}</p>
-              </div>
-              <AlertCircle className="w-8 h-8 text-red-500 opacity-50" />
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 shadow-sm border border-yellow-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-yellow-600 font-medium">Belum Lapor</p>
-                <p className="text-2xl font-bold text-yellow-900">{stats.belumLapor}</p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-500 opacity-50" />
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Tidak Lapor</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.tidakLapor}</p>
-              </div>
-              <AlertOctagon className="w-8 h-8 text-gray-500 opacity-50" />
-            </div>
-          </div>
-        </div>
-      </div>
+    
 
       {/* Filter Section */}
       <div className="px-6">
@@ -1271,7 +1221,7 @@ const ApoloReports = () => {
                   />
                 </div>
                 
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Clock className="w-4 h-4 inline mr-2" />
                     Periode Terpilih
@@ -1284,7 +1234,26 @@ const ApoloReports = () => {
                       {reportsWithPeriod.length} laporan ditemukan
                     </div>
                   </div>
+                </div> */}
+                 {/* Search */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Search className="w-4 h-4 inline mr-2" />
+                Cari Laporan
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-gray-400" />
                 </div>
+                <input
+                  type="text"
+                  placeholder="Cari nama laporan"
+                  className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
               </div>
             </div>
 
@@ -1327,28 +1296,10 @@ const ApoloReports = () => {
               </div>
             </div>
 
-            {/* Search */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Search className="w-4 h-4 inline mr-2" />
-                Cari Laporan
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Cari nama laporan, jenis LJK, atau aplikasi..."
-                  className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
+           
 
             {/* Filter Info Summary */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
+            {/* <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-blue-100 rounded-lg">
@@ -1400,6 +1351,57 @@ const ApoloReports = () => {
                   {filteredReports.length} laporan ditemukan
                 </div>
               </div>
+            </div> */}
+          </div>
+        </div>
+      </div>
+
+        {/* Stats Cards */}
+      <div className="px-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 shadow-sm border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-medium">Total Laporan</p>
+                <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+              </div>
+              <FileText className="w-8 h-8 text-blue-500 opacity-50" />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 shadow-sm border border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-600 font-medium">Lapor</p>
+                <p className="text-2xl font-bold text-green-900">{stats.tepatWaktu}</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-500 opacity-50" />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 shadow-sm border border-red-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-red-600 font-medium">Terlambat</p>
+                <p className="text-2xl font-bold text-red-900">{stats.terlambat}</p>
+              </div>
+              <AlertCircle className="w-8 h-8 text-red-500 opacity-50" />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 shadow-sm border border-yellow-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-yellow-600 font-medium">Belum Lapor</p>
+                <p className="text-2xl font-bold text-yellow-900">{stats.belumLapor}</p>
+              </div>
+              <Clock className="w-8 h-8 text-yellow-500 opacity-50" />
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Tidak Lapor</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.tidakLapor}</p>
+              </div>
+              <AlertOctagon className="w-8 h-8 text-gray-500 opacity-50" />
             </div>
           </div>
         </div>
@@ -1417,7 +1419,7 @@ const ApoloReports = () => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-lg font-bold text-red-900 truncate">
-                      Daftar Laporan APOLO, eReporting, SIPINA
+                      Daftar Laporan 
                     </h3>
                     <div className="mt-2 space-y-1">
                       <p className="text-sm text-gray-600 truncate">
@@ -1947,3 +1949,4 @@ const ApoloReports = () => {
 };
 
 export default ApoloReports;
+
