@@ -34,9 +34,8 @@ import {
   Trash2,
   ChevronUp,
   Send,
-  ThumbsUp,
-  ThumbsDown,
-  Info
+  Info,
+  FileWarning
 } from 'lucide-react';
 
 const ApoloReports = () => {
@@ -58,40 +57,34 @@ const ApoloReports = () => {
     alasanKeterlambatan: '',
     filePendukung: null
   });
+  const [showRejectionDetailModal, setShowRejectionDetailModal] = useState(false);
+  const [selectedRejectionReport, setSelectedRejectionReport] = useState(null);
   
-  // State untuk periode tanggal - filter berdasarkan 30 hari kebelakang dari current date
-  const [dateRange, setDateRange] = useState(() => {
-    const currentDate = getCurrentWIBTime();
-    const endDate = new Date(currentDate);
-    endDate.setHours(0, 0, 0, 0);
-    
-    const startDate = new Date(currentDate);
-    startDate.setDate(startDate.getDate() - 30);
-    startDate.setHours(0, 0, 0, 0);
-    
-    return {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0]
-    };
+  // State untuk periode tanggal - AWALNYA KOSONG
+  const [dateRange, setDateRange] = useState({
+    startDate: '',
+    endDate: ''
   });
   
-  // State untuk filter
+  // State untuk filter - MULTIPLE SELECT
   const [filters, setFilters] = useState({
-    aplikasi: 'all',
-    status: 'all'
+    aplikasi: [],
+    status: []
   });
   
+  const [showAplikasiDropdown, setShowAplikasiDropdown] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
   const [expandedRows, setExpandedRows] = useState({});
 
   // Load dispute data from localStorage
   useEffect(() => {
-    const savedDisputes = localStorage.getItem('apolo_disputes_v7');
+    const savedDisputes = localStorage.getItem('apolo_disputes_v11');
     if (savedDisputes) {
       setDisputeData(JSON.parse(savedDisputes));
     }
-    const savedDisputeForms = localStorage.getItem('apolo_dispute_forms_v7');
+    const savedDisputeForms = localStorage.getItem('apolo_dispute_forms_v11');
     if (savedDisputeForms) {
       setDisputeFormData(JSON.parse(savedDisputeForms));
     }
@@ -99,31 +92,17 @@ const ApoloReports = () => {
 
   // Save dispute data to localStorage
   const saveDisputeToLocalStorage = (disputes) => {
-    localStorage.setItem('apolo_disputes_v7', JSON.stringify(disputes));
+    localStorage.setItem('apolo_disputes_v11', JSON.stringify(disputes));
   };
 
   const saveDisputeFormToLocalStorage = (forms) => {
-    localStorage.setItem('apolo_dispute_forms_v7', JSON.stringify(forms));
+    localStorage.setItem('apolo_dispute_forms_v11', JSON.stringify(forms));
   };
 
   // Update waktu real-time WIB setiap detik
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentDateTime(getCurrentWIBTime());
-      
-      // Update date range untuk selalu 30 hari kebelakang
-      const currentDate = getCurrentWIBTime();
-      const newEndDate = new Date(currentDate);
-      newEndDate.setHours(0, 0, 0, 0);
-      
-      const newStartDate = new Date(currentDate);
-      newStartDate.setDate(newStartDate.getDate() - 30);
-      newStartDate.setHours(0, 0, 0, 0);
-      
-      setDateRange({
-        startDate: newStartDate.toISOString().split('T')[0],
-        endDate: newEndDate.toISOString().split('T')[0]
-      });
     }, 1000);
 
     return () => clearInterval(timer);
@@ -154,7 +133,7 @@ const ApoloReports = () => {
     return count;
   };
 
-  // Helper function untuk mendapatkan tanggal expiry (5 hari kerja)
+  // Helper function untuk mendapatkan tanggal expiry (5 hari kerja dari tanggal tertentu)
   const getExpiryDate = (startDate) => {
     const expiry = new Date(startDate);
     let daysAdded = 0;
@@ -164,10 +143,11 @@ const ApoloReports = () => {
         daysAdded++;
       }
     }
+    expiry.setHours(23, 59, 59, 999);
     return expiry;
   };
 
-  // Helper function untuk mendapatkan sisa hari kerja
+  // Helper function untuk mendapatkan sisa hari kerja (dalam hitungan mundur yang akurat)
   const getRemainingWorkingDays = (expiryDate) => {
     const now = new Date();
     if (now > expiryDate) return 0;
@@ -188,263 +168,337 @@ const ApoloReports = () => {
     return remaining;
   };
 
+  // Helper function untuk mendapatkan progress persentase waktu sanggah
+  const getDisputeProgress = (startDate, expiryDate) => {
+    const now = new Date();
+    const start = new Date(startDate);
+    const end = new Date(expiryDate);
+    
+    if (now >= end) return 100;
+    if (now <= start) return 0;
+    
+    const totalDuration = end.getTime() - start.getTime();
+    const elapsed = now.getTime() - start.getTime();
+    const percentage = (elapsed / totalDuration) * 100;
+    
+    return Math.min(100, Math.max(0, percentage));
+  };
+
   // Data reports statis
   const initialReports = useMemo(() => {
     const reports = [
-      // LAPOR (A <= B)
+      // APOLO
       {
         id: "APO001",
-        aplikasi: "APOLO",
-        jenisLJK: "Bank Umum Konvensional",
-        bidangLJK: "Bank Umum Konvensional",
-        namaLaporan: "LCR Individual",
-        tglUpload: "2026-04-10",
-        tglBatas: "2026-04-15",
+        namaAplikasi: "APOLO",
+        namaLaporan: "Rencana Bisnis Bank",
+        jenisPeriodeLaporan: "Tahunan",
+        tglUpload: "2026-04-24 17:45:23",
+        tglBatas: "2026-04-25",
+        periodeData: "2026-04-01",
         statusPengiriman: "Berhasil",
         disputeStatus: null,
         disputeExpiryDate: null,
+        disputeStartTime: null,
         detailForms: [
-          { id: 1, namaForm: "Form LCR Individual - Laporan Utama", fileUrl: "/reports/APO001_form1.pdf" }
+          { id: 1, namaForm: "Form Rencana Bisnis Bank - Laporan Utama", fileUrl: "/reports/APO001_form1.pdf" }
         ]
       },
-      // TERLAMBAT (A > B)
       {
         id: "APO002",
-        aplikasi: "APOLO",
-        jenisLJK: "Bank Umum Konvensional",
-        bidangLJK: "Bank Umum Konvensional",
-        namaLaporan: "LCR Konsolidasi",
-        tglUpload: "2026-04-20",
-        tglBatas: "2026-04-15",
+        namaAplikasi: "APOLO",
+        namaLaporan: "Laporan Rutin Bulanan",
+        jenisPeriodeLaporan: "Bulanan",
+        tglUpload: "2026-04-24 17:45:23",
+        tglBatas: "2026-04-23",
+        periodeData: "2026-04-02",
         statusPengiriman: "Berhasil",
         disputeStatus: null,
         disputeExpiryDate: null,
+        disputeStartTime: null,
         detailForms: [
-          { id: 1, namaForm: "Form LCR Konsolidasi - Laporan Utama", fileUrl: "/reports/APO002_form1.pdf" }
+          { id: 1, namaForm: "Form Laporan Rutin Bulanan - Utama", fileUrl: "/reports/APO002_form1.pdf" }
         ]
       },
-      // TERLAMBAT 3 hari
       {
-        id: "APO006",
-        aplikasi: "APOLO",
-        jenisLJK: "Bank Umum Syariah",
-        bidangLJK: "Bank Umum Syariah",
-        namaLaporan: "Laporan GWM Individual",
-        tglUpload: "2026-04-18",
-        tglBatas: "2026-04-15",
+        id: "APO003",
+        namaAplikasi: "APOLO",
+        namaLaporan: "Laporan Rutin Bulanan",
+        jenisPeriodeLaporan: "Bulanan",
+        tglUpload: "2026-04-24 17:45:23",
+        tglBatas: "2026-04-23",
+        periodeData: "2026-04-03",
         statusPengiriman: "Berhasil",
         disputeStatus: null,
         disputeExpiryDate: null,
+        disputeStartTime: null,
         detailForms: [
-          { id: 1, namaForm: "Form GWM Individual - Utama", fileUrl: "/reports/APO006_form1.pdf" }
+          { id: 1, namaForm: "Form Laporan Rutin Bulanan - Utama", fileUrl: "/reports/APO003_form1.pdf" }
         ]
       },
-      // BELUM LAPOR (A = null, B < C)
       {
-        id: "APO010",
-        aplikasi: "APOLO",
-        jenisLJK: "Bank Umum Konvensional",
-        bidangLJK: "Bank Umum Konvensional",
-        namaLaporan: "Laporan Bulanan BU",
+        id: "APO004",
+        namaAplikasi: "APOLO",
+        namaLaporan: "Laporan Keuangan Tahunan",
+        jenisPeriodeLaporan: "Tahunan",
+        tglUpload: "2026-04-27 17:45:23",
+        tglBatas: "2026-04-15",
+        periodeData: "2026-04-08",
+        statusPengiriman: "Berhasil",
+        disputeStatus: null,
+        disputeExpiryDate: null,
+        disputeStartTime: null,
+        detailForms: [
+          { id: 1, namaForm: "Form Laporan Keuangan Tahunan", fileUrl: "/reports/APO004_form1.pdf" }
+        ]
+      },
+      {
+        id: "APO005",
+        namaAplikasi: "APOLO",
+        namaLaporan: "Laporan Risiko Likuiditas",
+        jenisPeriodeLaporan: "Bulanan",
         tglUpload: null,
-        tglBatas: "2026-04-10",
+        tglBatas: "2026-02-23",
+        periodeData: "2026-02-01",
         statusPengiriman: "Belum Lapor",
         disputeStatus: null,
         disputeExpiryDate: null,
+        disputeStartTime: null,
         detailForms: [
-          { id: 1, namaForm: "Form Laporan Bulanan", fileUrl: null }
+          { id: 1, namaForm: "Form Risiko Likuiditas", fileUrl: null }
         ]
       },
-      // TIDAK LAPOR (C > D) - sudah lewat 30 hari dari deadline
       {
-        id: "APO015",
-        aplikasi: "APOLO",
-        jenisLJK: "Bank Umum Konvensional",
-        bidangLJK: "Bank Umum Konvensional",
-        namaLaporan: "Laporan Triwulanan",
+        id: "ERP001",
+        namaAplikasi: "e-Reporting",
+        namaLaporan: "Laporan Publikasi Asuransi Jiwa Konvensional",
+        jenisPeriodeLaporan: "Tahunan",
         tglUpload: null,
-        tglBatas: "2026-03-15",
-        statusPengiriman: "Tidak Lapor",
-        disputeStatus: null,
-        disputeExpiryDate: null,
-        detailForms: [
-          { id: 1, namaForm: "Form Laporan Triwulanan", fileUrl: null }
-        ]
-      },
-      // LAPOR tepat waktu
-      {
-        id: "APO012",
-        aplikasi: "APOLO",
-        jenisLJK: "Bank Umum Konvensional",
-        bidangLJK: "Bank Umum Konvensional",
-        namaLaporan: "Laporan Kualitas Aset",
-        tglUpload: "2026-04-08",
-        tglBatas: "2026-04-10",
-        statusPengiriman: "Berhasil",
-        disputeStatus: null,
-        disputeExpiryDate: null,
-        detailForms: [
-          { id: 1, namaForm: "Form Kualitas Aset", fileUrl: "/reports/APO012_form1.pdf" }
-        ]
-      },
-      // BELUM LAPOR lainnya
-      {
-        id: "APO016",
-        aplikasi: "APOLO",
-        jenisLJK: "Bank Perkreditan Rakyat",
-        bidangLJK: "BPR",
-        namaLaporan: "Laporan Bulanan BPR",
-        tglUpload: null,
-        tglBatas: "2026-04-05",
+        tglBatas: "2026-04-30",
+        periodeData: "2026-04-04",
         statusPengiriman: "Belum Lapor",
         disputeStatus: null,
         disputeExpiryDate: null,
+        disputeStartTime: null,
         detailForms: [
-          { id: 1, namaForm: "Form Laporan Bulanan BPR", fileUrl: null }
+          { id: 1, namaForm: "Form Publikasi Asuransi Jiwa", fileUrl: null }
+        ]
+      },
+      {
+        id: "ERP002",
+        namaAplikasi: "e-Reporting",
+        namaLaporan: "Laporan Asuransi Jiwa Syariah",
+        jenisPeriodeLaporan: "Bulanan",
+        tglUpload: "2026-04-30 17:45:23",
+        tglBatas: "2026-04-29",
+        periodeData: "2026-04-05",
+        statusPengiriman: "Berhasil",
+        disputeStatus: null,
+        disputeExpiryDate: null,
+        disputeStartTime: null,
+        detailForms: [
+          { id: 1, namaForm: "Form Asuransi Jiwa Syariah", fileUrl: "/reports/ERP002_form1.pdf" }
+        ]
+      },
+      {
+        id: "SIP001",
+        namaAplikasi: "SIPINA",
+        namaLaporan: "Laporan Penyampaian Informasi Nasabah Asing",
+        jenisPeriodeLaporan: "Tahunan",
+        tglUpload: "2026-04-24 17:45:23",
+        tglBatas: "2026-04-25",
+        periodeData: "2026-04-06",
+        statusPengiriman: "Berhasil",
+        disputeStatus: null,
+        disputeExpiryDate: null,
+        disputeStartTime: null,
+        detailForms: [
+          { id: 1, namaForm: "Form Informasi Nasabah Asing", fileUrl: "/reports/SIP001_form1.pdf" }
+        ]
+      },
+      {
+        id: "SIP002",
+        namaAplikasi: "SIPINA",
+        namaLaporan: "Laporan Reasuransi",
+        jenisPeriodeLaporan: "Bulanan",
+        tglUpload: "2026-04-24 17:45:23",
+        tglBatas: "2026-04-23",
+        periodeData: "2026-04-07",
+        statusPengiriman: "Berhasil",
+        disputeStatus: null,
+        disputeExpiryDate: null,
+        disputeStartTime: null,
+        detailForms: [
+          { id: 1, namaForm: "Form Reasuransi", fileUrl: "/reports/SIP002_form1.pdf" }
         ]
       }
     ];
 
-    // Data EReporting (TIDAK BISA MENYANGGAH)
-    const EReportingData = [
-      {
-        id: "ERP003",
-        aplikasi: "EReporting",
-        jenisLJK: "Bank Umum Konvensional",
-        bidangLJK: "Bank Umum Konvensional",
-        namaLaporan: "Laporan GWM Bulanan",
-        tglUpload: "2026-04-12",
-        tglBatas: "2026-04-15",
-        statusPengiriman: "Berhasil",
-        disputeStatus: null,
-        disputeExpiryDate: null,
-        detailForms: [
-          { id: 1, namaForm: "Form GWM - Utama", fileUrl: "/reports/ERP003_form1.pdf" }
-        ]
-      },
-      {
-        id: "ERP005",
-        aplikasi: "EReporting",
-        jenisLJK: "Bank Umum Konvensional",
-        bidangLJK: "Bank Umum Konvensional",
-        namaLaporan: "Laporan Kredit Bulanan",
-        tglUpload: "2026-04-19",
-        tglBatas: "2026-04-15",
-        statusPengiriman: "Berhasil",
-        disputeStatus: null,
-        disputeExpiryDate: null,
-        detailForms: [
-          { id: 1, namaForm: "Form Kredit Bulanan", fileUrl: "/reports/ERP005_form1.pdf" }
-        ]
-      }
-    ];
-
-    return [...reports, ...EReportingData];
+    return reports;
   }, []);
 
-  // Fungsi untuk menghitung status berdasarkan aturan
+  // Generate dispute start time when late occurs (hanya untuk APOLO)
+  useEffect(() => {
+    const now = new Date();
+    const updatedDisputes = { ...disputeData };
+    let hasChanges = false;
+    
+    initialReports.forEach(report => {
+      if (report.namaAplikasi === "APOLO" && report.statusPengiriman === "Berhasil") {
+        const uploadDate = report.tglUpload ? new Date(report.tglUpload) : null;
+        const deadlineDate = new Date(report.tglBatas);
+        deadlineDate.setHours(0, 0, 0, 0);
+        
+        let lateDays = 0;
+        let isLate = false;
+        
+        if (uploadDate && uploadDate > deadlineDate) {
+          lateDays = daysBetween(deadlineDate, uploadDate);
+          isLate = true;
+        } else if (!uploadDate && now > deadlineDate) {
+          lateDays = daysBetween(deadlineDate, now);
+          isLate = true;
+        }
+        
+        if (isLate && !disputeData[report.id]) {
+          const disputeStartTime = new Date();
+          const expiryDate = getExpiryDate(disputeStartTime);
+          
+          updatedDisputes[report.id] = {
+            id: report.id,
+            status: 'pending_confirmation',
+            originalLateDays: lateDays,
+            disputeStartDate: disputeStartTime.toISOString(),
+            disputeExpiryDate: expiryDate.toISOString(),
+            formSubmitted: false,
+            confirmed: false,
+            createdAt: new Date().toISOString(),
+            rejectionReason: null,
+            rejectionDocument: null,
+            rejectionDocumentName: null
+          };
+          hasChanges = true;
+        }
+        else if (isLate && disputeData[report.id] && disputeData[report.id].status === 'pending_confirmation') {
+          if (disputeData[report.id].originalLateDays !== lateDays) {
+            updatedDisputes[report.id] = {
+              ...disputeData[report.id],
+              originalLateDays: lateDays
+            };
+            hasChanges = true;
+          }
+        }
+      }
+    });
+    
+    if (hasChanges) {
+      setDisputeData(updatedDisputes);
+      saveDisputeToLocalStorage(updatedDisputes);
+    }
+  }, [initialReports, currentDateTime]);
+
+  // Auto-expire disputes
+  useEffect(() => {
+    const now = new Date();
+    const updatedDisputes = { ...disputeData };
+    let hasChanges = false;
+    
+    Object.keys(disputeData).forEach(id => {
+      const dispute = disputeData[id];
+      if (!dispute) return;
+      
+      const expiryDate = new Date(dispute.disputeExpiryDate);
+      
+      if (dispute.status === 'pending_confirmation' && !dispute.confirmed) {
+        if (now > expiryDate) {
+          updatedDisputes[id] = {
+            ...dispute,
+            status: 'expired',
+            expiredAt: now.toISOString()
+          };
+          hasChanges = true;
+        }
+      }
+      else if (dispute.status === 'pending_form' && !dispute.formSubmitted) {
+        if (now > expiryDate) {
+          updatedDisputes[id] = {
+            ...dispute,
+            status: 'expired',
+            expiredAt: now.toISOString()
+          };
+          hasChanges = true;
+        }
+      }
+    });
+    
+    if (hasChanges) {
+      setDisputeData(updatedDisputes);
+      saveDisputeToLocalStorage(updatedDisputes);
+    }
+  }, [currentDateTime, disputeData]);
+
+  // Inisialisasi data Negative Confirmation untuk APO004
+  useEffect(() => {
+    const ap004Id = "APO004";
+    
+    if (!disputeData[ap004Id]) {
+      const disputeStartDate = new Date();
+      disputeStartDate.setDate(disputeStartDate.getDate() - 10);
+      disputeStartDate.setHours(0, 0, 0, 0);
+      
+      const expiredDate = getExpiryDate(disputeStartDate);
+      
+      const updatedDisputes = { ...disputeData };
+      updatedDisputes[ap004Id] = {
+        id: ap004Id,
+        status: 'expired',
+        originalLateDays: 12,
+        disputeStartDate: disputeStartDate.toISOString(),
+        disputeExpiryDate: expiredDate.toISOString(),
+        formSubmitted: false,
+        confirmed: false,
+        expiredAt: expiredDate.toISOString(),
+        createdAt: disputeStartDate.toISOString(),
+        rejectionReason: null,
+        rejectionDocument: null,
+        rejectionDocumentName: null
+      };
+      setDisputeData(updatedDisputes);
+      saveDisputeToLocalStorage(updatedDisputes);
+    }
+  }, []);
+
+  // Fungsi untuk menghitung status
   const calculateStatus = (report, currentDate, disputeInfo = null) => {
     const uploadDate = report.tglUpload ? new Date(report.tglUpload) : null;
     const deadlineDate = new Date(report.tglBatas);
     const systemDate = new Date(currentDate);
     
-    // Reset time to midnight for comparison
     deadlineDate.setHours(0, 0, 0, 0);
     systemDate.setHours(0, 0, 0, 0);
     if (uploadDate) uploadDate.setHours(0, 0, 0, 0);
     
-    // Hitung tanggal dinyatakan tidak lapor (30 hari setelah deadline)
-    const declaredDate = new Date(deadlineDate);
-    declaredDate.setDate(declaredDate.getDate() + 30);
-    declaredDate.setHours(0, 0, 0, 0);
-    
-    // Cek dispute status
-    if (disputeInfo) {
-      if (disputeInfo.status === 'accepted') {
+    // Cek TIDAK LAPOR (terlambat 60 hari atau lebih)
+    if ((report.namaAplikasi === "APOLO" || report.namaAplikasi === "e-Reporting")) {
+      let lateDays = 0;
+      if (!uploadDate && systemDate > deadlineDate) {
+        lateDays = daysBetween(deadlineDate, systemDate);
+      } else if (uploadDate && uploadDate > deadlineDate) {
+        lateDays = daysBetween(deadlineDate, uploadDate);
+      }
+      
+      if (lateDays >= 60) {
         return {
-          finalStatus: disputeInfo.acceptedStatus === 'tepat_waktu' ? 'tepat_waktu' : 'terlambat',
-          lateDays: disputeInfo.acceptedLateDays || 0,
-          statusBadge: disputeInfo.acceptedStatus === 'tepat_waktu' ? 'Lapor' : 'Terlambat',
-          finalLabel: disputeInfo.acceptedStatus === 'tepat_waktu' ? 'Lapor' : `${disputeInfo.acceptedLateDays} Hari Terlambat`,
-          disputeStatus: 'accepted',
-          originalLateDays: disputeInfo.originalLateDays
-        };
-      } else if (disputeInfo.status === 'rejected') {
-        // Sanggahan ditolak - hitung ulang status
-        if (uploadDate && uploadDate > deadlineDate) {
-          const lateDays = daysBetween(deadlineDate, uploadDate);
-          let status = 'terlambat';
-          let badge = 'Terlambat';
-          let label = `${lateDays} Hari Terlambat`;
-          
-          // Cek apakah sudah menjadi Tidak Lapor (lebih dari 30 hari)
-          if (!uploadDate && systemDate > declaredDate) {
-            status = 'tidak_lapor';
-            badge = 'Tidak Lapor';
-            label = 'Tidak Lapor';
-          } else if (!uploadDate && deadlineDate < systemDate) {
-            status = 'belum_lapor';
-            badge = 'Belum Lapor';
-            label = 'Belum Lapor';
-          } else if (uploadDate && uploadDate <= deadlineDate) {
-            status = 'tepat_waktu';
-            badge = 'Lapor';
-            label = 'Lapor';
-          }
-          
-          return {
-            finalStatus: status,
-            lateDays: lateDays,
-            statusBadge: badge,
-            finalLabel: label,
-            disputeStatus: 'rejected',
-            originalLateDays: disputeInfo.originalLateDays
-          };
-        }
-      } else if (disputeInfo.status === 'pending_review') {
-        return {
-          finalStatus: 'pending_review',
-          lateDays: disputeInfo.originalLateDays,
-          statusBadge: 'Menunggu Review',
-          finalLabel: `${disputeInfo.originalLateDays} Hari (Dalam Review)`,
-          disputeStatus: 'pending_review',
-          originalLateDays: disputeInfo.originalLateDays
-        };
-      } else if (disputeInfo.status === 'pending_form') {
-        const now = new Date();
-        const startDate = new Date(disputeInfo.disputeStartDate);
-        const expiryDate = new Date(disputeInfo.disputeExpiryDate);
-        
-        if (now > expiryDate) {
-          // Lewat masa sanggahan, jadi Negative Confirmation -> status tetap terlambat
-          return {
-            finalStatus: 'terlambat',
-            lateDays: disputeInfo.originalLateDays,
-            statusBadge: 'Terlambat',
-            finalLabel: `${disputeInfo.originalLateDays} Hari Terlambat`,
-            disputeStatus: 'expired',
-            originalLateDays: disputeInfo.originalLateDays,
-            isNegativeConfirmation: true
-          };
-        }
-        
-        const remainingDays = getRemainingWorkingDays(expiryDate);
-        
-        return {
-          finalStatus: 'pending_form',
-          lateDays: disputeInfo.originalLateDays,
-          statusBadge: 'Menunggu Form Sanggahan',
-          finalLabel: `${disputeInfo.originalLateDays} Hari (Sisa ${remainingDays} Hari)`,
-          disputeStatus: 'pending_form',
-          disputeExpiryDate: expiryDate,
-          remainingWorkingDays: remainingDays,
-          originalLateDays: disputeInfo.originalLateDays
+          finalStatus: 'tidak_lapor',
+          lateDays: lateDays,
+          statusBadge: 'Tidak Lapor',
+          finalLabel: 'Tidak Lapor',
+          disputeStatus: null,
+          originalLateDays: lateDays
         };
       }
     }
     
-    // Aturan status berdasarkan data asli
-    // 1. Lapor: A <= B
     if (uploadDate && uploadDate <= deadlineDate) {
       return {
         finalStatus: 'tepat_waktu',
@@ -456,45 +510,25 @@ const ApoloReports = () => {
       };
     }
     
-    // 2. Terlambat: A > B
-    if (uploadDate && uploadDate > deadlineDate) {
-      const lateDays = daysBetween(deadlineDate, uploadDate);
+    if ((uploadDate && uploadDate > deadlineDate) || (!uploadDate && systemDate > deadlineDate)) {
+      let lateDays = 0;
+      if (uploadDate && uploadDate > deadlineDate) {
+        lateDays = daysBetween(deadlineDate, uploadDate);
+      } else if (!uploadDate && systemDate > deadlineDate) {
+        lateDays = daysBetween(deadlineDate, systemDate);
+      }
+      
       return {
         finalStatus: 'terlambat',
         lateDays: lateDays,
         statusBadge: 'Terlambat',
-        finalLabel: `${lateDays} Hari Terlambat`,
+        finalLabel: 'Terlambat',
         disputeStatus: null,
         originalLateDays: lateDays
       };
     }
     
-    // 3. Tidak Lapor: C > D (lebih dari 30 hari setelah deadline)
-    if (!uploadDate && systemDate > declaredDate) {
-      return {
-        finalStatus: 'tidak_lapor',
-        lateDays: null,
-        statusBadge: 'Tidak Lapor',
-        finalLabel: 'Tidak Lapor',
-        disputeStatus: null,
-        originalLateDays: null
-      };
-    }
-    
-    // 4. Belum Lapor: A = null; B < C (masih dalam 30 hari)
-    if (!uploadDate && deadlineDate < systemDate) {
-      return {
-        finalStatus: 'belum_lapor',
-        lateDays: null,
-        statusBadge: 'Belum Lapor',
-        finalLabel: 'Belum Lapor',
-        disputeStatus: null,
-        originalLateDays: null
-      };
-    }
-    
-    // Default: Belum Lapor
-    if (!uploadDate) {
+    if (!uploadDate && systemDate <= deadlineDate) {
       return {
         finalStatus: 'belum_lapor',
         lateDays: null,
@@ -515,141 +549,220 @@ const ApoloReports = () => {
     };
   };
 
-  // Cek apakah bisa melakukan sanggahan (hanya untuk APOLO dan status Terlambat)
-  const canDispute = (report, calculatedStatus) => {
-    // HANYA APOLO yang bisa menyanggah
-    if (report.aplikasi !== "APOLO") return false;
+  const canConfirm = (report, calculatedStatus) => {
+    // Hanya APOLO yang bisa konfirmasi/sanggah
+    if (report.namaAplikasi !== "APOLO") return false;
     if (report.statusPengiriman !== "Berhasil") return false;
     if (calculatedStatus.finalStatus !== "terlambat") return false;
+    if (calculatedStatus.lateDays >= 60) return false;
     if (calculatedStatus.lateDays <= 0) return false;
-    if (calculatedStatus.disputeStatus === 'accepted') return false;
-    if (calculatedStatus.disputeStatus === 'rejected') return false;
-    if (calculatedStatus.disputeStatus === 'pending_review') return false;
-    if (calculatedStatus.disputeStatus === 'expired') return false;
     
     const disputeInfo = disputeData[report.id];
-    if (disputeInfo && disputeInfo.status === 'pending_form') return false;
-    if (disputeInfo && disputeInfo.status === 'pending_review') return false;
+    if (disputeInfo && (disputeInfo.status === 'accepted' || disputeInfo.status === 'rejected' || disputeInfo.status === 'expired')) return false;
+    if (disputeInfo && disputeInfo.status === 'pending_form' && disputeInfo.formSubmitted) return false;
     
     return true;
   };
 
-  // Cek apakah form sanggahan tersedia
   const hasDisputeFormAvailable = (report) => {
+    // Hanya APOLO yang bisa sanggah
+    if (report.namaAplikasi !== "APOLO") return false;
     const disputeInfo = disputeData[report.id];
-    // HANYA APOLO yang punya form sanggahan
-    if (report.aplikasi !== "APOLO") return false;
+    if (disputeInfo && disputeInfo.status === 'accepted') return false;
     return disputeInfo && disputeInfo.status === 'pending_form' && !disputeInfo.formSubmitted;
+  };
+
+  const getDisputeProgressValue = (report) => {
+    const disputeInfo = disputeData[report.id];
+    if (!disputeInfo) return 0;
+    if (disputeInfo.status !== 'pending_confirmation' && disputeInfo.status !== 'pending_form') return 0;
+    
+    return getDisputeProgress(disputeInfo.disputeStartDate, disputeInfo.disputeExpiryDate);
   };
 
   // Proses data reports dengan filter tanggal
   const reportsWithPeriod = useMemo(() => {
+    if (!dateRange.startDate || !dateRange.endDate) {
+      return [];
+    }
+    
     const startDate = new Date(dateRange.startDate);
     startDate.setHours(0, 0, 0, 0);
     
     const endDate = new Date(dateRange.endDate);
     endDate.setHours(23, 59, 59, 999);
     
+    const filteredReports = initialReports.filter(report => {
+      const periodeData = new Date(report.periodeData);
+      periodeData.setHours(0, 0, 0, 0);
+      return periodeData >= startDate && periodeData <= endDate;
+    });
+    
     const systemDate = new Date(currentDateTime);
     systemDate.setHours(0, 0, 0, 0);
 
-    const processed = initialReports.map(report => {
-      const deadlineDate = new Date(report.tglBatas);
-      deadlineDate.setHours(0, 0, 0, 0);
+    const processed = filteredReports.map(report => {
+      const dispute = disputeData[report.id];
+      let calculated = calculateStatus(report, systemDate, dispute);
       
-      // Cek apakah deadline dalam range tanggal yang dipilih
-      const isInDateRange = deadlineDate >= startDate && deadlineDate <= endDate;
-      
-      if (!isInDateRange) {
-        return null;
+      if (dispute) {
+        if (dispute.status === 'accepted') {
+          calculated = {
+            ...calculated,
+            finalStatus: 'terlambat',
+            finalLabel: 'Terlambat',
+            disputeStatus: 'accepted',
+            originalLateDays: dispute.originalLateDays
+          };
+        } else if (dispute.status === 'rejected') {
+          calculated = {
+            ...calculated,
+            finalStatus: 'terlambat',
+            finalLabel: 'Terlambat',
+            disputeStatus: 'rejected',
+            rejectionReason: dispute.rejectionReason,
+            rejectionDocument: dispute.rejectionDocument,
+            rejectionDocumentName: dispute.rejectionDocumentName,
+            originalLateDays: dispute.originalLateDays
+          };
+        } else if (dispute.status === 'expired') {
+          calculated = {
+            ...calculated,
+            finalStatus: 'terlambat',
+            finalLabel: 'Terlambat',
+            disputeStatus: 'expired',
+            originalLateDays: dispute.originalLateDays,
+            isNegativeConfirmation: true
+          };
+        } else if (dispute.status === 'pending_form') {
+          const expiryDate = new Date(dispute.disputeExpiryDate);
+          const remainingDays = getRemainingWorkingDays(expiryDate);
+          
+          calculated = {
+            ...calculated,
+            finalStatus: 'terlambat',
+            finalLabel: 'Terlambat',
+            disputeStatus: 'pending_form',
+            disputeExpiryDate: expiryDate,
+            remainingWorkingDays: remainingDays,
+            disputeStartDate: dispute.disputeStartDate,
+            originalLateDays: dispute.originalLateDays
+          };
+        } else if (dispute.status === 'pending_confirmation') {
+          const expiryDate = new Date(dispute.disputeExpiryDate);
+          const remainingDays = getRemainingWorkingDays(expiryDate);
+          
+          calculated = {
+            ...calculated,
+            finalStatus: 'terlambat',
+            finalLabel: 'Terlambat',
+            disputeStatus: 'pending_confirmation',
+            disputeExpiryDate: expiryDate,
+            remainingWorkingDays: remainingDays,
+            disputeStartDate: dispute.disputeStartDate,
+            originalLateDays: dispute.originalLateDays
+          };
+        }
       }
       
-      // Dapatkan data sanggahan
-      const dispute = disputeData[report.id];
-      const calculated = calculateStatus(report, systemDate, dispute);
-      
-      // Format tanggal untuk display
-      const formatDateOnly = (date) => {
-        if (!date) return 'Belum ada';
-        const d = new Date(date);
-        if (isNaN(d.getTime())) return 'Tanggal tidak valid';
+      const formatDateTime = (dateTime) => {
+        if (!dateTime) return '-';
+        const d = new Date(dateTime);
+        if (isNaN(d.getTime())) return '-';
         return d.toLocaleDateString('id-ID', {
           day: '2-digit',
-          month: 'short',
-          year: 'numeric'
-        });
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }).replace(/\./g, ':');
+      };
+      
+      const formatDateOnly = (date) => {
+        if (!date) return '-';
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return '-';
+        return d.toISOString().split('T')[0];
       };
       
       return {
         ...report,
-        deadlineDate: report.tglBatas,
-        submissionDate: report.tglUpload,
-        displayDeadline: formatDateOnly(deadlineDate),
-        displaySubmit: report.tglUpload ? formatDateOnly(new Date(report.tglUpload)) : 'Belum submit',
+        displayUpload: formatDateTime(report.tglUpload),
+        displayBatas: formatDateOnly(report.tglBatas),
+        displayPeriodeData: formatDateOnly(report.periodeData),
         finalStatus: calculated.finalStatus,
         lateDays: calculated.lateDays,
         finalLabel: calculated.finalLabel,
         disputeStatus: calculated.disputeStatus,
         statusBadge: calculated.statusBadge,
         originalLateDays: calculated.originalLateDays,
-        canDispute: canDispute(report, calculated),
+        canConfirm: canConfirm(report, calculated),
         hasDisputeForm: hasDisputeFormAvailable(report),
         disputeExpiryDate: calculated.disputeExpiryDate,
         remainingWorkingDays: calculated.remainingWorkingDays,
+        disputeStartDate: calculated.disputeStartDate,
+        rejectionReason: calculated.rejectionReason,
+        rejectionDocument: calculated.rejectionDocument,
+        rejectionDocumentName: calculated.rejectionDocumentName,
         isNegativeConfirmation: calculated.isNegativeConfirmation
       };
-    }).filter(report => report !== null);
+    });
     
     return processed;
   }, [dateRange, initialReports, disputeData, currentDateTime]);
 
-  // Handle filter change
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
+  const handleAplikasiFilterChange = (value) => {
+    setFilters(prev => {
+      const currentValues = [...prev.aplikasi];
+      if (currentValues.includes(value)) {
+        return { ...prev, aplikasi: currentValues.filter(v => v !== value) };
+      } else {
+        return { ...prev, aplikasi: [...currentValues, value] };
+      }
+    });
   };
 
-  // Hitung filteredReports berdasarkan filter
+  const handleStatusFilterChange = (value) => {
+    setFilters(prev => {
+      const currentValues = [...prev.status];
+      if (currentValues.includes(value)) {
+        return { ...prev, status: currentValues.filter(v => v !== value) };
+      } else {
+        return { ...prev, status: [...currentValues, value] };
+      }
+    });
+  };
+
   const filteredReports = useMemo(() => {
     let filtered = [...reportsWithPeriod];
 
-    // Filter aplikasi
-    if (filters.aplikasi !== 'all') {
-      filtered = filtered.filter(report => report.aplikasi === filters.aplikasi);
+    if (filters.aplikasi.length > 0) {
+      filtered = filtered.filter(report => filters.aplikasi.includes(report.namaAplikasi));
     }
     
-    // Filter status (hanya 4 status: Lapor, Terlambat, Belum Lapor, Tidak Lapor)
-    if (filters.status !== 'all') {
-      filtered = filtered.filter(report => report.finalStatus === filters.status);
+    if (filters.status.length > 0) {
+      filtered = filtered.filter(report => filters.status.includes(report.finalStatus));
     }
 
-    // Apply search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(report => 
         report.namaLaporan.toLowerCase().includes(term) ||
-        report.jenisLJK.toLowerCase().includes(term) ||
-        report.aplikasi.toLowerCase().includes(term)
+        report.namaAplikasi.toLowerCase().includes(term)
       );
     }
 
     return filtered;
   }, [filters, searchTerm, reportsWithPeriod]);
 
-  // Get unique options for filters
   const getAplikasiOptions = () => {
-    const aplikasiList = [...new Set(reportsWithPeriod.map(r => r.aplikasi))];
-    return [
-      { value: 'all', label: 'Semua Aplikasi' },
-      ...aplikasiList.map(app => ({ value: app, label: app }))
-    ];
+    const aplikasiList = [...new Set(initialReports.map(r => r.namaAplikasi))];
+    return aplikasiList.map(app => ({ value: app, label: app }));
   };
 
   const getStatusOptions = () => {
     return [
-      { value: 'all', label: 'Semua Status' },
       { value: 'tepat_waktu', label: 'Lapor' },
       { value: 'terlambat', label: 'Terlambat' },
       { value: 'belum_lapor', label: 'Belum Lapor' },
@@ -657,7 +770,6 @@ const ApoloReports = () => {
     ];
   };
 
-  // Hitung stats
   const stats = useMemo(() => {
     const total = reportsWithPeriod.length;
     const tepatWaktu = reportsWithPeriod.filter(r => r.finalStatus === 'tepat_waktu').length;
@@ -675,82 +787,23 @@ const ApoloReports = () => {
   }, [reportsWithPeriod]);
 
   const resetFilters = () => {
-    const currentDate = getCurrentWIBTime();
-    const endDate = new Date(currentDate);
-    endDate.setHours(0, 0, 0, 0);
-    
-    const startDate = new Date(currentDate);
-    startDate.setDate(startDate.getDate() - 30);
-    startDate.setHours(0, 0, 0, 0);
-    
     setDateRange({
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0]
+      startDate: '',
+      endDate: ''
     });
-    
     setFilters({
-      aplikasi: 'all',
-      status: 'all'
+      aplikasi: [],
+      status: []
     });
     setSearchTerm('');
     setSelectedReport(null);
   };
 
-  // Handle open confirm modal (untuk Konfirmasi Keterlambatan)
   const handleOpenConfirmModal = (report) => {
     setSelectedConfirmReport(report);
     setShowConfirmModal(true);
   };
 
-  // Handle mengakui keterlambatan
-  const handleConfirmLate = (report) => {
-    const newDispute = {
-      id: report.id,
-      status: 'rejected',
-      acknowledged: true,
-      originalLateDays: report.originalLateDays,
-      acknowledgedLateDays: report.originalLateDays,
-      createdAt: new Date().toISOString(),
-      acknowledgedAt: new Date().toISOString()
-    };
-    
-    const updatedDisputes = { ...disputeData, [report.id]: newDispute };
-    setDisputeData(updatedDisputes);
-    saveDisputeToLocalStorage(updatedDisputes);
-    
-    setShowConfirmModal(false);
-    setSelectedConfirmReport(null);
-    
-    alert(`Anda mengakui keterlambatan ${report.originalLateDays} hari.`);
-  };
-
-  // Handle mulai proses sanggahan
-  const handleStartDispute = (report) => {
-    // Mulai proses sanggahan dengan waktu 5 hari kerja
-    const startDate = new Date();
-    const expiryDate = getExpiryDate(startDate);
-    
-    const newDispute = {
-      id: report.id,
-      status: 'pending_form',
-      originalLateDays: report.originalLateDays,
-      disputeStartDate: startDate.toISOString(),
-      disputeExpiryDate: expiryDate.toISOString(),
-      formSubmitted: false,
-      createdAt: new Date().toISOString()
-    };
-    
-    const updatedDisputes = { ...disputeData, [report.id]: newDispute };
-    setDisputeData(updatedDisputes);
-    saveDisputeToLocalStorage(updatedDisputes);
-    
-    setShowConfirmModal(false);
-    setSelectedConfirmReport(null);
-    
-    alert(`Sanggahan dimulai. Anda memiliki waktu 5 hari kerja (7 hari kalender) untuk mengisi form sanggahan. Batas waktu: ${expiryDate.toLocaleDateString('id-ID')}`);
-  };
-
-  // Handle open dispute form modal
   const handleOpenDisputeForm = (report) => {
     setSelectedReportForDisputeForm(report);
     setDisputeFormInput({
@@ -760,7 +813,68 @@ const ApoloReports = () => {
     setShowDisputeFormModal(true);
   };
 
-  // Handle submit dispute form
+  const handleAgreeLate = (report) => {
+    const disputeInfo = disputeData[report.id];
+    
+    const newDispute = {
+      ...disputeInfo,
+      status: 'rejected',
+      acknowledged: true,
+      acknowledgedLateDays: report.originalLateDays || disputeInfo?.originalLateDays,
+      confirmedAt: new Date().toISOString(),
+      confirmedChoice: 'setuju',
+      rejectionReason: null,
+      rejectionDocument: null,
+      rejectionDocumentName: null
+    };
+    
+    const updatedDisputes = { 
+      ...disputeData, 
+      [report.id]: newDispute
+    };
+    setDisputeData(updatedDisputes);
+    saveDisputeToLocalStorage(updatedDisputes);
+    
+    setShowConfirmModal(false);
+    setSelectedConfirmReport(null);
+  };
+
+  const handleDisagreeLate = (report) => {
+    let disputeInfo = disputeData[report.id];
+    let disputeStartDate;
+    let expiryDate;
+    
+    if (disputeInfo && disputeInfo.disputeStartDate) {
+      disputeStartDate = new Date(disputeInfo.disputeStartDate);
+      expiryDate = getExpiryDate(disputeStartDate);
+    } else {
+      disputeStartDate = new Date();
+      expiryDate = getExpiryDate(disputeStartDate);
+    }
+    
+    const newDispute = {
+      id: report.id,
+      status: 'pending_form',
+      originalLateDays: report.originalLateDays,
+      disputeStartDate: disputeStartDate.toISOString(),
+      disputeExpiryDate: expiryDate.toISOString(),
+      formSubmitted: false,
+      confirmedAt: new Date().toISOString(),
+      confirmedChoice: 'tidak_setuju',
+      createdAt: new Date().toISOString(),
+      rejectionReason: null,
+      rejectionDocument: null,
+      rejectionDocumentName: null
+    };
+    
+    const updatedDisputes = { ...disputeData, [report.id]: newDispute };
+    setDisputeData(updatedDisputes);
+    saveDisputeToLocalStorage(updatedDisputes);
+    
+    setShowConfirmModal(false);
+    setSelectedConfirmReport(null);
+  };
+
   const handleDisputeFormSubmit = () => {
     if (!disputeFormInput.alasanKeterlambatan) {
       alert('Harap isi alasan keterlambatan');
@@ -772,47 +886,55 @@ const ApoloReports = () => {
       return;
     }
     
-    // Random decision untuk sanggahan (50% diterima, 50% ditolak)
     const randomDecision = Math.random();
     const isAccepted = randomDecision < 0.5;
     
-    // Random untuk pengurangan hari jika diterima (0 - originalLateDays)
-    let acceptedLateDays = null;
-    let acceptedStatus = 'terlambat';
+    const existingDispute = disputeData[selectedReportForDisputeForm.id] || {};
+    
+    let newDispute;
     
     if (isAccepted) {
-      // 50% chance jadi 0 hari (tepat waktu), 50% chance berkurang
-      const reduceType = Math.random() < 0.5 ? 'zero' : 'reduce';
-      if (reduceType === 'zero') {
-        acceptedLateDays = 0;
-        acceptedStatus = 'tepat_waktu';
-      } else {
-        // Kurangi jumlah hari (random antara 1 sampai originalLateDays-1)
-        const originalDays = selectedReportForDisputeForm.originalLateDays;
-        if (originalDays > 1) {
-          acceptedLateDays = Math.floor(Math.random() * (originalDays - 1)) + 1;
-          acceptedStatus = 'terlambat';
-        } else {
-          acceptedLateDays = 0;
-          acceptedStatus = 'tepat_waktu';
-        }
-      }
+      newDispute = {
+        id: selectedReportForDisputeForm.id,
+        status: 'accepted',
+        alasanKeterlambatan: disputeFormInput.alasanKeterlambatan,
+        filePendukung: disputeFormInput.filePendukung.name,
+        originalLateDays: selectedReportForDisputeForm.originalLateDays,
+        acceptedLateDays: selectedReportForDisputeForm.originalLateDays,
+        acceptedStatus: 'terlambat',
+        formSubmitted: true,
+        submittedAt: new Date().toISOString(),
+        disputeStartDate: existingDispute.disputeStartDate,
+        disputeExpiryDate: existingDispute.disputeExpiryDate,
+        confirmedChoice: existingDispute.confirmedChoice,
+        confirmedAt: existingDispute.confirmedAt,
+        createdAt: existingDispute.createdAt || new Date().toISOString(),
+        rejectionReason: null,
+        rejectionDocument: null,
+        rejectionDocumentName: null
+      };
+    } else {
+      newDispute = {
+        id: selectedReportForDisputeForm.id,
+        status: 'rejected',
+        alasanKeterlambatan: disputeFormInput.alasanKeterlambatan,
+        filePendukung: disputeFormInput.filePendukung.name,
+        originalLateDays: selectedReportForDisputeForm.originalLateDays,
+        acceptedLateDays: selectedReportForDisputeForm.originalLateDays,
+        acceptedStatus: 'terlambat',
+        formSubmitted: true,
+        submittedAt: new Date().toISOString(),
+        disputeStartDate: existingDispute.disputeStartDate,
+        disputeExpiryDate: existingDispute.disputeExpiryDate,
+        confirmedChoice: existingDispute.confirmedChoice,
+        confirmedAt: existingDispute.confirmedAt,
+        createdAt: existingDispute.createdAt || new Date().toISOString(),
+        rejectionReason: 'Berdasarkan hasil verifikasi, alasan keterlambatan yang disampaikan tidak dapat diterima karena tidak terdapat bukti pendukung yang memadai sesuai dengan ketentuan.',
+        rejectionDocument: '/rejection/rejection_letter_' + selectedReportForDisputeForm.id + '.pdf',
+        rejectionDocumentName: 'Surat_Penolakan_Sanggahan_' + selectedReportForDisputeForm.id + '.pdf'
+      };
     }
     
-    const newDispute = {
-      id: selectedReportForDisputeForm.id,
-      status: isAccepted ? 'accepted' : 'rejected',
-      alasanKeterlambatan: disputeFormInput.alasanKeterlambatan,
-      filePendukung: disputeFormInput.filePendukung.name,
-      originalLateDays: selectedReportForDisputeForm.originalLateDays,
-      acceptedLateDays: acceptedLateDays,
-      acceptedStatus: acceptedStatus,
-      formSubmitted: true,
-      submittedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString()
-    };
-    
-    // Save form data
     const updatedForms = { ...disputeFormData, [selectedReportForDisputeForm.id]: disputeFormInput };
     setDisputeFormData(updatedForms);
     saveDisputeFormToLocalStorage(updatedForms);
@@ -824,17 +946,11 @@ const ApoloReports = () => {
     setShowDisputeFormModal(false);
     setSelectedReportForDisputeForm(null);
     
-    let message = '';
     if (isAccepted) {
-      if (acceptedStatus === 'tepat_waktu') {
-        message = 'Sanggahan dalam proses review pengawas';
-      } else {
-        message = `Sanggahan dalam proses review pengawas.`;
-      }
+      alert('Sanggahan dalam proses, akan diproses pengawas.');
     } else {
-      message = 'Sanggahan sedang dalam proses review pengawas';
+      alert('Sanggahan dalam proses,akan diproses pengawas.');
     }
-    alert(message);
   };
 
   const handleFileChange = (e) => {
@@ -844,210 +960,211 @@ const ApoloReports = () => {
     }
   };
 
-  const toggleRowExpand = (reportId) => {
-    setExpandedRows(prev => ({
-      ...prev,
-      [reportId]: !prev[reportId]
-    }));
-  };
-
-  const getStatusBadge = (statusBadge) => {
-    if (statusBadge === 'Lapor') {
-      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">Lapor</span>;
-    } else if (statusBadge === 'Belum Lapor') {
-      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">Belum Lapor</span>;
-    } else if (statusBadge === 'Tidak Lapor') {
-      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">Tidak Lapor</span>;
-    } else if (statusBadge === 'Menunggu Form Sanggahan') {
-      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">Menunggu Form Sanggahan</span>;
-    } else if (statusBadge === 'Menunggu Review') {
-      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">Menunggu Review</span>;
+  const handleDownloadRejectionDoc = (report) => {
+    if (report.rejectionDocument) {
+      const link = document.createElement('a');
+      link.href = report.rejectionDocument;
+      link.download = report.rejectionDocumentName || 'surat_penolakan.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } else {
-      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">Terlambat</span>;
+      alert('Dokumen tidak tersedia');
     }
   };
 
-  const getLateDaysDisplay = (report) => {
-    if (!report) return null;
-    
-    if (report.finalStatus === 'tepat_waktu') {
+  const handleOpenRejectionDetail = (report) => {
+    setSelectedRejectionReport(report);
+    setShowRejectionDetailModal(true);
+  };
+
+  const getStatusBadge = (report) => {
+  const { finalStatus, namaAplikasi, originalLateDays, isNegativeConfirmation } = report;
+  
+  if (finalStatus === 'tepat_waktu') {
+    return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Lapor</span>;
+  } else if (finalStatus === 'belum_lapor') {
+    return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Belum Lapor</span>;
+  } else if (finalStatus === 'tidak_lapor') {
+    return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Tidak Lapor</span>;
+  } else if (finalStatus === 'terlambat') {
+    if ((namaAplikasi === 'APOLO' || namaAplikasi === 'e-Reporting') && originalLateDays > 0 && !isNegativeConfirmation) {
       return (
-        <div className="text-sm">
-          <div className="text-green-600 font-medium">
-            Lapor
-          </div>
-        </div>
-      );
-    } else if (report.finalStatus === 'belum_lapor') {
-      return (
-        <div className="text-sm">
-          <div className="text-yellow-600 font-medium">
-            Belum Lapor
-          </div>
-        </div>
-      );
-    } else if (report.finalStatus === 'tidak_lapor') {
-      return (
-        <div className="text-sm">
-          <div className="text-gray-600 font-medium">
-            Tidak Lapor
-          </div>
-        </div>
-      );
-    } else if (report.finalStatus === 'pending_form') {
-      return (
-        <div className="text-sm">
-          <div className="text-blue-600 font-medium">
-            {report.lateDays} Hari
-          </div>
-          <div className="text-xs text-blue-500">
-            Sisa {report.remainingWorkingDays} Hari
-          </div>
-          <div className="text-xs text-gray-400 mt-1">
-            *Perhitungan by system
-          </div>
-        </div>
-      );
-    } else if (report.finalStatus === 'pending_review') {
-      return (
-        <div className="text-sm">
-          <div className="text-purple-600 font-medium">
-            {report.lateDays} Hari
-          </div>
-          <div className="text-xs text-purple-500">
-            Dalam Review
-          </div>
-          <div className="text-xs text-gray-400 mt-1">
-            *Perhitungan by system
-          </div>
-        </div>
-      );
-    } else if (report.finalStatus === 'terlambat') {
-      return (
-        <div className="text-sm">
-          <div className="text-red-600 font-medium">
-            {report.lateDays} Hari Terlambat
-          </div>
-          <div className="text-xs text-gray-400 mt-1">
-            *Perhitungan by system
-          </div>
+        <div className="text-left">
+          <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Terlambat</span>
+          <div className="text-xs text-red-600 font-medium mt-0.5">{originalLateDays} Hari Terlambat</div>
+          <div className="text-[10px] text-gray-400">*Perhitungan berdasarkan sistem</div>
         </div>
       );
     }
-    
+    return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Terlambat</span>;
+  }
+  
+  return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">-</span>;
+};
+
+  const DisputeProgressBar = ({ remainingDays, progressPercentage }) => {
+    const getBarColor = () => {
+      if (remainingDays <= 1) return 'bg-red-500';
+      if (remainingDays <= 2) return 'bg-orange-500';
+      return 'bg-blue-500';
+    };
+
     return (
-      <div className="text-sm">
-        <div className="text-gray-600 font-medium">
-          {report.finalLabel}
+      <div className="mt-2">
+        <div className="flex justify-between text-xs mb-1">
+          <span className="text-gray-600">Sisa waktu sanggah:</span>
+          <span className={`font-semibold ${remainingDays <= 1 ? 'text-red-600' : remainingDays <= 2 ? 'text-orange-600' : 'text-blue-600'}`}>
+            {remainingDays} hari kerja
+          </span>
         </div>
+        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div 
+            className={`h-2 rounded-full transition-all duration-500 ${getBarColor()}`}
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+        {remainingDays <= 1 && (
+          <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3" />
+            Segera lakukan konfirmasi sebelum waktu habis!
+          </p>
+        )}
       </div>
     );
   };
 
   const getConfirmationButton = (report) => {
-    // Negative Confirmation (expired)
-    if (report.disputeStatus === 'expired') {
+    // Negative Confirmation
+    if (report.isNegativeConfirmation || report.disputeStatus === 'expired') {
       return (
-        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-500 text-white border border-gray-600">
-          <XCircle className="w-3 h-3 mr-1" />
-          Negative Confirmation
-        </span>
-      );
-    }
-    
-    // Menunggu review
-    if (report.finalStatus === 'pending_review') {
-      return (
-        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
-          <Clock className="w-3 h-3 mr-1" />
-          Menunggu Review
-        </span>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => handleOpenRejectionDetail(report)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-500 text-white border border-gray-600 hover:bg-gray-600 transition-colors"
+          >
+            Negative Confirmation
+          </button>
+        </div>
       );
     }
     
     // Sanggahan diterima
     if (report.disputeStatus === 'accepted') {
       return (
-        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Sanggahan Diterima
-        </span>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => handleOpenRejectionDetail(report)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors"
+          >
+            Sanggahan Diterima
+          </button>
+        </div>
       );
     }
     
     // Sanggahan ditolak
-    if (report.disputeStatus === 'rejected') {
+    if (report.disputeStatus === 'rejected' && report.rejectionReason) {
       return (
-        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-          <XCircle className="w-3 h-3 mr-1" />
-          Mengakui Sanggahan
-        </span>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => handleOpenRejectionDetail(report)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors"
+          >
+            Sanggahan Ditolak
+          </button>
+        </div>
       );
     }
     
-    // Menunggu form sanggahan - Tampilkan tombol "Isi Form Sanggahan"
+    // Mengakui keterlambatan
+    if (report.disputeStatus === 'rejected' && !report.rejectionReason) {
+      return (
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => handleOpenRejectionDetail(report)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-orange-600 text-white border border-orange-600 hover:bg-orange-700 transition-colors"
+          >
+            Mengakui Keterlambatan
+          </button>
+        </div>
+      );
+    }
+    
+    // Menunggu form sanggahan (hanya untuk APOLO)
     if (report.hasDisputeForm) {
+      const remainingDays = report.remainingWorkingDays;
+      const progressPercentage = getDisputeProgressValue(report);
+      
       return (
-        <button
-          onClick={() => handleOpenDisputeForm(report)}
-          className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 transition-colors"
-        >
-          <FileText className="w-3 h-3 mr-1" />
-          Isi Form Sanggahan
-        </button>
+        <div className="flex flex-col gap-2 min-w-[180px]">
+          <button
+            onClick={() => handleOpenDisputeForm(report)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 transition-colors"
+          >
+            Isi Form Sanggahan
+          </button>
+          <DisputeProgressBar 
+            remainingDays={remainingDays} 
+            progressPercentage={progressPercentage}
+          />
+        </div>
       );
     }
     
-    // Jika bisa melakukan sanggahan (status Terlambat dan APOLO) - tampilkan tombol Konfirmasi Keterlambatan
-    if (report.canDispute) {
+    // Status pending_confirmation (belum konfirmasi) - hanya untuk APOLO
+    if (report.disputeStatus === 'pending_confirmation' && report.canConfirm) {
+      const remainingDays = report.remainingWorkingDays;
+      const progressPercentage = getDisputeProgressValue(report);
+      
       return (
-        <button
-          onClick={() => handleOpenConfirmModal(report)}
-          className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-600 text-white border border-orange-600 hover:bg-orange-700 transition-colors"
-        >
-          <MessageSquare className="w-3 h-3 mr-1" />
-          Konfirmasi Keterlambatan
-        </button>
+        <div className="flex flex-col gap-2 min-w-[180px]">
+          <button
+            onClick={() => handleOpenConfirmModal(report)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-orange-600 text-white border border-orange-600 hover:bg-orange-700 transition-colors"
+          >
+            Konfirmasi Keterlambatan
+          </button>
+          <DisputeProgressBar 
+            remainingDays={remainingDays} 
+            progressPercentage={progressPercentage}
+          />
+        </div>
       );
     }
     
-    // Jika Lapor
-    if (report.finalStatus === 'tepat_waktu') {
+    // Jika bisa melakukan konfirmasi (status awal) - hanya untuk APOLO
+    if (report.canConfirm && !report.disputeStatus) {
+      const remainingDays = 5;
+      const progressPercentage = 0;
+      
       return (
-        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Lapor
-        </span>
+        <div className="flex flex-col gap-2 min-w-[180px]">
+          <button
+            onClick={() => handleOpenConfirmModal(report)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-orange-600 text-white border border-orange-600 hover:bg-orange-700 transition-colors"
+          >
+            Konfirmasi Keterlambatan
+          </button>
+          <DisputeProgressBar 
+            remainingDays={remainingDays} 
+            progressPercentage={progressPercentage}
+          />
+        </div>
       );
     }
     
-    // Terlambat tapi tidak bisa sanggah (karena EReporting atau sudah pernah sanggah)
-    if (report.finalStatus === 'terlambat') {
-      return (
-        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-          <AlertCircle className="w-3 h-3 mr-1" />
-          Terlambat
-        </span>
-      );
-    }
-    
-    // Tidak Lapor
-    if (report.finalStatus === 'tidak_lapor') {
-      return (
-        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-          <AlertOctagon className="w-3 h-3 mr-1" />
-          Tidak Lapor
-        </span>
-      );
-    }
-    
-    return null;
+    // Untuk e-Reporting dan SIPINA yang tidak perlu konfirmasi
+    return (
+      <span className="text-xs text-gray-400 italic text-center">-</span>
+    );
   };
 
   const getAplikasiBadge = (aplikasi) => {
     const colorMap = {
       'APOLO': 'bg-blue-100 text-blue-800 border-blue-200',
-      'EReporting': 'bg-green-100 text-green-800 border-green-200',
+      'e-Reporting': 'bg-green-100 text-green-800 border-green-200',
+      'SIPINA': 'bg-purple-100 text-purple-800 border-purple-200',
     };
 
     return (
@@ -1063,16 +1180,14 @@ const ApoloReports = () => {
 
   const handleExportData = () => {
     const exportData = filteredReports.map(report => ({
-      'ID': report.id,
-      'Aplikasi': report.aplikasi,
-      'Jenis LJK': report.jenisLJK,
-      'Bidang LJK': report.bidangLJK,
+      'No': report.id,
+      'Nama Aplikasi': report.namaAplikasi,
       'Nama Laporan': report.namaLaporan,
-      'Jml Form': report.detailForms.length,
-      'Tgl Upload/Penyampaian': report.displaySubmit,
-      'Tgl Batas Akhir': report.displayDeadline,
-      'Status': report.statusBadge,
-      'Jml Hari Terlambat': report.finalLabel
+      'Jenis Periode Laporan': report.jenisPeriodeLaporan,
+      'Tgl Upload/Penyampaian': report.displayUpload,
+      'Status': report.finalLabel,
+      'Periode Data': report.displayPeriodeData,
+      'Tgl Batas Akhir': report.displayBatas
     }));
 
     const csv = convertToCSV(exportData);
@@ -1095,9 +1210,8 @@ const ApoloReports = () => {
     return csv;
   };
 
-  // Format date for display
   const formatDateDisplay = (dateString) => {
-    if (!dateString) return 'Tanggal tidak valid';
+    if (!dateString) return 'Kosong';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return 'Tanggal tidak valid';
     return date.toLocaleDateString('id-ID', {
@@ -1107,7 +1221,6 @@ const ApoloReports = () => {
     });
   };
 
-  // Format current date display
   const getCurrentDateDisplay = () => {
     return currentDateTime.toLocaleDateString('id-ID', {
       weekday: 'long',
@@ -1117,7 +1230,6 @@ const ApoloReports = () => {
     });
   };
 
-  // Format current time display
   const getCurrentTimeDisplay = () => {
     return currentDateTime.toLocaleTimeString('id-ID', { 
       hour: '2-digit',
@@ -1137,7 +1249,7 @@ const ApoloReports = () => {
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-red-900">Monitoring Absensi IRS</h1>
             <p className="text-gray-600 mt-1">Monitoring Laporan Rutin - Total {stats.total} Laporan</p>
-            <div className="flex items-center space-x-4 mt-1">
+            <div className="flex items-center space-x-4 mt-1 flex-wrap">
               <p className="text-sm font-medium text-gray-700 bg-white px-3 py-1 rounded-lg shadow-sm border border-gray-200">
                 <Clock className="w-3 h-3 inline mr-1" />
                 Waktu Real-time: {getCurrentTimeDisplay()}
@@ -1166,8 +1278,6 @@ const ApoloReports = () => {
         </div>
       </div>
 
-    
-
       {/* Filter Section */}
       <div className="px-6">
         <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl shadow-lg border border-red-100 overflow-hidden">
@@ -1179,7 +1289,7 @@ const ApoloReports = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-red-900">Filter Periode Laporan</h3>
-                  <p className="text-sm text-gray-600">Pilih rentang tanggal batas akhir (Maksimal 30 hari kebelakang)</p>
+                  <p className="text-sm text-gray-600">Pilih rentang tanggal periode data laporan <span className="text-red-500">*Wajib diisi</span></p>
                 </div>
               </div>
               <button
@@ -1192,50 +1302,120 @@ const ApoloReports = () => {
           </div>
 
           <div className="p-6">
-            {/* Filter Tanggal */}
             <div className="mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Mulai (Batas Akhir)
+                    Tanggal Mulai Periode Laporan <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
                     value={dateRange.startDate}
                     onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+                    required
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Akhir (Batas Akhir)
+                    Tanggal Akhir Periode Laporan <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
                     value={dateRange.endDate}
                     onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+                    required
                   />
                 </div>
+              </div>
+              {(!dateRange.startDate || !dateRange.endDate) && (
+                <p className="text-sm text-red-500 mt-2">
+                  <AlertCircle className="w-4 h-4 inline mr-1" />
+                  Harap pilih tanggal mulai dan tanggal akhir periode laporan untuk menampilkan data
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Filter Aplikasi - Multiple Select Dropdown */}
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Building className="w-4 h-4 inline mr-2" />
+                  Filter Aplikasi (Multiple)
+                </label>
+                <button
+                  onClick={() => setShowAplikasiDropdown(!showAplikasiDropdown)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm text-left flex justify-between items-center"
+                >
+                  <span className="text-gray-700">
+                    {filters.aplikasi.length === 0 
+                      ? 'Semua Aplikasi' 
+                      : `${filters.aplikasi.length} terpilih`}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
                 
-                {/* <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Clock className="w-4 h-4 inline mr-2" />
-                    Periode Terpilih
-                  </label>
-                  <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
-                    <div className="text-sm font-medium text-blue-900">
-                      {formatDateDisplay(dateRange.startDate)} - {formatDateDisplay(dateRange.endDate)}
-                    </div>
-                    <div className="text-xs text-blue-700 mt-1">
-                      {reportsWithPeriod.length} laporan ditemukan
+                {showAplikasiDropdown && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto">
+                    <div className="p-2">
+                      {getAplikasiOptions().map((option) => (
+                        <label key={option.value} className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filters.aplikasi.includes(option.value)}
+                            onChange={() => handleAplikasiFilterChange(option.value)}
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                        </label>
+                      ))}
                     </div>
                   </div>
-                </div> */}
-                 {/* Search */}
+                )}
+              </div>
+
+              {/* Filter Status - Multiple Select Dropdown */}
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <AlertCircle className="w-4 h-4 inline mr-2" />
+                  Filter Status (Multiple)
+                </label>
+                <button
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm text-left flex justify-between items-center"
+                >
+                  <span className="text-gray-700">
+                    {filters.status.length === 0 
+                      ? 'Semua Status' 
+                      : `${filters.status.length} terpilih`}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
+                
+                {showStatusDropdown && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto">
+                    <div className="p-2">
+                      {getStatusOptions().map((option) => (
+                        <label key={option.value} className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filters.status.includes(option.value)}
+                            onChange={() => handleStatusFilterChange(option.value)}
+                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Search className="w-4 h-4 inline mr-2" />
@@ -1247,118 +1427,20 @@ const ApoloReports = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="Cari nama laporan"
+                  placeholder="Cari nama laporan atau aplikasi"
                   className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
-              </div>
-            </div>
-
-            {/* Filter Aplikasi dan Status */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Building className="w-4 h-4 inline mr-2" />
-                  Filter Aplikasi
-                </label>
-                <select
-                  value={filters.aplikasi}
-                  onChange={(e) => handleFilterChange('aplikasi', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                >
-                  {getAplikasiOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <AlertCircle className="w-4 h-4 inline mr-2" />
-                  Filter Status
-                </label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                >
-                  {getStatusOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-           
-
-            {/* Filter Info Summary */}
-            {/* <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Filter className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <h5 className="font-medium text-blue-900">Filter Aktif:</h5>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
-                        Periode: {formatDateDisplay(dateRange.startDate)} - {formatDateDisplay(dateRange.endDate)}
-                      </span>
-                      {filters.aplikasi !== 'all' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                          Aplikasi: {filters.aplikasi}
-                          <button 
-                            onClick={() => handleFilterChange('aplikasi', 'all')}
-                            className="ml-2 text-green-600 hover:text-green-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      )}
-                      {filters.status !== 'all' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
-                          Status: {getStatusOptions().find(opt => opt.value === filters.status)?.label}
-                          <button 
-                            onClick={() => handleFilterChange('status', 'all')}
-                            className="ml-2 text-yellow-600 hover:text-yellow-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      )}
-                      {searchTerm && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                          Pencarian: "{searchTerm}"
-                          <button 
-                            onClick={() => setSearchTerm('')}
-                            className="ml-2 text-gray-600 hover:text-gray-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-sm font-medium text-blue-700">
-                  {filteredReports.length} laporan ditemukan
-                </div>
-              </div>
-            </div> */}
           </div>
         </div>
       </div>
 
-        {/* Stats Cards */}
+      {/* Stats Cards */}
       <div className="px-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 shadow-sm border border-blue-200">
             <div className="flex items-center justify-between">
               <div>
@@ -1401,7 +1483,7 @@ const ApoloReports = () => {
                 <p className="text-sm text-gray-600 font-medium">Tidak Lapor</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.tidakLapor}</p>
               </div>
-              <AlertOctagon className="w-8 h-8 text-gray-500 opacity-50" />
+              <XCircle className="w-8 h-8 text-gray-500 opacity-50" />
             </div>
           </div>
         </div>
@@ -1422,9 +1504,11 @@ const ApoloReports = () => {
                       Daftar Laporan 
                     </h3>
                     <div className="mt-2 space-y-1">
-                      <p className="text-sm text-gray-600 truncate">
-                        Periode: <span className="font-medium">{formatDateDisplay(dateRange.startDate)}</span> - <span className="font-medium">{formatDateDisplay(dateRange.endDate)}</span>
-                      </p>
+                      {dateRange.startDate && dateRange.endDate && (
+                        <p className="text-sm text-gray-600 truncate">
+                          Periode Data: <span className="font-medium">{formatDateDisplay(dateRange.startDate)}</span> - <span className="font-medium">{formatDateDisplay(dateRange.endDate)}</span>
+                        </p>
+                      )}
                       <div className="flex flex-wrap gap-x-3 gap-y-1">
                         <p className="text-xs text-gray-500">
                           <span className="font-medium">Tanggal:</span> {getCurrentDateDisplay()}
@@ -1452,136 +1536,54 @@ const ApoloReports = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-12">Show/Hide</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aplikasi</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jml Form</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-12">No</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Aplikasi</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Laporan</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jenis Periode Laporan</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tgl Upload/Penyampaian</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tgl Batas Akhir</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Jml Hari Terlambat</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Konfirmasi</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[220px]">Konfirmasi</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredReports.map((report) => (
-                  <React.Fragment key={report.id}>
-                    <tr className={`hover:bg-blue-50/50 transition-colors duration-200 ${
-                      report.finalStatus === 'terlambat' ? 'bg-red-50/30' : 
-                      report.finalStatus === 'belum_lapor' ? 'bg-yellow-50/30' :
-                      report.finalStatus === 'tidak_lapor' ? 'bg-gray-50/30' :
-                      report.finalStatus === 'pending_form' ? 'bg-blue-50/30' :
-                      report.finalStatus === 'pending_review' ? 'bg-purple-50/30' : ''
-                    }`}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => toggleRowExpand(report.id)}
-                          className="p-1 hover:bg-gray-100 rounded transition-colors"
-                        >
-                          {expandedRows[report.id] ? 
-                            <ChevronUp className="w-4 h-4 text-gray-500" /> : 
-                            <ChevronRight className="w-4 h-4 text-gray-500" />
-                          }
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getAplikasiBadge(report.aplikasi)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
-                        {report.detailForms.length}
-                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {report.displaySubmit}
-                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {report.displayDeadline}
-                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(report.statusBadge)}
-                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getLateDaysDisplay(report)}
-                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getConfirmationButton(report)}
-                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => handleViewDetails(report)}
-                          className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Lihat detail"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                       </td>
-                    </tr>
-                    {expandedRows[report.id] && (
-                      <tr className="bg-gray-50">
-                        <td colSpan="9" className="px-6 py-4">
-                          <div className="border-t border-gray-200 pt-4">
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3">Detail Form Laporan</h4>
-                            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                              <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-100">
-                                  <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">No.</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama Form</th>
-                                   </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                  {report.detailForms.map((form, idx) => (
-                                    <tr key={form.id} className="hover:bg-gray-50">
-                                      <td className="px-4 py-2 text-sm text-gray-600">{idx + 1}</td>
-                                      <td className="px-4 py-2 text-sm font-medium text-gray-900">{form.namaForm}</td>
-                                     </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-xs text-gray-500">Jenis LJK</p>
-                                <p className="text-sm font-medium text-gray-900">{report.jenisLJK}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-500">Bidang LJK</p>
-                                <p className="text-sm font-medium text-gray-900">{report.bidangLJK}</p>
-                              </div>
-                            </div>
-                            {report.disputeExpiryDate && (
-                              <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                                <p className="text-xs text-yellow-800">
-                                  <Clock className="w-3 h-3 inline mr-1" />
-                                  Batas pengisian form sanggahan: {report.disputeExpiryDate.toLocaleDateString('id-ID')} (5 hari kerja)
-                                </p>
-                                {report.remainingWorkingDays && (
-                                  <p className="text-xs text-yellow-700 mt-1">
-                                    Sisa waktu: {report.remainingWorkingDays} hari
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                            {report.finalStatus === 'terlambat' && report.originalLateDays && (
-                              <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                <p className="text-xs text-blue-800">
-                                  <Info className="w-3 h-3 inline mr-1" />
-                                  *Perhitungan keterlambatan by system berdasarkan tanggal upload dan tanggal batas akhir
-                                </p>
-                              </div>
-                            )}
-                            {report.isNegativeConfirmation && (
-                              <div className="mt-3 p-3 bg-gray-100 rounded-lg border border-gray-300">
-                                <p className="text-xs text-gray-700">
-                                  <AlertOctagon className="w-3 h-3 inline mr-1" />
-                                  Negative Confirmation: Anda tidak mengisi form sanggahan dalam 5 hari kerja.
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                         </td>
-                       </tr>
-                    )}
-                  </React.Fragment>
+                {filteredReports.map((report, index) => (
+                  <tr key={report.id} className={`hover:bg-blue-50/50 transition-colors duration-200 ${
+                    report.finalStatus === 'terlambat' ? 'bg-red-50/30' : 
+                    report.finalStatus === 'belum_lapor' ? 'bg-yellow-50/30' :
+                    report.finalStatus === 'tidak_lapor' ? 'bg-gray-50/30' : ''
+                  }`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {index + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getAplikasiBadge(report.namaAplikasi)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {report.namaLaporan}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {report.jenisPeriodeLaporan}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {report.displayUpload}
+                    </td>
+<td className="px-6 py-4 whitespace-nowrap text-left">
+                      {getStatusBadge(report)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleViewDetails(report)}
+                        className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Lihat detail"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </td>
+                    <td className="px-6 py-4">
+                      {getConfirmationButton(report)}
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -1592,8 +1594,14 @@ const ApoloReports = () => {
               <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-8 h-8 text-blue-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Tidak ada laporan ditemukan</h3>
-              <p className="text-gray-600">Tidak ada laporan yang sesuai dengan kriteria pencarian atau filter</p>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                {!dateRange.startDate || !dateRange.endDate ? 'Pilih Periode Tanggal Terlebih Dahulu' : 'Tidak ada laporan ditemukan'}
+              </h3>
+              <p className="text-gray-600">
+                {!dateRange.startDate || !dateRange.endDate 
+                  ? 'Silakan pilih tanggal mulai dan tanggal akhir periode laporan untuk menampilkan data'
+                  : 'Tidak ada laporan yang sesuai dengan kriteria pencarian atau filter'}
+              </p>
               <button
                 onClick={resetFilters}
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -1603,103 +1611,99 @@ const ApoloReports = () => {
             </div>
           )}
 
-          {/* Table Footer */}
-          <div className="px-4 md:px-6 py-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="text-xs md:text-sm text-gray-600">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="inline-flex items-center">
-                      <Clock className="w-3 h-3 mr-1" />
-                      Data diperbarui real-time
+          {filteredReports.length > 0 && (
+            <div className="px-4 md:px-6 py-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs md:text-sm text-gray-600">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span className="inline-flex items-center">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Data diperbarui real-time
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="text-xs md:text-sm text-gray-600">
+                    <span className="font-medium">
+                      Halaman 1 dari {Math.ceil(filteredReports.length / 10) || 1}
                     </span>
                   </div>
                 </div>
               </div>
-              
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <div className="text-xs md:text-sm text-gray-600">
-                  <span className="font-medium">
-                    Halaman 1 dari {Math.ceil(filteredReports.length / 10) || 1}
-                  </span>
-                </div>
-              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Confirm Modal - Konfirmasi Keterlambatan */}
+      {/* Modal-modals tetap sama seperti sebelumnya... */}
+      {/* Confirm Modal */}
       {showConfirmModal && selectedConfirmReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-white">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-r from-orange-100 to-orange-200 rounded-lg">
-                  <MessageSquare className="w-6 h-6 text-orange-600" />
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-auto overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-white">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-orange-100 rounded-full">
+                    <AlertTriangle className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">Konfirmasi Keterlambatan</h3>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-orange-900">Konfirmasi Keterlambatan</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Laporan: {selectedConfirmReport.namaLaporan}
-                  </p>
-                </div>
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setSelectedConfirmReport(null);
+                  }}
+                  className="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
               </div>
             </div>
             
             <div className="p-6 space-y-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
-                  <div className="text-sm text-yellow-800">
-                    <p className="font-medium">Informasi:</p>
-                    <p className="mt-1">Keterlambatan: {selectedConfirmReport.originalLateDays} hari</p>
-                    <p className="mt-2 text-xs text-yellow-700">
-                      *Perhitungan keterlambatan by system berdasarkan tanggal upload dan tanggal batas akhir
-                    </p>
+              <div className="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-4">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  Laporan <span className="font-semibold">{selectedConfirmReport.namaLaporan}</span> periode <span className="font-semibold">{selectedConfirmReport.displayPeriodeData}</span> <br></br>
+                  mengalami keterlambatan sebanyak <span className="font-bold text-red-600">{selectedConfirmReport.originalLateDays || selectedConfirmReport.lateDays} hari</span>.
+                </p>
+              </div>
+              
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="flex items-start space-x-2">
+                  <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-blue-800">
+                    <p className="font-medium mb-1">Informasi:</p>
+                    <p>Jika memilih "Setuju", Anda akan mengakui keterlambatan.</p>
+                    <p className="mt-1">Jika memilih "Tidak Setuju", Anda akan diberikan waktu 5 hari kerja untuk mengisi form sanggahan beserta upload surat pendukung yang ditandatangani Direksi. Jika melebihi batas waktu, status akan menjadi Negative Confirmation.</p>
                   </div>
                 </div>
               </div>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800 font-medium mb-2">Pilih salah satu opsi di bawah ini:</p>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => handleConfirmLate(selectedConfirmReport)}
-                    className="w-full p-3 bg-red-100 text-red-700 rounded-lg border border-red-200 hover:bg-red-200 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Mengakui Keterlambatan ({selectedConfirmReport.originalLateDays} Hari)</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleStartDispute(selectedConfirmReport)}
-                    className="w-full p-3 bg-green-100 text-green-700 rounded-lg border border-green-200 hover:bg-green-200 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Melakukan Sanggahan Keterlambatan</span>
-                  </button>
-                </div>
-              </div>
-              
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                <p className="text-xs text-orange-700">
-                  <strong>Disclaimer Sanggahan:</strong> Dengan Anda menyanggah, maka waktu untuk menyanggah adalah 5 hari kerja. 
-                  Jika sudah lewat 5 hari kerja dan tidak mengisi form serta upload surat pendukung yang ditandatangani Direksi, 
-                  maka status akan menjadi Negative Confirmation (tetap Terlambat).
-                </p>
-              </div>
             </div>
             
-            <div className="p-6 border-t border-gray-200 flex justify-end">
+            <div className="p-6 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3">
               <button
                 onClick={() => {
                   setShowConfirmModal(false);
                   setSelectedConfirmReport(null);
                 }}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
               >
                 Batal
+              </button>
+              <button
+                onClick={() => handleAgreeLate(selectedConfirmReport)}
+                className="px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium text-sm"
+              >
+                Setuju
+              </button>
+              <button
+                onClick={() => handleDisagreeLate(selectedConfirmReport)}
+                className="px-5 py-2.5 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors font-medium text-sm"
+              >
+                Tidak Setuju
               </button>
             </div>
           </div>
@@ -1709,39 +1713,38 @@ const ApoloReports = () => {
       {/* Dispute Form Modal */}
       {showDisputeFormModal && selectedReportForDisputeForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-white">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white z-10 p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-gradient-to-r from-orange-100 to-orange-200 rounded-lg">
-                    <FileText className="w-6 h-6 text-orange-600" />
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <FileText className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-orange-900">Form Sanggahan Keterlambatan</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Laporan: {selectedReportForDisputeForm.namaLaporan}
+                    <h3 className="text-xl font-bold text-gray-900">Form Sanggahan Keterlambatan</h3>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      {selectedReportForDisputeForm.namaLaporan}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowDisputeFormModal(false)}
-                  className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <XCircle className="w-6 h-6" />
+                  <XCircle className="w-5 h-5" />
                 </button>
               </div>
             </div>
             
             <div className="p-6 space-y-6">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
                 <div className="flex items-start space-x-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-yellow-800">
                     <p className="font-medium">Informasi Penting:</p>
                     <p className="mt-1">Dokumen pendukung yang diupload harus ditandatangani oleh Direksi.</p>
                     <p className="mt-1">Sanggahan akan direview oleh pengawas dan keputusan bersifat final.</p>
-                    <p className="mt-1 font-medium">Jumlah hari terlambat saat ini: {selectedReportForDisputeForm.originalLateDays} hari</p>
-                    <p className="mt-1 text-xs">*Perhitungan keterlambatan by system</p>
+                    <p className="mt-2 font-medium text-red-600">Jumlah hari terlambat saat ini: {selectedReportForDisputeForm.originalLateDays} hari</p>
                   </div>
                 </div>
               </div>
@@ -1756,7 +1759,7 @@ const ApoloReports = () => {
                     value={disputeFormInput.alasanKeterlambatan}
                     onChange={(e) => setDisputeFormInput({ ...disputeFormInput, alasanKeterlambatan: e.target.value })}
                     placeholder="Jelaskan alasan keterlambatan dengan detail..."
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   />
                 </div>
                 
@@ -1764,7 +1767,7 @@ const ApoloReports = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Upload Surat Pendukung <span className="text-red-500">*</span>
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-orange-400 transition-colors">
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors cursor-pointer bg-gray-50/50">
                     <input
                       type="file"
                       onChange={handleFileChange}
@@ -1772,7 +1775,7 @@ const ApoloReports = () => {
                       id="dispute-file-upload"
                       accept=".pdf,.doc,.docx"
                     />
-                    <label htmlFor="dispute-file-upload" className="cursor-pointer">
+                    <label htmlFor="dispute-file-upload" className="cursor-pointer block">
                       <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-600">
                         {disputeFormInput.filePendukung ? disputeFormInput.filePendukung.name : 'Klik untuk upload file'}
@@ -1782,27 +1785,141 @@ const ApoloReports = () => {
                       </p>
                     </label>
                   </div>
-                  <p className="text-xs text-orange-600 mt-2">
-                    * Surat pendukung harus ditandatangani oleh Direksi
+                  <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    Surat pendukung harus ditandatangani oleh Direksi
                   </p>
                 </div>
               </div>
-              
-              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            </div>
+            
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowDisputeFormModal(false)}
+                className="px-5 py-2.5 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDisputeFormSubmit}
+                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm"
+              >
+                Kirim Sanggahan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Detail Modal */}
+      {showRejectionDetailModal && selectedRejectionReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-auto overflow-hidden">
+            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-red-50 to-white">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-red-100 rounded-full">
+                    <FileWarning className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      {selectedRejectionReport.disputeStatus === 'accepted' ? 'Keputusan Sanggahan' : 'Penolakan Sanggahan'}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {selectedRejectionReport.namaLaporan}
+                    </p>
+                  </div>
+                </div>
                 <button
-                  onClick={() => setShowDisputeFormModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  onClick={() => setShowRejectionDetailModal(false)}
+                  className="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
                 >
-                  Batal
-                </button>
-                <button
-                  onClick={handleDisputeFormSubmit}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Kirim Sanggahan</span>
+                  <XCircle className="w-5 h-5" />
                 </button>
               </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {selectedRejectionReport.disputeStatus === 'accepted' ? (
+                <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-green-800">Sanggahan Diterima</p>
+                      <p className="text-sm text-green-700 mt-1">
+                        Berdasarkan hasil review, sanggahan Anda telah diterima.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : selectedRejectionReport.rejectionReason ? (
+                <>
+                  <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <AlertOctagon className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold text-red-800">Sanggahan Ditolak</p>
+                        <p className="text-sm text-red-700 mt-2 leading-relaxed">
+                          {selectedRejectionReport.rejectionReason}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {selectedRejectionReport.rejectionDocument && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Dokumen Resmi Penolakan
+                      </p>
+                      <button
+                        onClick={() => handleDownloadRejectionDoc(selectedRejectionReport)}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm font-medium w-full justify-center"
+                      >
+                        <Download className="w-4 h-4" />
+                        Unduh Surat Penolakan Sanggahan
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div className="bg-yellow-50 rounded-lg p-3">
+                    <p className="text-xs text-yellow-800 flex items-start gap-2">
+                      <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                      Status laporan<span className="font-semibold">Terlambat ({selectedRejectionReport.originalLateDays} Hari)</span>.
+                    </p>
+                  </div>
+                </>
+              ) : selectedRejectionReport.disputeStatus === 'rejected' ? (
+                <div className="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-4">
+                  <div>
+                    <p className="font-semibold text-orange-800">Mengakui Keterlambatan</p>
+                    <p className="text-sm text-orange-700 mt-1">
+                      Anda telah mengakui keterlambatan sebesar <span className="font-bold">{selectedRejectionReport.originalLateDays} hari</span>.
+                    </p>
+                  </div>
+                </div>
+              ) : selectedRejectionReport.isNegativeConfirmation ? (
+                <div className="bg-gray-100 border-l-4 border-gray-500 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <XCircle className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-gray-800">Negative Confirmation</p>
+                      <p className="text-sm text-gray-700 mt-1">
+                        Anda tidak melakukan konfirmasi dalam waktu 5 hari kerja.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            
+            <div className="p-6 border-t border-gray-100 bg-gray-50">
+              <button
+                onClick={() => setShowRejectionDetailModal(false)}
+                className="w-full px-5 py-2.5 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-medium text-sm"
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>
@@ -1812,7 +1929,7 @@ const ApoloReports = () => {
       {selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white sticky top-0 bg-white z-10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-gradient-to-r from-blue-100 to-blue-200 rounded-lg">
@@ -1821,7 +1938,7 @@ const ApoloReports = () => {
                   <div>
                     <h3 className="text-xl font-bold text-blue-900">Detail Laporan</h3>
                     <div className="flex items-center space-x-2 mt-1">
-                      {getAplikasiBadge(selectedReport.aplikasi)}
+                      {getAplikasiBadge(selectedReport.namaAplikasi)}
                       <span className="text-gray-600">• ID: {selectedReport.id}</span>
                     </div>
                   </div>
@@ -1845,80 +1962,66 @@ const ApoloReports = () => {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Aplikasi</h4>
-                  {getAplikasiBadge(selectedReport.aplikasi)}
+                  {getAplikasiBadge(selectedReport.namaAplikasi)}
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Jenis LJK</h4>
-                  <p className="text-gray-900">{selectedReport.jenisLJK}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Bidang LJK</h4>
-                  <p className="text-gray-900">{selectedReport.bidangLJK}</p>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Jenis Periode Laporan</h4>
+                  <p className="text-gray-900">{selectedReport.jenisPeriodeLaporan}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Tanggal Deadline</h4>
-                  <p className="text-gray-900">{selectedReport.displayDeadline}</p>
+                  <p className="text-gray-900">{selectedReport.displayBatas}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Tanggal Upload</h4>
-                  <p className="text-gray-900">{selectedReport.displaySubmit}</p>
+                  <p className="text-gray-900">{selectedReport.displayUpload}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Status Pengiriman</h4>
-                  {getStatusBadge(selectedReport.statusBadge)}
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Periode Data</h4>
+                  <p className="text-gray-900">{selectedReport.displayPeriodeData}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Jumlah Hari Keterlambatan</h4>
-                  {getLateDaysDisplay(selectedReport)}
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Jumlah Form</h4>
-                  <p className="text-gray-900">{selectedReport.detailForms.length}</p>
-                </div>
+  <h4 className="text-sm font-medium text-gray-500 mb-2">Status</h4>
+  <div className="text-left">
+    {getStatusBadge(selectedReport)}
+  </div>
+</div>
               </div>
 
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-3">Detail Form Laporan</h4>
-                <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No.</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Form</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
-                      {selectedReport.detailForms.map((form, idx) => (
-                        <tr key={form.id}>
-                          <td className="px-4 py-3 text-sm text-gray-600">{idx + 1}</td>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{form.namaForm}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              {selectedReport.finalStatus === 'terlambat' && selectedReport.originalLateDays && (
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-xs text-blue-800">
-                    <Info className="w-3 h-3 inline mr-1" />
-                    *Perhitungan keterlambatan by system berdasarkan tanggal upload dan tanggal batas akhir
-                  </p>
+              {selectedReport.rejectionReason && (
+                <div className="border-t border-gray-200 pt-4">
+                  <h4 className="text-sm font-medium text-red-600 mb-3 flex items-center gap-2">
+                    <AlertOctagon className="w-4 h-4" />
+                    Dokumen Penolakan Sanggahan dari Pengawas
+                  </h4>
+                  <div className="bg-red-50 rounded-lg border border-red-200 p-4">
+                    <p className="text-sm text-red-800 mb-3">
+                      <strong>Alasan Penolakan:</strong><br />
+                      {selectedReport.rejectionReason}
+                    </p>
+                    {selectedReport.rejectionDocument && (
+                      <button
+                        onClick={() => handleDownloadRejectionDoc(selectedReport)}
+                        className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-lg hover:bg-red-200 transition-colors"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Dokumen Penolakan (PDF)
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
               
-              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                {selectedReport.canDispute && (
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                {selectedReport.canConfirm && !selectedReport.disputeStatus && (
                   <button
                     onClick={() => {
                       setSelectedReport(null);
                       handleOpenConfirmModal(selectedReport);
                     }}
-                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
+                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                   >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Konfirmasi Keterlambatan</span>
+                    Konfirmasi Keterlambatan
                   </button>
                 )}
                 {selectedReport.hasDisputeForm && (
@@ -1927,10 +2030,9 @@ const ApoloReports = () => {
                       setSelectedReport(null);
                       handleOpenDisputeForm(selectedReport);
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    <FileText className="w-4 h-4" />
-                    <span>Isi Form Sanggahan</span>
+                    Isi Form Sanggahan
                   </button>
                 )}
                 <button
@@ -1949,4 +2051,3 @@ const ApoloReports = () => {
 };
 
 export default ApoloReports;
-
