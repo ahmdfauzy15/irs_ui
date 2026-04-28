@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Filter, 
   Download, 
@@ -35,17 +35,108 @@ import {
   ChevronUp,
   Send,
   Info,
-  FileWarning
+  FileWarning,
+  ClipboardList
 } from 'lucide-react';
 
+// Daftar nama form laporan
+const FORM_LIST = [
+  { no: 1, namaForm: "Form Laporan Rencana Bisnis Bank", kodeForm: "FRBB-01", jenis: "Tahunan" },
+  { no: 2, namaForm: "Form Laporan Rutin Bulanan", kodeForm: "FLRB-02", jenis: "Bulanan" },
+  // { no: 3, namaForm: "Form Laporan Keuangan Konsolidasi", kodeForm: "FLKK-03", jenis: "Tahunan" },
+  // { no: 4, namaForm: "Form Laporan GWM Individual", kodeForm: "FGWM-04", jenis: "Bulanan" },
+  // { no: 5, namaForm: "Form Laporan Risiko Likuiditas", kodeForm: "FLRL-05", jenis: "Bulanan" },
+  // { no: 6, namaForm: "Form Laporan GWM Konsolidasi", kodeForm: "FGWM-06", jenis: "Bulanan" },
+  // { no: 7, namaForm: "Form Laporan Posisi Devisa Neto", kodeForm: "FLPD-07", jenis: "Harian" },
+  // { no: 8, namaForm: "Form Laporan Kewajiban Penyediaan Modal Minimum", kodeForm: "FLKP-08", jenis: "Triwulan" },
+];
+
+// Custom Date Input DD/MM/YYYY dengan calendar picker
+const DateInputDDMMYYYY = ({ value, onChange, label, required, placeholder = "DD/MM/YYYY" }) => {
+  const inputRef = useRef(null);
+  const hiddenRef = useRef(null);
+
+  const toISO = (ddmmyyyy) => {
+    if (!ddmmyyyy || ddmmyyyy.length !== 10) return '';
+    const [dd, mm, yyyy] = ddmmyyyy.split('/');
+    if (!dd || !mm || !yyyy) return '';
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const fromISO = (iso) => {
+    if (!iso || iso.length !== 10) return '';
+    const [yyyy, mm, dd] = iso.split('-');
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
+  const handleTextChange = (e) => {
+    let raw = e.target.value.replace(/[^0-9]/g, '');
+    let formatted = '';
+    if (raw.length <= 2) {
+      formatted = raw;
+    } else if (raw.length <= 4) {
+      formatted = raw.slice(0, 2) + '/' + raw.slice(2);
+    } else {
+      formatted = raw.slice(0, 2) + '/' + raw.slice(2, 4) + '/' + raw.slice(4, 8);
+    }
+    onChange(formatted);
+  };
+
+  const handleCalendarChange = (e) => {
+    const iso = e.target.value;
+    onChange(fromISO(iso));
+  };
+
+  const openCalendar = () => {
+    if (hiddenRef.current) {
+      hiddenRef.current.showPicker && hiddenRef.current.showPicker();
+    }
+  };
+
+  return (
+    <div>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          <Calendar className="w-4 h-4 inline mr-2" />
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+      )}
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="text"
+          maxLength={10}
+          placeholder={placeholder}
+          value={value}
+          onChange={handleTextChange}
+          className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+        />
+        <input
+          ref={hiddenRef}
+          type="date"
+          value={toISO(value)}
+          onChange={handleCalendarChange}
+          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+          tabIndex={-1}
+        />
+        <button
+          type="button"
+          onClick={openCalendar}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          <Calendar className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ApoloReports = () => {
-  // Fungsi untuk mendapatkan waktu saat ini di WIB
   const getCurrentWIBTime = () => {
     const now = new Date();
     return now;
   };
 
-  // State untuk waktu real-time
   const [currentDateTime, setCurrentDateTime] = useState(getCurrentWIBTime());
   const [disputeData, setDisputeData] = useState({});
   const [disputeFormData, setDisputeFormData] = useState({});
@@ -60,13 +151,12 @@ const ApoloReports = () => {
   const [showRejectionDetailModal, setShowRejectionDetailModal] = useState(false);
   const [selectedRejectionReport, setSelectedRejectionReport] = useState(null);
   
-  // State untuk periode tanggal - AWALNYA KOSONG
+  // State untuk periode tanggal - FORMAT DD/MM/YYYY
   const [dateRange, setDateRange] = useState({
     startDate: '',
     endDate: ''
   });
   
-  // State untuk filter - MULTIPLE SELECT
   const [filters, setFilters] = useState({
     aplikasi: [],
     status: []
@@ -77,6 +167,14 @@ const ApoloReports = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
   const [expandedRows, setExpandedRows] = useState({});
+
+  // Parse DD/MM/YYYY ke Date object
+  const parseDDMMYYYY = (str) => {
+    if (!str || str.length !== 10) return null;
+    const [dd, mm, yyyy] = str.split('/');
+    const d = new Date(+yyyy, +mm - 1, +dd);
+    return isNaN(d.getTime()) ? null : d;
+  };
 
   // Load dispute data from localStorage
   useEffect(() => {
@@ -90,7 +188,6 @@ const ApoloReports = () => {
     }
   }, []);
 
-  // Save dispute data to localStorage
   const saveDisputeToLocalStorage = (disputes) => {
     localStorage.setItem('apolo_disputes_v11', JSON.stringify(disputes));
   };
@@ -99,16 +196,13 @@ const ApoloReports = () => {
     localStorage.setItem('apolo_dispute_forms_v11', JSON.stringify(forms));
   };
 
-  // Update waktu real-time WIB setiap detik
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentDateTime(getCurrentWIBTime());
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
-  // Helper function untuk menghitung selisih hari
   const daysBetween = (date1, date2) => {
     const d1 = new Date(date1);
     const d2 = new Date(date2);
@@ -117,7 +211,6 @@ const ApoloReports = () => {
     return diffDays;
   };
 
-  // Helper function untuk menghitung hari kerja (Senin-Jumat)
   const getWorkingDaysBetween = (startDate, endDate) => {
     let count = 0;
     const current = new Date(startDate);
@@ -133,7 +226,7 @@ const ApoloReports = () => {
     return count;
   };
 
-  // Helper function untuk mendapatkan tanggal expiry (5 hari kerja dari tanggal tertentu)
+  // PERBAIKAN: Hitung expiry date berdasarkan tanggal upload
   const getExpiryDate = (startDate) => {
     const expiry = new Date(startDate);
     let daysAdded = 0;
@@ -147,7 +240,6 @@ const ApoloReports = () => {
     return expiry;
   };
 
-  // Helper function untuk mendapatkan sisa hari kerja (dalam hitungan mundur yang akurat)
   const getRemainingWorkingDays = (expiryDate) => {
     const now = new Date();
     if (now > expiryDate) return 0;
@@ -168,7 +260,6 @@ const ApoloReports = () => {
     return remaining;
   };
 
-  // Helper function untuk mendapatkan progress persentase waktu sanggah
   const getDisputeProgress = (startDate, expiryDate) => {
     const now = new Date();
     const start = new Date(startDate);
@@ -187,13 +278,12 @@ const ApoloReports = () => {
   // Data reports statis
   const initialReports = useMemo(() => {
     const reports = [
-      // APOLO
       {
         id: "APO001",
         namaAplikasi: "APOLO",
         namaLaporan: "Rencana Bisnis Bank",
         jenisPeriodeLaporan: "Tahunan",
-        tglUpload: "2026-04-24 17:45:23",
+        tglUpload: "2026-04-20 17:45:23",
         tglBatas: "2026-04-25",
         periodeData: "2026-04-01",
         statusPengiriman: "Berhasil",
@@ -361,7 +451,8 @@ const ApoloReports = () => {
         }
         
         if (isLate && !disputeData[report.id]) {
-          const disputeStartTime = new Date();
+          // PERBAIKAN: Gunakan tanggal upload sebagai start date untuk hitung sisa waktu
+          const disputeStartTime = uploadDate || new Date();
           const expiryDate = getExpiryDate(disputeStartTime);
           
           updatedDisputes[report.id] = {
@@ -442,7 +533,9 @@ const ApoloReports = () => {
     const ap004Id = "APO004";
     
     if (!disputeData[ap004Id]) {
-      const disputeStartDate = new Date();
+      const report = initialReports.find(r => r.id === ap004Id);
+      const uploadDate = report?.tglUpload ? new Date(report.tglUpload) : new Date();
+      const disputeStartDate = new Date(uploadDate);
       disputeStartDate.setDate(disputeStartDate.getDate() - 10);
       disputeStartDate.setHours(0, 0, 0, 0);
       
@@ -468,7 +561,6 @@ const ApoloReports = () => {
     }
   }, []);
 
-  // Fungsi untuk menghitung status
   const calculateStatus = (report, currentDate, disputeInfo = null) => {
     const uploadDate = report.tglUpload ? new Date(report.tglUpload) : null;
     const deadlineDate = new Date(report.tglBatas);
@@ -478,7 +570,6 @@ const ApoloReports = () => {
     systemDate.setHours(0, 0, 0, 0);
     if (uploadDate) uploadDate.setHours(0, 0, 0, 0);
     
-    // Cek TIDAK LAPOR (terlambat 60 hari atau lebih)
     if ((report.namaAplikasi === "APOLO" || report.namaAplikasi === "e-Reporting")) {
       let lateDays = 0;
       if (!uploadDate && systemDate > deadlineDate) {
@@ -550,7 +641,6 @@ const ApoloReports = () => {
   };
 
   const canConfirm = (report, calculatedStatus) => {
-    // Hanya APOLO yang bisa konfirmasi/sanggah
     if (report.namaAplikasi !== "APOLO") return false;
     if (report.statusPengiriman !== "Berhasil") return false;
     if (calculatedStatus.finalStatus !== "terlambat") return false;
@@ -565,7 +655,6 @@ const ApoloReports = () => {
   };
 
   const hasDisputeFormAvailable = (report) => {
-    // Hanya APOLO yang bisa sanggah
     if (report.namaAplikasi !== "APOLO") return false;
     const disputeInfo = disputeData[report.id];
     if (disputeInfo && disputeInfo.status === 'accepted') return false;
@@ -580,28 +669,35 @@ const ApoloReports = () => {
     return getDisputeProgress(disputeInfo.disputeStartDate, disputeInfo.disputeExpiryDate);
   };
 
-  // Proses data reports dengan filter tanggal
-  const reportsWithPeriod = useMemo(() => {
-    if (!dateRange.startDate || !dateRange.endDate) {
+  // Filter data berdasarkan periode data (DD/MM/YYYY)
+  const filterByDateRange = (data) => {
+    const startDate = parseDDMMYYYY(dateRange.startDate);
+    const endDate = parseDDMMYYYY(dateRange.endDate);
+    
+    if (!startDate || !endDate) {
       return [];
     }
     
-    const startDate = new Date(dateRange.startDate);
     startDate.setHours(0, 0, 0, 0);
-    
-    const endDate = new Date(dateRange.endDate);
     endDate.setHours(23, 59, 59, 999);
     
-    const filteredReports = initialReports.filter(report => {
-      const periodeData = new Date(report.periodeData);
-      periodeData.setHours(0, 0, 0, 0);
+    return data.filter(item => {
+      const periodeData = new Date(item.periodeData);
+      if (isNaN(periodeData.getTime())) return false;
       return periodeData >= startDate && periodeData <= endDate;
     });
+  };
+
+  // Proses data reports dengan filter tanggal
+  const reportsWithPeriod = useMemo(() => {
+    const filteredByDate = filterByDateRange(initialReports);
+    
+    if (filteredByDate.length === 0) return [];
     
     const systemDate = new Date(currentDateTime);
     systemDate.setHours(0, 0, 0, 0);
 
-    const processed = filteredReports.map(report => {
+    const processed = filteredByDate.map(report => {
       const dispute = disputeData[report.id];
       let calculated = calculateStatus(report, systemDate, dispute);
       
@@ -683,7 +779,11 @@ const ApoloReports = () => {
         if (!date) return '-';
         const d = new Date(date);
         if (isNaN(d.getTime())) return '-';
-        return d.toISOString().split('T')[0];
+        return d.toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
       };
       
       return {
@@ -798,6 +898,8 @@ const ApoloReports = () => {
     setSearchTerm('');
     setSelectedReport(null);
   };
+
+  const hasValidDates = parseDDMMYYYY(dateRange.startDate) && parseDDMMYYYY(dateRange.endDate);
 
   const handleOpenConfirmModal = (report) => {
     setSelectedConfirmReport(report);
@@ -979,29 +1081,29 @@ const ApoloReports = () => {
   };
 
   const getStatusBadge = (report) => {
-  const { finalStatus, namaAplikasi, originalLateDays, isNegativeConfirmation } = report;
-  
-  if (finalStatus === 'tepat_waktu') {
-    return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Lapor</span>;
-  } else if (finalStatus === 'belum_lapor') {
-    return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Belum Lapor</span>;
-  } else if (finalStatus === 'tidak_lapor') {
-    return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Tidak Lapor</span>;
-  } else if (finalStatus === 'terlambat') {
-    if ((namaAplikasi === 'APOLO' || namaAplikasi === 'e-Reporting') && originalLateDays > 0 && !isNegativeConfirmation) {
-      return (
-        <div className="text-left">
-          <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Terlambat</span>
-          <div className="text-xs text-red-600 font-medium mt-0.5">{originalLateDays} Hari Terlambat</div>
-          <div className="text-[10px] text-gray-400">*Perhitungan berdasarkan sistem</div>
-        </div>
-      );
+    const { finalStatus, namaAplikasi, originalLateDays, isNegativeConfirmation } = report;
+    
+    if (finalStatus === 'tepat_waktu') {
+      return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Lapor</span>;
+    } else if (finalStatus === 'belum_lapor') {
+      return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Belum Lapor</span>;
+    } else if (finalStatus === 'tidak_lapor') {
+      return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Tidak Lapor</span>;
+    } else if (finalStatus === 'terlambat') {
+      if ((namaAplikasi === 'APOLO' || namaAplikasi === 'e-Reporting') && originalLateDays > 0 && !isNegativeConfirmation) {
+        return (
+          <div className="text-left">
+            <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Terlambat</span>
+            <div className="text-xs text-red-600 font-medium mt-0.5">{originalLateDays} Hari Terlambat</div>
+            <div className="text-[10px] text-gray-400">*Perhitungan berdasarkan sistem</div>
+          </div>
+        );
+      }
+      return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Terlambat</span>;
     }
-    return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Terlambat</span>;
-  }
-  
-  return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">-</span>;
-};
+    
+    return <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">-</span>;
+  };
 
   const DisputeProgressBar = ({ remainingDays, progressPercentage }) => {
     const getBarColor = () => {
@@ -1035,7 +1137,6 @@ const ApoloReports = () => {
   };
 
   const getConfirmationButton = (report) => {
-    // Negative Confirmation
     if (report.isNegativeConfirmation || report.disputeStatus === 'expired') {
       return (
         <div className="flex flex-col gap-2">
@@ -1049,7 +1150,6 @@ const ApoloReports = () => {
       );
     }
     
-    // Sanggahan diterima
     if (report.disputeStatus === 'accepted') {
       return (
         <div className="flex flex-col gap-2">
@@ -1063,7 +1163,6 @@ const ApoloReports = () => {
       );
     }
     
-    // Sanggahan ditolak
     if (report.disputeStatus === 'rejected' && report.rejectionReason) {
       return (
         <div className="flex flex-col gap-2">
@@ -1077,7 +1176,6 @@ const ApoloReports = () => {
       );
     }
     
-    // Mengakui keterlambatan
     if (report.disputeStatus === 'rejected' && !report.rejectionReason) {
       return (
         <div className="flex flex-col gap-2">
@@ -1091,7 +1189,6 @@ const ApoloReports = () => {
       );
     }
     
-    // Menunggu form sanggahan (hanya untuk APOLO)
     if (report.hasDisputeForm) {
       const remainingDays = report.remainingWorkingDays;
       const progressPercentage = getDisputeProgressValue(report);
@@ -1112,7 +1209,6 @@ const ApoloReports = () => {
       );
     }
     
-    // Status pending_confirmation (belum konfirmasi) - hanya untuk APOLO
     if (report.disputeStatus === 'pending_confirmation' && report.canConfirm) {
       const remainingDays = report.remainingWorkingDays;
       const progressPercentage = getDisputeProgressValue(report);
@@ -1133,7 +1229,6 @@ const ApoloReports = () => {
       );
     }
     
-    // Jika bisa melakukan konfirmasi (status awal) - hanya untuk APOLO
     if (report.canConfirm && !report.disputeStatus) {
       const remainingDays = 5;
       const progressPercentage = 0;
@@ -1154,7 +1249,6 @@ const ApoloReports = () => {
       );
     }
     
-    // Untuk e-Reporting dan SIPINA yang tidak perlu konfirmasi
     return (
       <span className="text-xs text-gray-400 italic text-center">-</span>
     );
@@ -1210,11 +1304,10 @@ const ApoloReports = () => {
     return csv;
   };
 
-  const formatDateDisplay = (dateString) => {
-    if (!dateString) return 'Kosong';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Tanggal tidak valid';
-    return date.toLocaleDateString('id-ID', {
+  const formatDateDisplay = (ddmmyyyy) => {
+    const d = parseDDMMYYYY(ddmmyyyy);
+    if (!d) return ddmmyyyy || "-";
+    return d.toLocaleDateString('id-ID', {
       day: '2-digit',
       month: 'long',
       year: 'numeric'
@@ -1304,44 +1397,28 @@ const ApoloReports = () => {
           <div className="p-6">
             <div className="mb-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Mulai Periode Laporan <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={dateRange.startDate}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-2" />
-                    Tanggal Akhir Periode Laporan <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={dateRange.endDate}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
-                    required
-                  />
-                </div>
+                <DateInputDDMMYYYY
+                  label="Tanggal Mulai Periode Laporan"
+                  required
+                  value={dateRange.startDate}
+                  onChange={(val) => setDateRange(prev => ({ ...prev, startDate: val }))}
+                />
+                <DateInputDDMMYYYY
+                  label="Tanggal Akhir Periode Laporan"
+                  required
+                  value={dateRange.endDate}
+                  onChange={(val) => setDateRange(prev => ({ ...prev, endDate: val }))}
+                />
               </div>
-              {(!dateRange.startDate || !dateRange.endDate) && (
+              {!hasValidDates && (
                 <p className="text-sm text-red-500 mt-2">
                   <AlertCircle className="w-4 h-4 inline mr-1" />
-                  Harap pilih tanggal mulai dan tanggal akhir periode laporan untuk menampilkan data
+                  Harap isi tanggal mulai dan akhir periode laporan (format DD/MM/YYYY)
                 </p>
               )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {/* Filter Aplikasi - Multiple Select Dropdown */}
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Building className="w-4 h-4 inline mr-2" />
@@ -1378,7 +1455,6 @@ const ApoloReports = () => {
                 )}
               </div>
 
-              {/* Filter Status - Multiple Select Dropdown */}
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <AlertCircle className="w-4 h-4 inline mr-2" />
@@ -1504,7 +1580,7 @@ const ApoloReports = () => {
                       Daftar Laporan 
                     </h3>
                     <div className="mt-2 space-y-1">
-                      {dateRange.startDate && dateRange.endDate && (
+                      {hasValidDates && (
                         <p className="text-sm text-gray-600 truncate">
                           Periode Data: <span className="font-medium">{formatDateDisplay(dateRange.startDate)}</span> - <span className="font-medium">{formatDateDisplay(dateRange.endDate)}</span>
                         </p>
@@ -1568,7 +1644,7 @@ const ApoloReports = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {report.displayUpload}
                     </td>
-<td className="px-6 py-4 whitespace-nowrap text-left">
+                    <td className="px-6 py-4 whitespace-nowrap text-left">
                       {getStatusBadge(report)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -1595,11 +1671,11 @@ const ApoloReports = () => {
                 <AlertCircle className="w-8 h-8 text-blue-400" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                {!dateRange.startDate || !dateRange.endDate ? 'Pilih Periode Tanggal Terlebih Dahulu' : 'Tidak ada laporan ditemukan'}
+                {!hasValidDates ? 'Pilih Periode Tanggal Terlebih Dahulu' : 'Tidak ada laporan ditemukan'}
               </h3>
               <p className="text-gray-600">
-                {!dateRange.startDate || !dateRange.endDate 
-                  ? 'Silakan pilih tanggal mulai dan tanggal akhir periode laporan untuk menampilkan data'
+                {!hasValidDates 
+                  ? 'Silakan isi tanggal mulai dan akhir periode laporan (format DD/MM/YYYY)'
                   : 'Tidak ada laporan yang sesuai dengan kriteria pencarian atau filter'}
               </p>
               <button
@@ -1638,7 +1714,6 @@ const ApoloReports = () => {
         </div>
       </div>
 
-      {/* Modal-modals tetap sama seperti sebelumnya... */}
       {/* Confirm Modal */}
       {showConfirmModal && selectedConfirmReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1666,7 +1741,7 @@ const ApoloReports = () => {
             <div className="p-6 space-y-4">
               <div className="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-4">
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  Laporan <span className="font-semibold">{selectedConfirmReport.namaLaporan}</span> periode <span className="font-semibold">{selectedConfirmReport.displayPeriodeData}</span> <br></br>
+                  <span className="font-semibold">{selectedConfirmReport.namaLaporan}</span> periode <span className="font-semibold">{selectedConfirmReport.displayPeriodeData}</span> <br></br>
                   mengalami keterlambatan sebanyak <span className="font-bold text-red-600">{selectedConfirmReport.originalLateDays || selectedConfirmReport.lateDays} hari</span>.
                 </p>
               </div>
@@ -1866,22 +1941,6 @@ const ApoloReports = () => {
                     </div>
                   </div>
                   
-                  {selectedRejectionReport.rejectionDocument && (
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <p className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        Dokumen Resmi Penolakan
-                      </p>
-                      <button
-                        onClick={() => handleDownloadRejectionDoc(selectedRejectionReport)}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm font-medium w-full justify-center"
-                      >
-                        <Download className="w-4 h-4" />
-                        Unduh Surat Penolakan Sanggahan
-                      </button>
-                    </div>
-                  )}
-                  
                   <div className="bg-yellow-50 rounded-lg p-3">
                     <p className="text-xs text-yellow-800 flex items-start gap-2">
                       <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
@@ -1925,7 +1984,7 @@ const ApoloReports = () => {
         </div>
       )}
 
-      {/* Detail Modal */}
+      {/* Detail Modal - DENGAN LIST NAMA FORM */}
       {selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -1981,36 +2040,38 @@ const ApoloReports = () => {
                   <p className="text-gray-900">{selectedReport.displayPeriodeData}</p>
                 </div>
                 <div>
-  <h4 className="text-sm font-medium text-gray-500 mb-2">Status</h4>
-  <div className="text-left">
-    {getStatusBadge(selectedReport)}
-  </div>
-</div>
-              </div>
-
-              {selectedReport.rejectionReason && (
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="text-sm font-medium text-red-600 mb-3 flex items-center gap-2">
-                    <AlertOctagon className="w-4 h-4" />
-                    Dokumen Penolakan Sanggahan dari Pengawas
-                  </h4>
-                  <div className="bg-red-50 rounded-lg border border-red-200 p-4">
-                    <p className="text-sm text-red-800 mb-3">
-                      <strong>Alasan Penolakan:</strong><br />
-                      {selectedReport.rejectionReason}
-                    </p>
-                    {selectedReport.rejectionDocument && (
-                      <button
-                        onClick={() => handleDownloadRejectionDoc(selectedReport)}
-                        className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-lg hover:bg-red-200 transition-colors"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download Dokumen Penolakan (PDF)
-                      </button>
-                    )}
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Status</h4>
+                  <div className="text-left">
+                    {getStatusBadge(selectedReport)}
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* ===== TABEL DAFTAR NAMA FORM ===== */}
+              <div className="bg-green-50 rounded-xl p-4 md:p-5 border border-green-200">
+                <div className="flex items-center space-x-3 mb-4">
+                  <ClipboardList className="w-5 h-5 text-green-600" />
+                  <h4 className="text-base font-semibold text-green-900">Daftar Nama Form</h4>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-green-200">
+                    <thead className="bg-green-100">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-bold text-green-800 uppercase tracking-wider w-12">No</th>
+                        <th className="px-4 py-2 text-left text-xs font-bold text-green-800 uppercase tracking-wider">Nama Form</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-green-100">
+                      {FORM_LIST.map((form) => (
+                        <tr key={form.no} className="hover:bg-green-50/50 transition-colors">
+                          <td className="px-4 py-2 text-sm text-gray-500 text-center">{form.no}</td>
+                          <td className="px-4 py-2 text-sm font-medium text-gray-900">{form.namaForm}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
               
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                 {selectedReport.canConfirm && !selectedReport.disputeStatus && (
